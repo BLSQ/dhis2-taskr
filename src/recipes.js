@@ -426,6 +426,29 @@ return ccc.categoryCombos;
     return legendSet;
     
 `
+  },
+  {
+    id: "aze123PkdS6",
+    name: "Play : export orgunits with parent and groups",
+    editable: true,
+    code: `
+  const api = await dhis2.api();
+const ou = await api.get("organisationUnits", {
+  fields:
+    "id,name,coordinates,featureType,parent,organisationUnitGroups[id,name,groupSets[id]]",
+  paging: false
+});
+return ou.organisationUnits.map(ou => {
+  return {
+    id: ou.id,
+    name: ou.name,
+    coordinates: ou.coordinates,
+    featureType: ou.featureType,
+    parent: ou.parent ? ou.parent.id : undefined,
+    groups: ou.organisationUnitGroups.map(g => g.name).join(", ")
+  };
+});
+`
   }
 ];
 export default recipes;
