@@ -1,8 +1,9 @@
 
-# context
-
+# Context
 
 Small dhis2 scripts editor/runner to automate recurring tasks.
+
+![](./doc/screenshot.png)
 
 Script in JavaScript
 
@@ -17,8 +18,8 @@ can display results
 - As a map, If coordinate, coordinates or geometry field
 - As json
 
-
-# prerequisite
+# Development 
+## Prerequisite
 
 install nodejs and yarn
 
@@ -26,7 +27,7 @@ install nodejs and yarn
   brew install yarn
 ```
 
-# create a .env.development
+## Create a .env.development
 
 see
 or take you personal user
@@ -37,7 +38,8 @@ REACT_APP_USER=xxxxxxxxxxxx
 REACT_APP_PASSWORD=xxxxxxxxxxxx
 ```
 
-# start developement mode
+## Start developement mode
+
 ```
 yarn start
 Then goto http://127.0.0.1:3000/ or local0host:3000
@@ -46,8 +48,8 @@ Then goto http://127.0.0.1:3000/ or local0host:3000
 Note that localhost:3000 and 127.0.0.0:3000 needs to be whitelisted in Dhis2 Settings -> Access -> CORS whitelist
 see https://<<your-dhis2>>/dhis-web-settings/index.html#/access
 
-# deployment to production
+## Deployment to production
 
 ```
-./ship.sh 'https://play.dhis2.org' 'admin' '<see1password>'
+./ship.sh 'https://play.dhis2.org/2.31.6' 'admin' '<password>'
 ```
