@@ -1,0 +1,94 @@
+
+https://mermaidjs.github.io/mermaid-live-editor/#
+
+
+classDiagram
+    
+     Value *--Period
+     Value *--OrganisationUnit
+     Value *--DataElement
+     Value *--CategoryOptionCombo
+     class Period
+
+     class Value {
+         period
+         organisationUnit
+         dataElement
+         categoryOptionCombo 
+         value
+     }
+
+     class CategoryOptionCombo
+     class CategoryCombo
+     class Category
+     class CategoryOption
+
+    Category "1"--> "n"     CategoryOption
+    CategoryCombo "1"--> "n"     Category
+    CategoryCombo "1"--> "n"     CategoryOptionCombo
+
+classDiagram
+  class OrganisationUnit {
+         code
+         name
+         parent
+         path*
+         level*
+         ancestors*
+         children*
+         coordinates
+         attributeValues
+     }
+     OrganisationUnit  -->  OrganisationUnit : parent
+     class OrganisationUnitGroup {
+         code
+         name
+     }
+
+     OrganisationUnit "1" --> "n" OrganisationUnitGroup
+     class OrganisationUnitGroupSets {
+         code
+         name
+     }
+     OrganisationUnitGroupSets "1" --> "*" OrganisationUnitGroup
+
+     class DataElement {
+         code
+         name
+         shortName 
+         domainType
+         valueType
+         aggregationType
+         zeroIsSignificant
+     }
+     class DataElementGroup
+     DataElementGroup "1" --> "*" DataElement
+     class DataElementGroupSet
+     DataElementGroupSet "1" --> "*" DataElementGroup
+
+     class DataSet {         
+         dataSetElements
+         periodType
+      }
+     DataSet "1" --> "*" DataElement
+     
+    class Indicator {
+        numerator
+        denominator
+    }
+    Indicator --> DataElement : expression references
+
+
+    class Event {
+        date
+        organisationUnit
+        values
+    }
+
+ class Program {
+    }
+ class ProgramStage {
+    }    
+    Program --> "*" ProgramStage
+
+    ProgramStage --> "*" DataElement

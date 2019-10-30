@@ -1,0 +1,20 @@
+{
+  "version": "0.0.1b",
+  "name": "Dhis2 Taskr",
+  "appType": "APP",
+  "description": "Dhis2 Taskr, allows to run small js script and display them in a explorative way",
+  "icons": {
+    "48": "blsq.png"
+  },
+  "developer": {
+    "name": "Stéphan Mestach",
+    "email": "mestachs@bluesquarehub.com"
+  },
+  "activities": {
+    "dhis": {
+      "href": "*"
+    }
+  },
+  "launch_path": "index.html",
+  "default_locale": "en"
+}
