@@ -48,6 +48,23 @@ Then goto http://127.0.0.1:3000/ or local0host:3000
 Note that localhost:3000 and 127.0.0.0:3000 needs to be whitelisted in Dhis2 Settings -> Access -> CORS whitelist
 see https://<<your-dhis2>>/dhis-web-settings/index.html#/access
 
+
+## if you don't have access rights, you might want to proxy the dhis2 api request
+
+in package.json 
+
+```
+ "proxy": "https://mydhis2",
+```
+
+in .env.development
+
+```
+REACT_APP_DHIS2_URL=REACT_APP_DHIS2_URL=http://localhost:3000
+REACT_APP_USER=xxxxxxxxxxxx
+REACT_APP_PASSWORD=xxxxxxxxxxxx
+```
+
 ## Deployment to production
 
 ```
