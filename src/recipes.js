@@ -449,6 +449,43 @@ return ou.organisationUnits.map(ou => {
   };
 });
 `
+  },
+  {
+    id: "YlvBkdBjjVO",
+    name: "Play : event counts",
+    editable: true,
+    code: `    
+    // press crtl-r to run
+const api = await dhis2.api();
+const pg = await api.get("programs", {
+  fields: "id,name,programStages[id,name]",
+  paging: false
+});
+
+const results = [];
+
+await asyncForEach(pg.programs, async program => {
+  try {
+    const ev = await api.get("events", {
+      program: program.id,
+      pageSize: 10,
+      totalPages: true
+    });
+    results.push({
+      id: program.id,
+
+      name: program.name,
+      events: ev.pager.total
+    });
+  } catch (ignore) {}
+});
+
+results.push({
+  name: "TOTAL",
+  events: results.map(m => m.events).reduce((a, b) => a + b)
+});
+return results;
+`
   }
 ];
 export default recipes;

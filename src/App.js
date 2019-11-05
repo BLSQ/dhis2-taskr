@@ -120,11 +120,13 @@ function App() {
 
   async function onSave(modifiedRecipe) {
     const api = await dhis2.api();
-    const createResp = await api.post(
-      "/dataStore/taskr/" + modifiedRecipe.id,
-      modifiedRecipe
-    );
-    delete recipe.fresh;
+    try {
+      const createResp = await api.post(
+        "/dataStore/taskr/" + modifiedRecipe.id,
+        modifiedRecipe
+      );
+      delete recipe.fresh;
+    } catch (error) {}
 
     const updateResp = await api.update(
       "/dataStore/taskr/" + modifiedRecipe.id,
