@@ -18,7 +18,7 @@ can display results
 - As a map, If coordinate, coordinates or geometry field
 - As json
 
-# Development 
+# Development
 ## Prerequisite
 
 install nodejs and yarn
@@ -33,9 +33,9 @@ see
 or take you personal user
 
 ```
-REACT_APP_DHIS2_URL=https://play.dhis2.org/2.31.6
-REACT_APP_USER=xxxxxxxxxxxx
-REACT_APP_PASSWORD=xxxxxxxxxxxx
+REACT_APP_DHIS2_URL=https://play.dhis2.org/2.32.2
+REACT_APP_USER=admin
+REACT_APP_PASSWORD=district
 ```
 
 ## Start developement mode
@@ -51,7 +51,7 @@ see https://<<your-dhis2>>/dhis-web-settings/index.html#/access
 
 ## if you don't have access rights, you might want to proxy the dhis2 api request
 
-in package.json 
+in package.json
 
 ```
  "proxy": "https://mydhis2",

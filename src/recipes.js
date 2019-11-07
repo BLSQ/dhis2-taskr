@@ -8,8 +8,8 @@ const recipes = [
     const ou = await api.get("organisationUnits", {
       fields: "id,name,ancestors[id,name]"
     });
-    
-    return _.flattenObjects(ou.organisationUnits);     
+
+    return _.flattenObjects(ou.organisationUnits);
       `
   },
   {
@@ -29,6 +29,7 @@ const recipes = [
     name: "Basic - List of orgunits with ancestors and groups",
     editable: false,
     code: `
+
   const api = await dhis2.api();
   const organisationUnitsResp = await api.get("organisationUnits", {
     fields: "id,name,ancestors[id,name],organisationUnitGroups[id,name]",
@@ -126,18 +127,18 @@ return userResp.users.map( user => {
     code: `
     const stats = [];
     const api = await dhis2.api();
-    
+
     const levels = await api.get("organisationUnitLevels", {
       fields: "id,name,level",
       order: "level"
     });
-    
+
     const system = await api.get("system/info");
     const version = system.version;
     const v = version.split(".");
     const vfloat = parseFloat(v[0] + "." + v[1]);
     const fieldCoordinates = vfloat >= 2.32 ? "geometry" : "coordinates";
-    
+
     await asyncForEach(levels.organisationUnitLevels, async level => {
       const withCoordinates = await api.get("organisationUnits", {
         fields: "id,name",
@@ -151,14 +152,14 @@ return userResp.users.map( user => {
         paging: true,
         pageSize: 1
       });
-    
+
       const allOus = await api.get("organisationUnits", {
         fields: "id,name",
         filter: ["level:eq:" + level.level],
         paging: true,
         pageSize: 1
       });
-    
+
       stats.push({
         levelName: level.name,
         level: level.level,
@@ -171,10 +172,10 @@ return userResp.users.map( user => {
             : "-"
       });
     });
-    
+
     return stats;
-    
-    
+
+
  `
   },
   {
@@ -231,9 +232,9 @@ return ou.organisationUnits;
         program: "VBqh0ynB2wv",
         pageSize: 100
       });
-         
-      return ev.events;      
-       
+
+      return ev.events;
+
         `
   },
   {
@@ -255,18 +256,18 @@ return ou.organisationUnits;
       });
       const events = ev.events.map(event => {
         r = { id: event.event, coordinate: event.coordinate };
-      
+
         event.dataValues.forEach(
           dataValue => (r[dataElementsById[dataValue.dataElement]] = dataValue.value)
         );
-      
+
         r.color = r["Gender"] == "Male" ? "blue" : "red";
         return r;
       });
-      
+
       return events;
-      
-       
+
+
         `
   },
   {
@@ -288,7 +289,7 @@ return ou.organisationUnits;
         "id,name,numerator,denominator,numeratorDescription,denominatorDescription",
       paging: false
     });
-    return _.uniqBy(ind.indicators.concat(ind2.indicators), i => i.id);       
+    return _.uniqBy(ind.indicators.concat(ind2.indicators), i => i.id);
     `
   },
   {
@@ -352,7 +353,7 @@ return _.uniqBy(
     name: "Generic - overview of category combos",
     editable: true,
     code: `
-    
+
     // press crtl-r to run
 const api = await dhis2.api();
 const ccc = await api.get("categoryCombos", {
@@ -395,7 +396,7 @@ return ccc.categoryCombos;
     var line = turf.lineString([[0, 10], [20, 20]]);
     var tin = turf.tin(turf.featureCollection(points), "z");
     return points.concat([line]).concat(tin["features"]);
-         
+
 `
   },
   {
@@ -412,7 +413,7 @@ return ccc.categoryCombos;
       "40 - 50": "#addd50",
       "50 - 60": "#41ab60"
     };
-    
+
     Object.keys(colors).forEach(range => {
       const legend = legendSet.legends.find(l => l.displayName == range);
       legend.color = colors[range];
@@ -424,7 +425,7 @@ return ccc.categoryCombos;
       fields: ":all"
     });
     return legendSet;
-    
+
 `
   },
   {
@@ -454,7 +455,7 @@ return ou.organisationUnits.map(ou => {
     id: "YlvBkdBjjVO",
     name: "Play : event counts",
     editable: true,
-    code: `    
+    code: `
     // press crtl-r to run
 const api = await dhis2.api();
 const pg = await api.get("programs", {
@@ -486,6 +487,51 @@ results.push({
 });
 return results;
 `
+  },
+  {
+
+      id: "YlvBkdBjaz5",
+      name: "Play : CSV and fuse",
+      editable: true,
+      code: `
+
+      const data = \`
+line,name
+1,Adonkiia
+2,Afro Arabe Clinique
+      \`;
+
+      const options = {
+        shouldSort: true,
+        includeScore: true,
+        threshold: 0.6,
+        location: 0,
+        distance: 100,
+        maxPatternLength: 32,
+        minMatchCharLength: 1,
+        keys: ["name"]
+      };
+
+      const api = await dhis2.api();
+      const ou = await api.get("organisationUnits", {
+        paging: false,
+        fields: "id,name"
+      });
+
+      const fuse = new Fuse(ou.organisationUnits, options); // "list" is the item array
+
+      let ouToMaps = PapaParse.parse(data.trim(), {
+        header: true
+      });
+
+      ouToMaps.data.forEach(ouToMap => {
+        ouToMap.mapping = fuse.search(ouToMap.name)[0];
+      });
+
+      return _.flattenObjects(ouToMaps.data);
+
+
+    `
   }
 ];
 export default recipes;

@@ -8,6 +8,7 @@
     "@material-ui/icons": "^4.4.1",
     "@turf/turf": "^5.1.6",
     "d2": "30.0.2",
+    "fuse.js": "^3.4.5",
     "leaflet": "^1.5.1",
     "lodash": "^4.17.15",
     "mui-datatables": "^2.12.0",

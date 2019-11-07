@@ -3,6 +3,8 @@ import React, { useState } from "react";
 import "./App.css";
 import _ from "lodash";
 import * as turf from "@turf/turf";
+import Fuse from "fuse.js";
+import PapaParse from "papaparse";
 import { asyncForEach } from "./support/asyncForEach";
 import Button from "@material-ui/core/Button";
 import TextField from "@material-ui/core/TextField";
@@ -226,8 +228,10 @@ function Editor({ recipe, dhis2, onSave }) {
         "asyncForEach",
         "_",
         "turf",
+        "Fuse",
+        "PapaParse",
         body
-      )(dhis2, asyncForEach, _, turf);
+      )(dhis2, asyncForEach, _, turf, Fuse, PapaParse);
 
       setResults(results);
     } catch (e) {
