@@ -42,7 +42,7 @@ REACT_APP_PASSWORD=district
 
 ```
 yarn start
-Then goto http://127.0.0.1:3000/ or http://localhost:3000
+Then go to http://127.0.0.1:3000/ or http://localhost:3000
 ```
 
 Note that localhost:3000 and 127.0.0.0:3000 needs to be whitelisted in Dhis2 Settings -> Access -> CORS whitelist
