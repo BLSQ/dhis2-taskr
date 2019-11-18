@@ -192,7 +192,6 @@ const interceptor = FetchInterceptor.register({
   },
   onRequestSuccess(response, request, controller) {
     if (setOutRequest) {
-      debugger;
       setOutRequest([request.url, request.method, "success", response.status]);
     }
   },

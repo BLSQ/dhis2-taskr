@@ -102,10 +102,22 @@ function App() {
       try {
         const keys = await api.get("dataStore/taskr");
         await asyncForEach(keys, async key => {
-          const task = await api.get("dataStore/taskr/" + key);
+          const response = await fetch(
+            api.baseUrl + "/dataStore/taskr/" + key,
+            {
+              headers: api.defaultHeaders
+            }
+          );
+          const buffer = await response.arrayBuffer();
+          let decoder = new TextDecoder("iso-8859-1");
+          let text = decoder.decode(buffer);
+          const task = JSON.parse(text);
+
           tasks.push(task);
         });
-      } catch (e) {}
+      } catch (e) {
+        console.log(e);
+      }
       if (tasks.length == 0) {
         tasks.push(freshRecipe());
       }

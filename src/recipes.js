@@ -489,11 +489,10 @@ return results;
 `
   },
   {
-
-      id: "YlvBkdBjaz5",
-      name: "Play : CSV and fuse",
-      editable: true,
-      code: `
+    id: "YlvBkdBjaz5",
+    name: "Play : CSV and fuse",
+    editable: true,
+    code: `
 
       const data = \`
 line,name
@@ -531,6 +530,74 @@ line,name
       return _.flattenObjects(ouToMaps.data);
 
 
+    `
+  },
+  {
+    id: "UMHyEfFHCcr",
+    name: "Create event based on csv",
+    editable: true,
+    code: `
+
+    const programId = "SNjlAlFiJDQ";
+
+    const rawData =\`
+eventid,id,Data element Name
+kyLIIfcispb,LOtFVpPWZ5u,1
+    \`;
+    
+    const dryRun = true;
+    // press crtl-r to run
+    const api = await dhis2.api();
+    const pg = await api.get("programs/" + programId, {
+      fields:
+        "id,name,programStages[programStageDataElements[dataElement[id,name,valueType]]]"
+    });
+    const dataElementsByName = {};
+    pg.programStages
+      .flatMap(ps => ps.programStageDataElements)
+      .map(psde => psde.dataElement)
+      .forEach(de => (dataElementsByName[de.name] = de));
+    
+    const csv = PapaParse.parse(rawData.trim(), {
+      header: true
+    });
+    
+    function formatValue(value, de) {
+      if (de.valueType == "INTEGER_ZERO_OR_POSITIVE") {
+        return parseInt(value);
+      }
+      if (de.valueType == "BOOLEAN") {
+        return value === "Oui" || value === "1" ? true : false;
+      }
+      return value;
+    }
+    
+    const events = csv.data.map(row => {
+      return {
+        program: programId,
+        event: row.eventid,
+        orgUnit: row.id,
+        eventDate: "2019-11-18T00:00:00.000",
+        status: "COMPLETED",
+        dataValues: Object.keys(dataElementsByName).map(column => {
+          return {
+            dataElement: dataElementsByName[column].id,
+            value: formatValue(row[column], dataElementsByName[column])
+          };
+        })
+      };
+    });
+    
+    if (dryRun) {
+      return { events };
+    } else {
+      try {
+        const createResp = await api.post("events", { events });
+        return createResp;
+      } catch (except) {
+        return except;
+      }
+    }
     `
   }
 ];
