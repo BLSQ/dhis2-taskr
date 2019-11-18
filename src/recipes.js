@@ -546,6 +546,7 @@ kyLIIfcispb,LOtFVpPWZ5u,1
     \`;
     
     const dryRun = true;
+    const generateEmptyCsv = true;
     // press crtl-r to run
     const api = await dhis2.api();
     const pg = await api.get("programs/" + programId, {
@@ -557,6 +558,18 @@ kyLIIfcispb,LOtFVpPWZ5u,1
       .flatMap(ps => ps.programStageDataElements)
       .map(psde => psde.dataElement)
       .forEach(de => (dataElementsByName[de.name] = de));
+    
+    if (generateEmptyCsv) {
+      const result = {
+        id: "orgUnitId",
+        eventid:
+          "pre-generated event Id by https://play.dhis2.org/2.29/api/system/id?limit=3"
+      };
+      Object.keys(dataElementsByName).forEach(k => {
+        result[k] = "";
+      });
+      return [result];
+    }
     
     const csv = PapaParse.parse(rawData.trim(), {
       header: true
@@ -598,6 +611,7 @@ kyLIIfcispb,LOtFVpPWZ5u,1
         return except;
       }
     }
+    
     `
   }
 ];
