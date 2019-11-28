@@ -238,6 +238,32 @@ return ou.organisationUnits;
         `
   },
   {
+    id: "af2fd38f351",
+    name: "Play - Periods",
+    editable: true,
+    code: `
+const periods = ["2019", "2019S1", "2019Q3", "201907"];
+const frequencies = [
+  "monthly",
+  "quarterly",
+  "yearly",
+  "sixMonthly",
+  "financialJuly"
+];
+const results = [];
+periods.forEach(period => {
+  frequencies.forEach(frequency => {
+    results.push(
+      [period, frequency].concat(DatePeriods.split(period, frequency))
+    );
+  });
+});
+
+return results;
+
+    `
+  },
+  {
     id: "af2fd38f350",
     name: "Play - display event values and map",
     editable: true,
@@ -544,7 +570,7 @@ line,name
 eventid,id,Data element Name
 kyLIIfcispb,LOtFVpPWZ5u,1
     \`;
-    
+
     const dryRun = true;
     const generateEmptyCsv = true;
     // press crtl-r to run
@@ -558,7 +584,7 @@ kyLIIfcispb,LOtFVpPWZ5u,1
       .flatMap(ps => ps.programStageDataElements)
       .map(psde => psde.dataElement)
       .forEach(de => (dataElementsByName[de.name] = de));
-    
+
     if (generateEmptyCsv) {
       const result = {
         id: "orgUnitId",
@@ -570,11 +596,11 @@ kyLIIfcispb,LOtFVpPWZ5u,1
       });
       return [result];
     }
-    
+
     const csv = PapaParse.parse(rawData.trim(), {
       header: true
     });
-    
+
     function formatValue(value, de) {
       if (de.valueType == "INTEGER_ZERO_OR_POSITIVE") {
         return parseInt(value);
@@ -584,7 +610,7 @@ kyLIIfcispb,LOtFVpPWZ5u,1
       }
       return value;
     }
-    
+
     const events = csv.data.map(row => {
       return {
         program: programId,
@@ -600,7 +626,7 @@ kyLIIfcispb,LOtFVpPWZ5u,1
         })
       };
     });
-    
+
     if (dryRun) {
       return { events };
     } else {
@@ -611,7 +637,33 @@ kyLIIfcispb,LOtFVpPWZ5u,1
         return except;
       }
     }
-    
+
+    `
+  },
+  {
+    id: "UMHyEfFHXLS",
+    name: "XlsxPopulate - Create a workbook from js",
+    editable: true,
+    code: `
+
+    const workbook = await XlsxPopulate.fromBlankAsync();
+    const sheet = workbook.sheet(0);
+
+    sheet
+      .cell("A1")
+      .value("This was created in the browser!")
+      .style("fontColor", "ff0000");
+
+    const api = await dhis2.api();
+    const ou = await api.get("organisationUnits", {
+      fields: "id,name,ancestors[id,name]"
+    });
+    const r = sheet.cell("A2");
+    r.value(ou.organisationUnits.map(ou => [ou.id, ou.name]));
+    sheet.column("A").width(15);
+    sheet.column("B").width(30);
+    XlsxPopulate.openAsBlob(workbook, "orgunits.xslx");
+    return "a workbook will open shortly";
     `
   }
 ];

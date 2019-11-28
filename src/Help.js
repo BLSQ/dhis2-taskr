@@ -45,6 +45,24 @@ function Help() {
             turf
           </a>
         </li>
+        <li>
+          <a
+            target="_blank"
+            rel="noopener noreferrer"
+            href="https://www.papaparse.com/"
+          >
+            Papa Parse
+          </a>
+        </li>
+        <li>
+          <a
+            target="_blank"
+            rel="noopener noreferrer"
+            href="https://github.com/dtjohnson/xlsx-populate#usage"
+          >
+            xlsx-populate
+          </a>
+        </li>
       </ul>
     </div>
   );

@@ -5,6 +5,7 @@ import _ from "lodash";
 import * as turf from "@turf/turf";
 import Fuse from "fuse.js";
 import PapaParse from "papaparse";
+import XlsxPopulate from "xlsx-populate";
 import { asyncForEach } from "./support/asyncForEach";
 import Button from "@material-ui/core/Button";
 import TextField from "@material-ui/core/TextField";
@@ -13,6 +14,8 @@ import "brace/mode/javascript";
 import "brace/theme/monokai";
 import "brace/ext/searchbox";
 
+import DatePeriods from "./support/DatePeriods";
+
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Switch from "@material-ui/core/Switch";
 import prettier from "prettier/standalone";
@@ -20,6 +23,23 @@ import parser from "prettier/parser-babylon";
 
 const position = [-12.9487, 9.0131];
 const AsyncFunction = Object.getPrototypeOf(async function() {}).constructor;
+
+XlsxPopulate.openAsBlob = (workbook, filename) => {
+  workbook.outputAsync({ type: "blob" }).then(function(blob) {
+    if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+      window.navigator.msSaveOrOpenBlob(blob, filename || "out.xlsx");
+    } else {
+      var url = window.URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      document.body.appendChild(a);
+      a.href = url;
+      a.download = filename || "out.xlsx";
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    }
+  });
+};
 
 function flattenObject(o, prefix = "", result = {}, keepNull = true) {
   if (
@@ -229,8 +249,19 @@ function Editor({ recipe, dhis2, onSave }) {
         "turf",
         "Fuse",
         "PapaParse",
+        "XlsxPopulate",
+        "DatePeriods",
         body
-      )(dhis2, asyncForEach, _, turf, Fuse, PapaParse);
+      )(
+        dhis2,
+        asyncForEach,
+        _,
+        turf,
+        Fuse,
+        PapaParse,
+        XlsxPopulate,
+        DatePeriods
+      );
 
       setResults(results);
     } catch (e) {
