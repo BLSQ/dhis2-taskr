@@ -18,6 +18,7 @@ can display results
 - As a map, If coordinate, coordinates or geometry field
 - As json
 
+
 # Development
 ## Prerequisite
 
@@ -65,7 +66,27 @@ REACT_APP_USER=xxxxxxxxxxxx
 REACT_APP_PASSWORD=xxxxxxxxxxxx
 ```
 
-## Deployment to production
+# Production
+
+## Install from the app store (recommanded)
+
+Go to the app management
+
+![](./doc/app-store-select.png)
+
+In the app store section, find the dhis2-taskr app and install the latest version
+
+![](./doc/app-store-install.png)
+
+Once installed, click on the app
+
+![](./doc/app-store-installed.png)
+
+and you can run your first recipes !
+
+![](./doc/screenshot.png)
+
+## Deployment to production (from source)
 
 ```
 ./ship.sh 'https://play.dhis2.org/2.31.6' 'admin' '<password>'
