@@ -33,7 +33,7 @@ export function Results({ results, label, position }) {
 
     const filename = (label || "Result List").replace(/\s/g, "_") + ".csv";
     return (
-      <div>
+      <div style={{ width: "95%" }}>
         <Tabs
           value={selectedTab}
           onChange={handleChange}
@@ -65,6 +65,8 @@ export function Results({ results, label, position }) {
             options={{
               filterType: "dropdown",
               print: false,
+              responsive: "scrollFullHeight",
+              selectableRows: "none",
               downloadOptions: {
                 filename: filename,
                 separator: ","

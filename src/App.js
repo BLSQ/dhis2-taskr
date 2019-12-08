@@ -11,7 +11,7 @@ import MenuItem from "@material-ui/core/MenuItem";
 import Select from "@material-ui/core/Select";
 import Fab from "@material-ui/core/Fab";
 import AddIcon from "@material-ui/icons/Add";
-import Help from "./Help";
+
 import Editor from "./Editor";
 import {
   HashRouter as Router,
@@ -22,6 +22,7 @@ import {
 } from "react-router-dom";
 import { generateUid } from "d2/lib/uid";
 import { asyncForEach } from "./support/asyncForEach";
+import RecipesPage from "./RecipesPage";
 import Dhis2 from "./support/Dhis2";
 
 import builtInRecipes from "./recipes";
@@ -29,11 +30,13 @@ import builtInRecipes from "./recipes";
 const useStyles = makeStyles(theme => ({
   root: {
     width: "100%",
-    margin: "auto"
+    margin: "auto",
+    backgroundColor: "#eeeeee"
   },
   paper: {
     paddingBottom: "100%",
-    paddingLeft: "100px"
+    paddingLeft: "100px",
+    backgroundColor: "#eeeeee"
   },
   fab: {
     position: "absolute",
@@ -49,7 +52,8 @@ function RecipePage({
   setRecipe,
   setRecipes,
   history,
-  onSave
+  onSave,
+  editable
 }) {
   let recipe = recipes.find(r => r.id === match.params.recipeId);
   if (recipe === undefined) {
@@ -64,10 +68,18 @@ function RecipePage({
   }
   return (
     <>
-      <Editor key={recipe.id} recipe={recipe} dhis2={dhis2} onSave={onSave} />
-      <Fab className={classes.fab} onClick={newRecipe}>
-        <AddIcon />
-      </Fab>
+      <Editor
+        key={recipe.id}
+        recipe={recipe}
+        dhis2={dhis2}
+        onSave={onSave}
+        editable={editable}
+      />
+      {editable && (
+        <Fab className={classes.fab} onClick={newRecipe}>
+          <AddIcon />
+        </Fab>
+      )}
     </>
   );
 }
@@ -160,40 +172,31 @@ function App() {
                 className={classes.menuButton}
                 color="inherit"
                 aria-label="menu"
+                href={"#/recipes/"}
               >
                 <MenuIcon />
               </IconButton>
               <Typography variant="h6" color="inherit">
                 Taskr : your task runner.
               </Typography>
-              <div style={{ marginLeft: "100px" }}>
-                <Select
-                  color="inherit"
-                  value={recipe}
-                  style={{ width: "400px", color: "white" }}
-                  onChange={event => {
-                    const r = event.target.value;
-                    setRecipe(r);
-                  }}
-                >
-                  {recipes.map(recipe => (
-                    <MenuItem
-                      value={recipe}
-                      component={Link}
-                      to={"/recipes/" + recipe.id}
-                    >
-                      {recipe.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </div>
             </Toolbar>
           </AppBar>
           <Paper className={classes.paper}>
-            <Help></Help>
             <Switch>
               <Route
+                path={`/recipes`}
+                exact={true}
+                render={props => (
+                  <RecipesPage
+                    classes={classes}
+                    recipes={recipes}
+                    match={props.match}
+                  />
+                )}
+              />
+              <Route
                 path={`/recipes/:recipeId`}
+                exact={true}
                 render={props => (
                   <RecipePage
                     classes={classes}
@@ -203,6 +206,22 @@ function App() {
                     setRecipes={setRecipes}
                     history={props.history}
                     onSave={onSave}
+                    editable={true}
+                  />
+                )}
+              />
+              <Route
+                path={`/recipes/:recipeId/run`}
+                render={props => (
+                  <RecipePage
+                    classes={classes}
+                    recipes={recipes}
+                    match={props.match}
+                    setRecipe={setRecipe}
+                    setRecipes={setRecipes}
+                    history={props.history}
+                    onSave={onSave}
+                    editable={false}
                   />
                 )}
               />

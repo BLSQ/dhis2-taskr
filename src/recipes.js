@@ -6,10 +6,10 @@ const recipes = [
     code: `
     const api = await dhis2.api();
     const ou = await api.get("organisationUnits", {
-      fields: "id,name,ancestors[id,name]"
+      fields: "id,name,ancestors[id,name],geometry"
     });
 
-    return _.flattenObjects(ou.organisationUnits);
+    return _.flattenObjects(ou.organisationUnits, ["geometry"]);
       `
   },
   {
