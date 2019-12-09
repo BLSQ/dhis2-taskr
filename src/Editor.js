@@ -13,9 +13,12 @@ import { asyncForEach } from "./support/asyncForEach";
 import Button from "@material-ui/core/Button";
 import TextField from "@material-ui/core/TextField";
 import AceEditor from "react-ace";
+import "brace/ext/language_tools";
 import "brace/mode/javascript";
 import "brace/theme/monokai";
 import "brace/ext/searchbox";
+import "brace/snippets/javascript";
+
 import Help from "./Help";
 import DatePeriods from "./support/DatePeriods";
 import PlayArrowIcon from "@material-ui/icons/PlayArrow";
@@ -144,6 +147,8 @@ function Editor({ recipe, dhis2, onSave, editable }) {
           theme="monokai"
           value={code}
           debounceChangePeriod={3}
+          enableBasicAutocompletion={true}
+          enableSnippets={true}
           onChange={val => {
             setCode(val);
           }}
