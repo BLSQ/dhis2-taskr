@@ -79,6 +79,19 @@ export function Results({ results, label, position }) {
     );
   }
 
+  const getCircularReplacer = () => {
+    const seen = new WeakSet();
+    return (key, value) => {
+      if (typeof value === "object" && value !== null) {
+        if (seen.has(value)) {
+          return;
+        }
+        seen.add(value);
+      }
+      return value;
+    };
+  };
+
   if (!Array.isArray(results)) {
     return (
       <div>
@@ -86,7 +99,7 @@ export function Results({ results, label, position }) {
           {isPrimitive(results) ? (
             <pre>{results}</pre>
           ) : (
-            JSON.stringify(results, null, 2)
+            JSON.stringify(results, getCircularReplacer(), 2)
           )}
         </pre>
       </div>

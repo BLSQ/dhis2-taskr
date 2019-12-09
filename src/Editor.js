@@ -27,6 +27,7 @@ import Switch from "@material-ui/core/Switch";
 import prettier from "prettier/standalone";
 import parser from "prettier/parser-babylon";
 
+import Params from "./Params";
 const position = [-12.9487, 9.0131];
 const AsyncFunction = Object.getPrototypeOf(async function() {}).constructor;
 
@@ -58,6 +59,7 @@ function Editor({ recipe, dhis2, onSave, editable }) {
   const [code, setCode] = useState(recipe.code);
   const [results, setResults] = useState(undefined);
   const [requests, setRequests] = useState([]);
+  const [parameters, setParameters] = useState({});
   setOutRequest = setRequests;
   const [error, setError] = useState("");
   async function onRun(code) {
@@ -81,6 +83,7 @@ function Editor({ recipe, dhis2, onSave, editable }) {
         "PapaParse",
         "XlsxPopulate",
         "DatePeriods",
+        "parameters",
         body
       )(
         dhis2,
@@ -90,7 +93,8 @@ function Editor({ recipe, dhis2, onSave, editable }) {
         Fuse,
         PapaParse,
         XlsxPopulate,
-        DatePeriods
+        DatePeriods,
+        parameters
       );
 
       setResults(results);
@@ -163,6 +167,7 @@ function Editor({ recipe, dhis2, onSave, editable }) {
           ]}
         />
       )}
+
       <Button
         onClick={click => {
           onRun(code);
@@ -198,6 +203,12 @@ function Editor({ recipe, dhis2, onSave, editable }) {
             onChange={() => setShowEditor(!showEditor)}
           />{" "}
         </>
+      )}
+      {recipe.params && (
+        <Params
+          params={recipe.params}
+          onParametersChange={setParameters}
+        ></Params>
       )}
       <span>
         {requests && requests.length > 1 && (

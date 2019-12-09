@@ -562,17 +562,34 @@ line,name
     id: "UMHyEfFHCcr",
     name: "Create event based on csv",
     editable: true,
+    params: {
+      programId: {
+        type: "text",
+        default: "lxAQ7Zs9VYR"
+      },
+      mode: {
+        type: "select",
+        default: "generateEmptyCsv",
+        choices: [
+          ["generateEmptyCsv", "Generate an empty csv"],
+          ["dryRun", "Import from csv - Dry run"],
+          ["import", "Import from csv - import events"]
+        ]
+      },
+      file: {
+        type: "csv"
+      }
+    },
     code: `
-
-    const programId = "SNjlAlFiJDQ";
+  
+    const programId = parameters.programId;
 
     const rawData =\`
 eventid,id,Data element Name
 kyLIIfcispb,LOtFVpPWZ5u,1
     \`;
 
-    const dryRun = true;
-    const generateEmptyCsv = true;
+    const dryRun = parameters.mode =="dryRun";
     // press crtl-r to run
     const api = await dhis2.api();
     const pg = await api.get("programs/" + programId, {
@@ -585,7 +602,7 @@ kyLIIfcispb,LOtFVpPWZ5u,1
       .map(psde => psde.dataElement)
       .forEach(de => (dataElementsByName[de.name] = de));
 
-    if (generateEmptyCsv) {
+    if (parameters.mode == "generateEmptyCsv") {
       const result = {
         id: "orgUnitId",
         eventid:
@@ -597,9 +614,7 @@ kyLIIfcispb,LOtFVpPWZ5u,1
       return [result];
     }
 
-    const csv = PapaParse.parse(rawData.trim(), {
-      header: true
-    });
+    const csv = parameters.file
 
     function formatValue(value, de) {
       if (de.valueType == "INTEGER_ZERO_OR_POSITIVE") {
@@ -670,7 +685,7 @@ kyLIIfcispb,LOtFVpPWZ5u,1
     id: "hV9ISZaPz2w",
     name: "Play - Create users from csv",
     editable: true,
-    code:`
+    code: `
 
 const api = await dhis2.api();
 const dryRun = true;
@@ -717,7 +732,6 @@ if (dryRun) {
   return resp;
 }
     `
-
   }
 ];
 export default recipes;
