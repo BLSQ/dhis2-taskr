@@ -665,6 +665,59 @@ kyLIIfcispb,LOtFVpPWZ5u,1
     XlsxPopulate.openAsBlob(workbook, "orgunits.xslx");
     return "a workbook will open shortly";
     `
+  },
+  {
+    id: "hV9ISZaPz2w",
+    name: "Play - Create users from csv",
+    editable: true,
+    code:`
+
+const api = await dhis2.api();
+const dryRun = true;
+const rawData = \`
+firstName,surname,email,username,password,userRole
+John,Doe,johndoe@mail.com,johndoe123,Your-password-123,Data entry clerk
+\`;
+const users = PapaParse.parse(rawData.trim(), { header: true }).data;
+
+const ur = await api.get("userRoles");
+const userRoles = {};
+ur.userRoles.forEach(u => (userRoles[u.name] = u.id));
+
+const ids = (await api.get("system/id?limit=" + 2 * users.length))["codes"];
+
+let index = 0;
+dhis2_users = users.map(user => {
+  const id1 = ids[index];
+  const id2 = ids[index + 1];
+  index = index + 2;
+  const dhis2user = {
+    id: id1,
+    firstName: user.firstName,
+    surname: user.surname,
+    email: user.email,
+    userCredentials: {
+      id: id2,
+      userInfo: {
+        id: id1
+      },
+      username: user.username,
+      password: user.password
+    }
+  };
+  dhis2user.userRoles = [user.userRole].map(u => {
+    return { id: userRoles[u.userRole] };
+  });
+  return dhis2user;
+});
+if (dryRun) {
+  return { dhis2_users };
+} else {
+  const resp = await api.post("metadata", { users: dhis2_users });
+  return resp;
+}
+    `
+
   }
 ];
 export default recipes;
