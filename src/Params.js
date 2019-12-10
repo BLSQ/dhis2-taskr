@@ -7,6 +7,7 @@ import Select from "@material-ui/core/Select";
 import XlsxPopulate from "./support/XlsxPopulateOpenAsBlob";
 import PapaParse from "papaparse";
 import InputLabel from "@material-ui/core/InputLabel";
+import Typography from "@material-ui/core/Typography";
 import FormHelperText from "@material-ui/core/FormHelperText";
 import FormControl from "@material-ui/core/FormControl";
 
@@ -63,20 +64,22 @@ const Params = props => {
   const style = { margin: "10px" };
   return (
     <>
-      <h2>Parameters</h2>
+      <h3>Parameters</h3>
       {props.params.map(param => {
         const k = param.id;
         const v = param;
+        const label = param.label || k;
         return (
           <div>
             {v.type == "select" && (
               <FormControl>
-                <InputLabel style={{ marginLeft: "10px" }}>{k}</InputLabel>
+                <InputLabel style={{ marginLeft: "10px" }}>{label}</InputLabel>
                 <Select
                   name={k}
                   value={parameters[k]}
                   onChange={onChange}
                   style={style}
+                  helperText={v.helperText}
                 >
                   {v.choices.map(([val, label]) => (
                     <MenuItem key={val} value={val}>
@@ -90,29 +93,39 @@ const Params = props => {
               <TextField
                 width={200}
                 name={k}
-                label={v.label || k}
+                label={label}
                 value={parameters[k]}
                 onChange={onChange}
                 style={style}
+                helperText={v.helperText}
               />
             )}
             {v.type == "xlsx" && (
-              <input
-                type="file"
-                name={k}
-                onChange={parseExcelFile}
-                accept=".xlsx"
-                style={style}
-              ></input>
+              <>
+                <InputLabel style={{ marginLeft: "10px" }}>{label}</InputLabel>
+                <input
+                  type="file"
+                  name={k}
+                  onChange={parseExcelFile}
+                  accept=".xlsx"
+                  style={style}
+                  helperText={v.helperText}
+                ></input>
+                <p>{v.helperText}</p>
+              </>
             )}
             {v.type == "csv" && (
-              <input
-                type="file"
-                name={k}
-                onChange={parserCsv}
-                accept=".csv"
-                style={style}
-              ></input>
+              <>
+                <InputLabel style={{ marginLeft: "10px" }}>{label}</InputLabel>
+                <input
+                  type="file"
+                  name={k}
+                  onChange={parserCsv}
+                  accept=".csv"
+                  style={style}
+                ></input>
+                <Typography>{v.helperText}</Typography>
+              </>
             )}
             <br></br>
           </div>

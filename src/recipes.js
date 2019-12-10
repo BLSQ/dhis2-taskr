@@ -565,11 +565,13 @@ line,name
     params: [
       {
         id: "programId",
+        label: "Paste a program id",
         type: "text",
         default: "lxAQ7Zs9VYR"
       },
       {
         id: "mode",
+        label: "Select run mode",
         type: "select",
         default: "generateEmptyCsv",
         choices: [
@@ -580,7 +582,10 @@ line,name
       },
       {
         id: "file",
-        type: "csv"
+        label: "Pick csv with event values",
+        type: "csv",
+        helperText:
+          "you can use 'Generate an empty csv' run mode to generate a template"
       }
     ],
     code: `

@@ -64,7 +64,7 @@ function Editor({ recipe, dhis2, onSave, editable }) {
   const [requests, setRequests] = useState([]);
   const [parameters, setParameters] = useState({});
   const [parameterDefinitionsJson, setParameterDefinitionsJson] = useState(
-    recipe.params ? JSON.stringify(recipe.params, null, 4) : ""
+    recipe.params ? JSON.stringify(recipe.params, null, 4) : []
   );
   const [parameterDefinitions, setParameterDefinitions] = useState(
     recipe.params
@@ -188,7 +188,7 @@ function Editor({ recipe, dhis2, onSave, editable }) {
       )}
       {editable && recipe && showParamsEditor && showEditor && (
         <>
-          <h2>Parameter Definitions</h2>
+          <h3>Parameter Definitions</h3>
           <TextareaAutosize
             cols={150}
             value={parameterDefinitionsJson}
@@ -197,15 +197,17 @@ function Editor({ recipe, dhis2, onSave, editable }) {
           <br></br>
         </>
       )}
-      {parameterDefinitions !== undefined && parameterDefinitions !== {} && (
-        <>
-          <Params
-            params={parameterDefinitions}
-            onParametersChange={setParameters}
-          ></Params>
-          <br></br>
-        </>
-      )}
+      {parameterDefinitions !== undefined &&
+        parameterDefinitions !== [] &&
+        parameterDefinitions !== {} && (
+          <>
+            <Params
+              params={parameterDefinitions}
+              onParametersChange={setParameters}
+            ></Params>
+            <br></br>
+          </>
+        )}
       <Button
         onClick={click => {
           onRun(code);
