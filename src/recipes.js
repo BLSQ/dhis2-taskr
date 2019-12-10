@@ -562,12 +562,14 @@ line,name
     id: "UMHyEfFHCcr",
     name: "Create event based on csv",
     editable: true,
-    params: {
-      programId: {
+    params: [
+      {
+        id: "programId",
         type: "text",
         default: "lxAQ7Zs9VYR"
       },
-      mode: {
+      {
+        id: "mode",
         type: "select",
         default: "generateEmptyCsv",
         choices: [
@@ -576,18 +578,14 @@ line,name
           ["import", "Import from csv - import events"]
         ]
       },
-      file: {
+      {
+        id: "file",
         type: "csv"
       }
-    },
+    ],
     code: `
   
     const programId = parameters.programId;
-
-    const rawData =\`
-eventid,id,Data element Name
-kyLIIfcispb,LOtFVpPWZ5u,1
-    \`;
 
     const dryRun = parameters.mode =="dryRun";
     // press crtl-r to run

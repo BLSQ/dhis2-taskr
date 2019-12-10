@@ -28,6 +28,7 @@ import prettier from "prettier/standalone";
 import parser from "prettier/parser-babylon";
 
 import Params from "./Params";
+import { TextareaAutosize } from "@material-ui/core";
 const position = [-12.9487, 9.0131];
 const AsyncFunction = Object.getPrototypeOf(async function() {}).constructor;
 
@@ -52,16 +53,33 @@ const interceptor = FetchInterceptor.register({
 
 function Editor({ recipe, dhis2, onSave, editable }) {
   const [showEditor, setShowEditor] = useState(recipe.editable);
+  const [showParamsEditor, setShowParamsEditor] = useState(false);
   if (showEditor && editable == false) {
     setShowEditor(false);
+    setShowParamsEditor(false);
   }
   const [name, setName] = useState(recipe.name);
   const [code, setCode] = useState(recipe.code);
   const [results, setResults] = useState(undefined);
   const [requests, setRequests] = useState([]);
   const [parameters, setParameters] = useState({});
+  const [parameterDefinitionsJson, setParameterDefinitionsJson] = useState(
+    recipe.params ? JSON.stringify(recipe.params, null, 4) : ""
+  );
+  const [parameterDefinitions, setParameterDefinitions] = useState(
+    recipe.params
+  );
+
   setOutRequest = setRequests;
   const [error, setError] = useState("");
+  const parametersDefinitionsChange = e => {
+    setParameterDefinitionsJson(e.target.value);
+    try {
+      setParameterDefinitions(JSON.parse(e.target.value));
+    } catch (error) {
+      setError(error.message + " " + e.target.value);
+    }
+  };
   async function onRun(code) {
     setError(undefined);
     setResults(undefined);
@@ -114,7 +132,8 @@ function Editor({ recipe, dhis2, onSave, editable }) {
       id: recipe.id,
       name: name,
       code: code,
-      editable: true
+      editable: true,
+      params: parameterDefinitions
     };
     onSave(modifiedRecipe);
   }
@@ -167,7 +186,26 @@ function Editor({ recipe, dhis2, onSave, editable }) {
           ]}
         />
       )}
-
+      {editable && recipe && showParamsEditor && showEditor && (
+        <>
+          <h2>Parameter Definitions</h2>
+          <TextareaAutosize
+            cols={150}
+            value={parameterDefinitionsJson}
+            onChange={parametersDefinitionsChange}
+          ></TextareaAutosize>
+          <br></br>
+        </>
+      )}
+      {parameterDefinitions !== undefined && parameterDefinitions !== {} && (
+        <>
+          <Params
+            params={parameterDefinitions}
+            onParametersChange={setParameters}
+          ></Params>
+          <br></br>
+        </>
+      )}
       <Button
         onClick={click => {
           onRun(code);
@@ -202,14 +240,14 @@ function Editor({ recipe, dhis2, onSave, editable }) {
             label="Hide editor"
             onChange={() => setShowEditor(!showEditor)}
           />{" "}
+          <FormControlLabel
+            control={<Switch value={showParamsEditor} />}
+            label="Hide params editor"
+            onChange={() => setShowParamsEditor(!showParamsEditor)}
+          />{" "}
         </>
       )}
-      {recipe.params && (
-        <Params
-          params={recipe.params}
-          onParametersChange={setParameters}
-        ></Params>
-      )}
+
       <span>
         {requests && requests.length > 1 && (
           <>

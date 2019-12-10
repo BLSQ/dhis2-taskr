@@ -6,11 +6,14 @@ import MenuItem from "@material-ui/core/MenuItem";
 import Select from "@material-ui/core/Select";
 import XlsxPopulate from "./support/XlsxPopulateOpenAsBlob";
 import PapaParse from "papaparse";
+import InputLabel from "@material-ui/core/InputLabel";
+import FormHelperText from "@material-ui/core/FormHelperText";
+import FormControl from "@material-ui/core/FormControl";
 
 const Params = props => {
   const defaultValues = {};
-  Object.entries(props.params).forEach(
-    ([k, v]) => (defaultValues[k] = v["default"])
+  props.params.forEach(
+    param => (defaultValues[param["id"]] = param["default"])
   );
   useEffect(() => {
     props.onParametersChange(defaultValues);
@@ -57,21 +60,31 @@ const Params = props => {
       }
     });
   }
-
+  const style = { margin: "10px" };
   return (
     <>
       <h2>Parameters</h2>
-      {Object.entries(props.params).map(([k, v]) => {
+      {props.params.map(param => {
+        const k = param.id;
+        const v = param;
         return (
           <div>
             {v.type == "select" && (
-              <Select name={k} value={parameters[k]} onChange={onChange}>
-                {v.choices.map(([val, label]) => (
-                  <MenuItem key={val} value={val}>
-                    {label}
-                  </MenuItem>
-                ))}
-              </Select>
+              <FormControl>
+                <InputLabel style={{ marginLeft: "10px" }}>{k}</InputLabel>
+                <Select
+                  name={k}
+                  value={parameters[k]}
+                  onChange={onChange}
+                  style={style}
+                >
+                  {v.choices.map(([val, label]) => (
+                    <MenuItem key={val} value={val}>
+                      {label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             )}
             {v.type == "text" && (
               <TextField
@@ -80,6 +93,7 @@ const Params = props => {
                 label={v.label || k}
                 value={parameters[k]}
                 onChange={onChange}
+                style={style}
               />
             )}
             {v.type == "xlsx" && (
@@ -88,6 +102,7 @@ const Params = props => {
                 name={k}
                 onChange={parseExcelFile}
                 accept=".xlsx"
+                style={style}
               ></input>
             )}
             {v.type == "csv" && (
@@ -96,6 +111,7 @@ const Params = props => {
                 name={k}
                 onChange={parserCsv}
                 accept=".csv"
+                style={style}
               ></input>
             )}
             <br></br>
