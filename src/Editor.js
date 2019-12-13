@@ -204,6 +204,7 @@ function Editor({ recipe, dhis2, onSave, editable }) {
             <Params
               params={parameterDefinitions}
               onParametersChange={setParameters}
+              dhis2={dhis2}
             ></Params>
             <br></br>
           </>

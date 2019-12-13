@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { makeStyles } from "@material-ui/core/styles";
 
 import TextField from "@material-ui/core/TextField";
 
@@ -10,6 +11,94 @@ import InputLabel from "@material-ui/core/InputLabel";
 import Typography from "@material-ui/core/Typography";
 import FormHelperText from "@material-ui/core/FormHelperText";
 import FormControl from "@material-ui/core/FormControl";
+
+import Autocomplete from "@material-ui/lab/Autocomplete";
+import LocationOnIcon from "@material-ui/icons/LocationOn";
+import Grid from "@material-ui/core/Grid";
+import parse from "autosuggest-highlight/parse";
+import throttle from "lodash/throttle";
+
+const Dhis2Search = props => {
+  const { dhis2, resourceName, style, name, label, onChange, filter } = props;
+  const [inputValue, setInputValue] = React.useState("");
+  const [options, setOptions] = React.useState([]);
+
+  const handleChange = event => {
+    setInputValue(event.target.value);
+  };
+
+  const fetchMemo = React.useMemo(
+    () =>
+      throttle((input, callback) => {
+        dhis2
+          .api()
+          .then(api => {
+            const filters = ["name:ilike:" + input.input];
+            if (filter) {
+              filters.push(filter);
+            }
+            return api.get(resourceName, {
+              filter: filters,
+              fields: "id,name"
+            });
+          })
+          .then(f => {
+            setOptions(f[resourceName]);
+            return f[resourceName];
+          });
+      }, 200),
+    []
+  );
+  React.useEffect(() => {
+    let active = true;
+    if (inputValue === "") {
+      setOptions([]);
+      return undefined;
+    }
+
+    fetchMemo({ input: inputValue }, results => {
+      if (active) {
+        setOptions(results || []);
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [inputValue, fetchMemo]);
+
+  const onSearchChange = (evt, value) => {
+    onChange(name, value, resourceName);
+  };
+
+  return (
+    <Autocomplete
+      style={style}
+      getOptionLabel={option =>
+        typeof option === "string" ? option : option.name
+      }
+      filterOptions={x => x}
+      options={options}
+      onChange={onSearchChange}
+      autoComplete
+      includeInputInList
+      freeSolo
+      disableOpenOnFocus
+      renderInput={params => (
+        <TextField
+          {...params}
+          name={name}
+          label={label || "Search for " + resourceName}
+          fullWidth
+          onChange={handleChange}
+        />
+      )}
+      renderOption={option => {
+        return <span name={name}>{option.name}</span>;
+      }}
+    />
+  );
+};
 
 const Params = props => {
   const defaultValues = {};
@@ -61,7 +150,17 @@ const Params = props => {
       }
     });
   }
-  const style = { margin: "10px" };
+
+  const onSearchChange = (elementName, data) => {
+    const newParameters = {
+      ...parameters,
+      [elementName]: data
+    };
+    setParameters(newParameters);
+    props.onParametersChange(newParameters);
+  };
+
+  const style = { marginBottom: "10px", width: 400 };
   return (
     <>
       <h3>Parameters</h3>
@@ -127,6 +226,18 @@ const Params = props => {
                 <Typography>{v.helperText}</Typography>
               </>
             )}
+            {v.type == "dhis2" && (
+              <Dhis2Search
+                style={style}
+                dhis2={props.dhis2}
+                resourceName={v.resourceName}
+                filter={v.filter}
+                name={k}
+                label={label}
+                onChange={onSearchChange}
+              />
+            )}
+
             <br></br>
           </div>
         );

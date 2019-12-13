@@ -99,7 +99,7 @@ function RecipesPage({ match, recipes }) {
                   Run
                 </Button>
                 <span style={{ width: "300px" }}></span>
-                <Button size="small" href={"#/recipes/" + recipe.id + "/edit"}>
+                <Button size="small" href={"#/recipes/" + recipe.id}>
                   Edit
                 </Button>
               </CardActions>

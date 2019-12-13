@@ -564,9 +564,10 @@ line,name
     editable: true,
     params: [
       {
-        id: "programId",
-        label: "Paste a program id",
-        type: "text",
+        id: "program",
+        label: "Search",
+        type: "dhis2",
+        resourceName: "programs",
         default: "lxAQ7Zs9VYR"
       },
       {
@@ -590,7 +591,7 @@ line,name
     ],
     code: `
   
-    const programId = parameters.programId;
+    const programId = parameters.program.id;
 
     const dryRun = parameters.mode =="dryRun";
     // press crtl-r to run
@@ -734,6 +735,55 @@ if (dryRun) {
   const resp = await api.post("metadata", { users: dhis2_users });
   return resp;
 }
+    `
+  },
+  {
+    id: "akBR3UIfpLB",
+    name: "Play - Pameters show case",
+    editable: true,
+    params: [
+      {
+        id: "program",
+        label: "Search for program",
+        type: "dhis2",
+        resourceName: "programs",
+        default: "sample"
+      },
+      {
+        id: "datalementTracker",
+        label: "Search for tracker data element",
+        type: "dhis2",
+        resourceName: "dataElements",
+        filter: "domainType:eq:TRACKER"
+      },
+      {
+        id: "datalementAggregate",
+        label: "Search for aggregate data element",
+        type: "dhis2",
+        resourceName: "dataElements",
+        filter: "domainType:eq:AGGREGATE"
+      },
+      {
+        id: "mode",
+        label: "Select run mode",
+        type: "select",
+        default: "generateEmptyCsv",
+        choices: [
+          ["generateEmptyCsv", "Generate an empty csv"],
+          ["dryRun", "Import from csv - Dry run"],
+          ["import", "Import from csv - import events"]
+        ]
+      },
+      {
+        id: "file",
+        label: "Pick csv with event values",
+        type: "csv",
+        helperText:
+          "you can use 'Generate an empty csv' run mode to generate a template"
+      }
+    ],
+    code: `
+       return parameters
     `
   }
 ];
