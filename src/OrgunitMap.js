@@ -1,5 +1,5 @@
 import * as turf from "@turf/turf";
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { AsPrimitive } from "./AsPrimitive";
 import { Map, CircleMarker, Popup, TileLayer, GeoJSON } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
@@ -45,6 +45,7 @@ function getRandomColor() {
 function OrgunitMap({ lines, position, showableMap }) {
   const [clicked, setClicked] = useState("");
   const [selectedLayer, setSelectedLayer] = useState(maps[0]);
+
   if (lines == undefined) {
     return <></>;
   }
@@ -60,8 +61,11 @@ function OrgunitMap({ lines, position, showableMap }) {
   const geojsons = lines
     .filter(
       l =>
-        (l.coordinates && l.coordinates.startsWith("[[")) ||
+        (l.coordinates &&
+          isString(l.coordinates) &&
+          l.coordinates.startsWith("[[")) ||
         (l.geometry &&
+          l.geometry.type &&
           ["LineString", "Polygon", "Multipolygon"].includes(l.geometry.type))
     )
     .map((line, index) => {
@@ -84,11 +88,11 @@ function OrgunitMap({ lines, position, showableMap }) {
           data={geometry}
           key={"parent-" + index}
           style={{
-            fillColor: getRandomColor(),
-            color: getRandomColor(),
-            weight: opacity,
-            opacity: opacity,
-            fillOpacity: opacity
+            fillColor: line.fillColor || getRandomColor(),
+            color: line.color || getRandomColor(),
+            weight: line.opacity || opacity,
+            opacity: line.opacity || opacity,
+            fillOpacity: line.opacity || opacity
           }}
           title={JSON.stringify(line)}
           onClick={() => {
@@ -118,7 +122,11 @@ function OrgunitMap({ lines, position, showableMap }) {
       if (l.coordinates === undefined) {
         return false;
       }
-      return !l.coordinates.startsWith("[[") && l.coordinates != "";
+      return (
+        isString(l.coordinates) &&
+        !l.coordinates.startsWith("[[") &&
+        l.coordinates != ""
+      );
     })
     .map((line, index) => {
       const latlong =
@@ -150,6 +158,7 @@ function OrgunitMap({ lines, position, showableMap }) {
   const mapSelected = (event, val) => {
     setSelectedLayer(val.props.value);
   };
+
   return (
     <>
       <div>

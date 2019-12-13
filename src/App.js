@@ -143,20 +143,25 @@ function App() {
   }, [recipes, setRecipes]);
 
   async function onSave(modifiedRecipe) {
-    const api = await dhis2.api();
     try {
-      const createResp = await api.post(
+      const api = await dhis2.api();
+      try {
+        const createResp = await api.post(
+          "/dataStore/taskr/" + modifiedRecipe.id,
+          modifiedRecipe
+        );
+        delete recipe.fresh;
+      } catch (error) {}
+
+      const updateResp = await api.update(
         "/dataStore/taskr/" + modifiedRecipe.id,
         modifiedRecipe
       );
-      delete recipe.fresh;
-    } catch (error) {}
-
-    const updateResp = await api.update(
-      "/dataStore/taskr/" + modifiedRecipe.id,
-      modifiedRecipe
-    );
-    window.location.reload();
+      window.location.reload();
+    } catch (error) {
+      debugger;
+      alert("Something went really wrong :" + (error.message || error));
+    }
   }
 
   const [recipe, setRecipe] = useState(undefined);
