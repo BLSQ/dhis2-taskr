@@ -785,6 +785,57 @@ if (dryRun) {
     code: `
        return parameters
     `
+  },
+  {
+    id: "q1bKZe58btE",
+    name: "Play - Mix orgunits and gadm",
+    params: [
+      {
+        id: "orgunit",
+        type: "dhis2",
+        label: "Search for a zone",
+        filter: "level:in:[1,2,3]",
+        default: {
+          name: "Badjia",
+          id: "YuQRtpLP10I"
+        },
+        resourceName: "organisationUnits"
+      },
+      {
+        id: "gadm_level",
+        label: "GADM level",
+        type: "select",
+        default: "1",
+        choices: [[0, "0"], [1, "1"], [2, "2"], [3, "3"]]
+      }
+    ],
+    code: `
+    // press crtl-r to run
+    const api = await dhis2.api();
+    const ou = await api.get("organisationUnits/" + parameters.orgunit.id, {
+      fields: "id,name,geometry"
+    });
+    ou.opacity = 0.7;
+    ou.color = "red";
+    ou.fillColor = "red";
+    
+    const s3_url = "https://geojson-countries.s3-eu-west-1.amazonaws.com/";
+    const download = async file => {
+      return fetch(s3_url + file).then(f => f.json());
+    };
+    const gadm = await download("gadm36_SLE_"+parameters.gadm_level+".shp.geojson");
+    
+    const results = [];
+    
+    gadm["features"].forEach((f, index) => {
+      results.push(f);
+      f.name = f.properties.NAME_2;
+      f.color = "black";
+    });
+    results.push(ou);
+    return results;
+    
+ `
   }
 ];
 export default recipes;

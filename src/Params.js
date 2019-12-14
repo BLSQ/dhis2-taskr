@@ -19,10 +19,20 @@ import parse from "autosuggest-highlight/parse";
 import throttle from "lodash/throttle";
 
 const Dhis2Search = props => {
-  const { dhis2, resourceName, style, name, label, onChange, filter } = props;
-  const [inputValue, setInputValue] = React.useState("");
-  const [options, setOptions] = React.useState([]);
+  const {
+    dhis2,
+    resourceName,
+    style,
+    name,
+    label,
+    onChange,
+    filter,
+    defaultValue
+  } = props;
+  const [inputValue, setInputValue] = React.useState(defaultValue);
 
+  const [options, setOptions] = React.useState([]);
+  const [selectedOption, setSelectedOption] = React.useState([]);
   const handleChange = event => {
     setInputValue(event.target.value);
   };
@@ -50,6 +60,10 @@ const Dhis2Search = props => {
     []
   );
   React.useEffect(() => {
+    console.log("defaultValue", defaultValue, inputValue);
+    setInputValue(defaultValue);
+  }, [setInputValue]);
+  React.useEffect(() => {
     let active = true;
     if (inputValue === "") {
       setOptions([]);
@@ -69,6 +83,7 @@ const Dhis2Search = props => {
 
   const onSearchChange = (evt, value) => {
     onChange(name, value, resourceName);
+    setSelectedOption(value);
   };
 
   return (
@@ -83,14 +98,19 @@ const Dhis2Search = props => {
       autoComplete
       includeInputInList
       freeSolo
-      disableOpenOnFocus
+      searchText={defaultValue}
+      defaultValue={defaultValue}
       renderInput={params => (
         <TextField
           {...params}
           name={name}
-          label={label || "Search for " + resourceName}
+          label={
+            label + " " + inputValue ||
+            "Search for " + resourceName + " " + inputValue
+          }
           fullWidth
           onChange={handleChange}
+          value={inputValue}
         />
       )}
       renderOption={option => {
@@ -232,6 +252,7 @@ const Params = props => {
                 dhis2={props.dhis2}
                 resourceName={v.resourceName}
                 filter={v.filter}
+                defaultValue={v.default}
                 name={k}
                 label={label}
                 onChange={onSearchChange}

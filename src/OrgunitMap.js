@@ -66,7 +66,7 @@ function OrgunitMap({ lines, position, showableMap }) {
           l.coordinates.startsWith("[[")) ||
         (l.geometry &&
           l.geometry.type &&
-          ["LineString", "Polygon", "Multipolygon"].includes(l.geometry.type))
+          ["LineString", "Polygon", "MultiPolygon"].includes(l.geometry.type))
     )
     .map((line, index) => {
       let geometry = line.geometry;
