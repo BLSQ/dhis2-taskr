@@ -124,7 +124,7 @@ function App() {
           let decoder = new TextDecoder("iso-8859-1");
           let text = decoder.decode(buffer);
           const task = JSON.parse(text);
-
+          task.local = true;
           tasks.push(task);
         });
       } catch (e) {
@@ -159,7 +159,6 @@ function App() {
       );
       window.location.reload();
     } catch (error) {
-      debugger;
       alert("Something went really wrong :" + (error.message || error));
     }
   }

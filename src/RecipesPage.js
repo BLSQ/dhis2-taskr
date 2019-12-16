@@ -81,7 +81,8 @@ function RecipesPage({ match, recipes }) {
               style={{
                 flex: "10 10 20%",
                 alignSelf: "stretch",
-                alignContent: "stretch"
+                alignContent: "stretch",
+                backgroundColor: recipe.local ? "white" : "lightgrey"
               }}
             >
               <CardContent>

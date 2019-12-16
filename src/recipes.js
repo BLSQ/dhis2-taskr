@@ -836,6 +836,90 @@ if (dryRun) {
     return results;
     
  `
+  },
+  {
+    id: "dHC94p8sbdE",
+    name: "update custom attributes of program indicator",
+    params: [
+      {
+        id: "programIndicator",
+        type: "dhis2",
+        resourceName: "programIndicators"
+      },
+      {
+        id: "alternateName-fr",
+        type: "text"
+      },
+      {
+        id: "position",
+        type: "text"
+      },
+      {
+        id: "iconName",
+        type: "text"
+      },
+      {
+        id: "mode",
+        label: "Select run mode",
+        type: "select",
+        default: "dryRun",
+        choices: [["dryRun", "Dry run"], ["update", "update"]]
+      }
+    ],
+    code: `
+
+const api = await dhis2.api();
+const pi = await api.get(
+  "programIndicators/" + parameters.programIndicator.id,
+  {
+    fields: ":all",
+    paging: false
+  }
+);
+
+const values = {
+  "alternateName-fr": parameters["alternateName-fr"],
+  position: parameters["position"],
+  iconName: parameters["iconName"]
+};
+
+const customAttributes = (await api.get("attributes",
+                            {
+                              fields:"id,name",
+                              filter: "programIndicatorAttribute:eq:true"
+                            })).attributes
+if (customAttributes.length == 0) {
+  alert("Sorry no custom attributes : "+Object.keys(values))
+  return 
+}
+customAttributes.forEach(customAttribute => {
+  const currentVal = pi.attributeValues.find(
+    attribValue => attribValue.attribute.id == customAttribute.id
+  );
+  const newValue = values[customAttribute.name];
+  if (values[customAttribute.name]) {
+    if (currentVal) {
+      currentVal.value = newValue;
+    } else {
+      pi.attributeValues.push({
+        value: newValue,
+        attribute: { id: customAttribute.id }
+      });
+    }
+  }
+});
+
+const dryRun = parameters.mode == "dryRun";
+if (dryRun) {
+  return pi;
+} else {
+  const updated = await api.update("programIndicators/" + pi.id, pi);
+  return updated;
+}
+return pi.attributeValues;
+
+ 
+`
   }
 ];
 export default recipes;
