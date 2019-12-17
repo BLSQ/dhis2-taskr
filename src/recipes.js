@@ -590,7 +590,7 @@ line,name
       }
     ],
     code: `
-  
+
     const programId = parameters.program.id;
 
     const dryRun = parameters.mode =="dryRun";
@@ -818,15 +818,15 @@ if (dryRun) {
     ou.opacity = 0.7;
     ou.color = "red";
     ou.fillColor = "red";
-    
+
     const s3_url = "https://geojson-countries.s3-eu-west-1.amazonaws.com/";
     const download = async file => {
       return fetch(s3_url + file).then(f => f.json());
     };
     const gadm = await download("gadm36_SLE_"+parameters.gadm_level+".shp.geojson");
-    
+
     const results = [];
-    
+
     gadm["features"].forEach((f, index) => {
       results.push(f);
       f.name = f.properties.NAME_2;
@@ -834,7 +834,7 @@ if (dryRun) {
     });
     results.push(ou);
     return results;
-    
+
  `
   },
   {
@@ -890,7 +890,7 @@ const customAttributes = (await api.get("attributes",
                             })).attributes
 if (customAttributes.length == 0) {
   alert("Sorry no custom attributes : "+Object.keys(values))
-  return 
+  return
 }
 customAttributes.forEach(customAttribute => {
   const currentVal = pi.attributeValues.find(
@@ -918,7 +918,146 @@ if (dryRun) {
 }
 return pi.attributeValues;
 
- 
+
+`
+  },
+  {
+
+      id: "YKPWywkbphl",
+      name: "Generate a basic xlsform for a program",
+      params: [
+        {
+          id: "program",
+          type: "dhis2",
+          resourceName: "programs"
+        }
+      ],
+      code: `
+    // press crtl-r to run
+
+const api = await dhis2.api();
+const pg = await api.get("programs/" + parameters.program.id, {
+  fields:
+    "id,name,programStages[programStageDataElements[compulsory,code,dataElement[id,name,formName,shortName,code,valueType,optionSet[id,code,name,options[code,name]]]]]",
+  paging: false
+});
+
+function slugify(string) {
+  const a = 'àáâäæãåāăąçćčđďèéêëēėęěğǵḧîïíīįìłḿñńǹňôöòóœøōõőṕŕřßśšşșťțûüùúūǘůűųẃẍÿýžźż·/_,:;'
+  const b = 'aaaaaaaaaacccddeeeeeeeegghiiiiiilmnnnnoooooooooprrsssssttuuuuuuuuuwxyyzzz______'
+  const p = new RegExp(a.split('').join('|'), 'g')
+
+  return string.toString().toLowerCase()
+  .replace(/\\\s+/g, '_') // Replace spaces with -
+  .replace(p, c => b.charAt(a.indexOf(c))) // Replace special characters
+  .replace(/&/g, '_and_') // Replace & with 'and'
+  .replace(/[^[a-zA-Z0-9أ-ي]-]+/g, "") // Arabic support
+  .replace(/__+/g, '_') // Replace multiple - with single -
+  .replace(/^-+/, '') // Trim - from start of text
+  .replace(/_+$/, '') // Trim - from end of text
+  }
+
+const workbook = await XlsxPopulate.fromBlankAsync();
+const sheet = workbook.sheet(0);
+const questions = [
+  [
+    "type",
+    "name",
+    "label",
+    "required",
+    "choice_filter",
+    "constraint",
+    "constraint_message",
+    "relevant",
+    "hint",
+    "appearance",
+    "calculation"
+  ]
+];
+
+
+pg.programStages.forEach(programStage => {
+  programStage.programStageDataElements.forEach(de => {
+    let type = "";
+    let constraint = undefined;
+    let constraint_message = undefined
+    let required = undefined
+    if (de.compulsory == true){
+      required = true
+    }
+    if (de.dataElement.optionSet) {
+      type = "select_one " + slugify(de.dataElement.optionSet.code || de.dataElement.optionSet.name);
+    } else if (de.dataElement.valueType == "BOOLEAN" || de.dataElement.valueType == "TRUE_ONLY") {
+      type = "select_one yesno";
+    } else if (de.dataElement.valueType == "DATE") {
+      type = "date";
+    } else if (de.dataElement.valueType == "TEXT") {
+      type = "text";
+    } else if (de.dataElement.valueType == "PERCENTAGE") {
+      type = "integer";
+    } else if (de.dataElement.valueType == "INTEGER") {
+      type = "integer";
+    } else if (de.dataElement.valueType == "INTEGER_POSITIVE"){
+      type = "integer";
+      constraint = ". > 0";
+      constraint_message = "must be non-zero positive number"
+    } else if (de.dataElement.valueType == "INTEGER_ZERO_OR_POSITIVE"){
+      type = "integer";
+      constraint = ". >= 0";
+      constraint_message = "must be a positive number"
+    } else if (de.dataElement.valueType == "INTEGER_ZERO_OR_NEGATIVE"){
+      type = "integer";
+      constraint = ". <= 0";
+      constraint_message = "must be a negative number"
+    } else if (de.dataElement.valueType == "INTEGER_NEGATIVE"){
+      type = "integer";
+      constraint = ". < 0";
+      constraint_message = "must be non-zero negative number"
+    } else if (de.dataElement.valueType == "NUMBER") {
+      type = "decimal";
+    } else if ( de.dataElement.valueType == "COORDINATE") {
+      type = "geopoint"
+    }
+    questions.push([type, de.dataElement.code, de.dataElement.formName || de.dataElement.name, required, undefined, constraint, constraint_message]);
+  });
+})
+questions.push(["image", "imgUrl", "Photo de la structure"]);
+questions.push(["geopoint", "gps", "Coordonnées GPS"]);
+
+sheet.name("survey");
+sheet.cell("A1").value(questions);
+
+const sheetChoices = workbook.addSheet("choices");
+const dataElementsWithOptionSets = pg.programStages[0].programStageDataElements.filter(
+  de => de.dataElement.optionSet
+);
+const optionChoices = [
+  ["list_name", "name", "label"],
+  ["yesno", "yes", "1"],
+  ["yesno", "no", "0"]
+];
+dataElementsWithOptionSets.forEach(de => {
+  de.dataElement.optionSet.options.forEach(option => {
+    optionChoices.push([
+      slugify(de.dataElement.optionSet.code || de.dataElement.optionSet.name),
+      option.code,
+      option.name
+    ]);
+  });
+});
+
+const sheetSettings = workbook.addSheet("settings");
+const settings = [
+  ["form_title","form_id"],
+  [pg.name,pg.code]
+];
+sheetSettings.cell("A1").value(settings);
+
+sheetChoices.cell("A1").value(optionChoices);
+
+XlsxPopulate.openAsBlob(workbook, "orgunits.xslx");
+
+return pg;
 `
   }
 ];
