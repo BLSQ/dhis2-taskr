@@ -983,7 +983,7 @@ pg.programStages.forEach(programStage => {
     let constraint_message = undefined
     let required = undefined
     if (de.compulsory == true){
-      required = true
+      required = "true"
     }
     if (de.dataElement.optionSet) {
       type = "select_one " + slugify(de.dataElement.optionSet.code || de.dataElement.optionSet.name);
