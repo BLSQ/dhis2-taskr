@@ -9,7 +9,7 @@ function isBoolean(r) {
 }
 
 export function AsPrimitive({ value }) {
-  if (value === undefined) {
+  if (value === undefined || value === null) {
     return "";
   }
   if (isString(value) && value.length > 100) {

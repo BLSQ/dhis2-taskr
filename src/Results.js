@@ -19,7 +19,11 @@ export function Results({ results, label, position }) {
   const [selectedTab, setSelectedTab] = useState(1);
   if (Array.isArray(results)) {
     const keySet = new Set();
-    results.forEach(r => Object.keys(r).forEach(k => keySet.add(k)));
+    results.forEach(r => {
+      if (r !== null && r !== undefined) {
+        Object.keys(r).forEach(k => keySet.add(k));
+      }
+    });
     const keys = Array.from(keySet);
 
     const showableMap =
