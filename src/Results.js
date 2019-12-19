@@ -4,16 +4,8 @@ import Tabs from "@material-ui/core/Tabs";
 import Tab from "@material-ui/core/Tab";
 import OrgunitMap from "./OrgunitMap";
 import { AsPrimitive } from "./AsPrimitive";
+import ErrorBoundary from "./ErrorBoundary";
 
-function isString(r) {
-  return typeof r == "string";
-}
-function isBoolean(r) {
-  return typeof r == "boolean";
-}
-function isPrimitive(r) {
-  return typeof r == "number" || isString(r) || isBoolean(r);
-}
 
 export function Results({ results, label, position }) {
   const [selectedTab, setSelectedTab] = useState(1);
@@ -75,7 +67,7 @@ export function Results({ results, label, position }) {
                 filename: filename,
                 separator: ","
               },
-              rowsPerPageOptions: [1, 10, 50, 100, 1000]
+              rowsPerPageOptions: [1, 20 ,50, 100, 1000]
             }}
           />
         )}
@@ -83,29 +75,14 @@ export function Results({ results, label, position }) {
     );
   }
 
-  const getCircularReplacer = () => {
-    const seen = new WeakSet();
-    return (key, value) => {
-      if (typeof value === "object" && value !== null) {
-        if (seen.has(value)) {
-          return;
-        }
-        seen.add(value);
-      }
-      return value;
-    };
-  };
-
   if (!Array.isArray(results)) {
     return (
       <div>
-        <pre>
-          {isPrimitive(results) ? (
-            <pre>{results}</pre>
-          ) : (
-            JSON.stringify(results, getCircularReplacer(), 2)
-          )}
-        </pre>
+        <ErrorBoundary>
+          <pre>
+            <AsPrimitive value={results}></AsPrimitive>
+          </pre>
+        </ErrorBoundary>
       </div>
     );
   }

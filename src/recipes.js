@@ -922,17 +922,16 @@ return pi.attributeValues;
 `
   },
   {
-
-      id: "YKPWywkbphl",
-      name: "Generate a basic xlsform for a program",
-      params: [
-        {
-          id: "program",
-          type: "dhis2",
-          resourceName: "programs"
-        }
-      ],
-      code: `
+    id: "YKPWywkbphl",
+    name: "XLSForm - Generate a basic xlsform for a program",
+    params: [
+      {
+        id: "program",
+        type: "dhis2",
+        resourceName: "programs"
+      }
+    ],
+    code: `
     // press crtl-r to run
 
 const api = await dhis2.api();
@@ -1058,6 +1057,147 @@ sheetChoices.cell("A1").value(optionChoices);
 XlsxPopulate.openAsBlob(workbook, "orgunits.xslx");
 
 return pg;
+`
+  },
+  {
+    id: "vPHBZOSHMfS",
+    name: "XLSForm - Diff two xlsform",
+    params: [
+      {
+        id: "v1",
+        type: "xlsx"
+      },
+      {
+        id: "v2",
+        type: "xlsx"
+      }
+    ],
+    code: `
+const surveyV1 = parameters.v1.sheet("survey");
+const surveyV2 = parameters.v2.sheet("survey");
+
+const questionKeysFrom = survey => {
+  return survey
+    .range("B2:B2000")
+    .value()
+    .flat(1)
+    .filter(v => v != null);
+};
+
+const questionFields = [
+  "type",
+  "name",
+  "label",
+  "constraint",
+  "constraint_message",
+  "relevant",
+  "choice_filter",
+  "required",
+  "hint",
+  "appearance",
+  "calculation"
+];
+const asQuestions = survey => {
+  const questions = survey
+    .range("A2:K2000")
+    .value()
+    .map(row => {
+      const val = {};
+      questionFields.forEach((col, index) => {
+        let rawVal = row[index];
+        if (rawVal && rawVal["_node"]) {
+          rawVal = rawVal["_node"]["children"];
+        }
+        val[col] = rawVal;
+      });
+      return val;
+    });
+  results = {};
+  questions.forEach(q => (results[q.name] = q));
+  return results;
+};
+
+const v1_question_keys = new Set(questionKeysFrom(surveyV1));
+
+const v2_question_keys = new Set(questionKeysFrom(surveyV2));
+
+let allKeys = new Set([...v1_question_keys, ...v2_question_keys]);
+
+let same_keys = new Set(
+  [...v1_question_keys].filter(x => v2_question_keys.has(x))
+);
+
+let deleted_keys = new Set(
+  [...v1_question_keys].filter(x => !v2_question_keys.has(x))
+);
+let added_keys = new Set(
+  [...v2_question_keys].filter(x => !v1_question_keys.has(x))
+);
+
+questions_v1 = asQuestions(surveyV1);
+
+questions_v2 = asQuestions(surveyV2);
+diffs = [];
+same_keys.forEach(key => {
+  const q1 = questions_v1[key];
+  const q2 = questions_v2[key];
+  const diffColumns = questionFields.filter(
+    field =>
+      (q1 == undefined && q2 != undefined) ||
+      (q1 != undefined && q2 == undefined) ||
+      (q1 && q2 && q1[field] !== q2[field])
+  );
+  if (diffColumns.length > 0) {
+    diffs.push({ key, diffColumns, v1: q1, v2: q2 });
+  }
+});
+const flattened_diff = diffs.map(d => {
+  let v = { key: d.key, status: "M", diffColumns: d.diffColumns.join(" , ") };
+  d.diffColumns.forEach(c => {
+    v[c + "_v1"] = d.v1[c];
+    v[c + "_v2"] = d.v2[c];
+  });
+
+  return v;
+});
+
+added_keys.forEach(added_key => {
+  const q = questions_v2[added_key];
+  let v = {
+    key: added_key,
+    status: "A",
+    diffColumns: ":ALL"
+  };
+  questionFields.forEach(c => {
+    v[c + "_v2"] = q[c];
+  });
+  flattened_diff.push(v);
+});
+
+deleted_keys.forEach(deleted_key => {
+  const q = questions_v1[deleted_key];
+  let v = {
+    key: deleted_key,
+    status: "D",
+    diffColumns: ":ALL"
+  };
+  questionFields.forEach(c => {
+    v[c + "_v1"] = q[c];
+  });
+  flattened_diff.push(v);
+});
+
+return flattened_diff;
+return {
+  deleted_keys: Array.from(deleted_keys),
+  added_keys: Array.from(added_keys),
+  same_keys: Array.from(same_keys),
+  allKeys: Array.from(allKeys),
+  v1_question_keys: Array.from(v1_question_keys),
+  v2_question_keys: Array.from(v2_question_keys),
+  diffs: diffs
+};
+
 `
   }
 ];
