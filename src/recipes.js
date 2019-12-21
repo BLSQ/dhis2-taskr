@@ -1199,6 +1199,158 @@ return {
 };
 
 `
+  },
+  {
+    id: "WJBsaMBdioj",
+    name: "XLSForm - generate a xlsform from a DataSet",
+    params: [
+      {
+        id: "dataSet",
+        type: "dhis2",
+        resourceName: "dataSets"
+      }
+    ],
+    code: `const api = await dhis2.api();
+
+    //return await api.get("dataSets");
+    const ds = await api.get("dataSets/" + parameters.dataSet.id, {
+      fields:
+        "id,name,periodType,dataSetElements[dataElement[id,name,formName,code,valueType,categoryCombo[id,name,categoryOptionCombos[id,name,categoryOptions[id,name,code]]]"
+    });
+    const questions = [];
+    
+    var collator = new Intl.Collator(undefined, {
+      numeric: true,
+      sensitivity: "base"
+    });
+    const dataSetElements = ds.dataSetElements.sort((a, b) =>
+      collator.compare(a.dataElement.name, b.dataElement.name)
+    );
+    
+    function slugify(str) {
+      str = str.replace(/^\s+|\s+$/g, ""); // trim
+      str = str.toLowerCase();
+    
+      // remove accents, swap ñ for n, etc
+      var from = "àáãäâèéëêìíïîòóöôùúüûñç·/_,:;";
+      var to = "aaaaaeeeeiiiioooouuuunc______";
+    
+      for (var i = 0, l = from.length; i < l; i++) {
+        str = str.replace(new RegExp(from.charAt(i), "g"), to.charAt(i));
+      }
+    
+      str = str
+        .replace(/[^a-z0-9 -]/g, "") // remove invalid chars
+        .replace(/\s+/g, "_") // collapse whitespace and replace by -
+        .replace(/-+/g, "_"); // collapse dashes
+    
+      return str;
+    }
+    
+    dataSetElements.forEach(dataSetElement => {
+      const dataElement = dataSetElement.dataElement;
+      dataElement.categoryCombo.categoryOptionCombos.forEach(coc => {
+        const coc_code = coc.categoryOptions.map(o => slugify(o.code)).join("__");
+        let type = "";
+        let constraint;
+        let constraint_message;
+        let required;
+    
+        if (
+          dataElement.valueType == "BOOLEAN" ||
+          dataElement.valueType == "TRUE_ONLY"
+        ) {
+          type = "select_one yesno";
+        } else if (dataElement.valueType == "DATE") {
+          type = "date";
+        } else if (dataElement.valueType == "TEXT") {
+          type = "text";
+        } else if (dataElement.valueType == "PERCENTAGE") {
+          type = "integer";
+        } else if (dataElement.valueType == "INTEGER") {
+          type = "integer";
+        } else if (dataElement.valueType == "INTEGER_POSITIVE") {
+          type = "integer";
+          constraint = ". > 0";
+          constraint_message = "must be non-zero positive number";
+        } else if (dataElement.valueType == "INTEGER_ZERO_OR_POSITIVE") {
+          type = "integer";
+          constraint = ". >= 0";
+          constraint_message = "must be a positive number";
+        } else if (dataElement.valueType == "INTEGER_ZERO_OR_NEGATIVE") {
+          type = "integer";
+          constraint = ". <= 0";
+          constraint_message = "must be a negative number";
+        } else if (dataElement.valueType == "INTEGER_NEGATIVE") {
+          type = "integer";
+          constraint = ". < 0";
+          constraint_message = "must be non-zero negative number";
+        } else if (dataElement.valueType == "NUMBER") {
+          type = "decimal";
+        } else if (dataElement.valueType == "COORDINATE") {
+          type = "geopoint";
+        }
+        let label = dataElement.formName || dataElement.name;
+        let code = slugify(dataElement.code || dataElement.name);
+        if (coc.name != "default") {
+          label = label + " " + coc.name;
+          code = code + "__" + coc_code;
+        }
+        questions.push({
+          type: type,
+          name: code,
+          label: label,
+          constraint: constraint,
+          constraint_message: constraint_message
+        });
+      });
+
+      //questions.push({});
+    });
+
+    const workbook = await XlsxPopulate.fromBlankAsync();
+
+    const questionFields = [
+      "type",
+      "name",
+      "label",
+      "constraint",
+      "constraint_message",
+      "relevant",
+      "choice_filter",
+      "required",
+      "hint",
+      "appearance",
+      "calculation"
+    ];
+
+    const sheet = workbook.sheet(0);
+    sheet.name("survey");
+    sheet.cell("A1").value([questionFields])
+    sheet.cell("A2").value(questions.map(question => questionFields.map(f => question[f])));
+
+    
+    const sheetChoices = workbook.addSheet("choices");
+    const optionChoices = [
+      ["list_name", "name", "label"],
+      ["yesno", "yes", "1"],
+      ["yesno", "no", "0"]
+    ];
+    sheetChoices.cell("A1").value(optionChoices);
+
+    const sheetSettings = workbook.addSheet("settings");
+    const settings = [
+      ["form_title","form_id"],
+      [ds.name,ds.code]
+    ];
+
+    sheetSettings.cell("A1").value(settings);
+
+    XlsxPopulate.openAsBlob(workbook, slugify(ds.name)+".xslx");      
+
+    
+    return questions;
+    `
   }
 ];
 export default recipes;
