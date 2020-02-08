@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { AsPrimitive } from "./AsPrimitive";
 import { Map, CircleMarker, Popup, TileLayer, GeoJSON } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-
+import CoordinatesControl from "./leaflet/CoordinatesControl";
 import InputLabel from "@material-ui/core/InputLabel";
 import FormControl from "@material-ui/core/FormControl";
 
@@ -161,11 +161,6 @@ function OrgunitMap({ lines, position, showableMap }) {
 
   return (
     <>
-      <div>
-        {lines.length} records. {points.length} points displayed.{" "}
-        {geojsons.length} zones displayed.{" "}
-        {isString(clicked.name) ? clicked.name : ""}
-      </div>
       <FormControl>
         <InputLabel>Layer</InputLabel>
         <Select onChange={mapSelected} value={selectedLayer}>
@@ -174,6 +169,12 @@ function OrgunitMap({ lines, position, showableMap }) {
           ))}
         </Select>
       </FormControl>
+      <div>
+        {lines.length} records. {points.length} points displayed.{" "}
+        {geojsons.length} zones displayed.{" "}
+        {isString(clicked.name) ? clicked.name : ""}
+      </div>
+
       <Map
         doubleClickZoom={false}
         center={position}
@@ -185,6 +186,7 @@ function OrgunitMap({ lines, position, showableMap }) {
         }}
       >
         <TileLayer {...selectedLayer}></TileLayer>
+        <CoordinatesControl position="top" coordinates="decimal" />
         {geojsons}
         {points}
       </Map>
