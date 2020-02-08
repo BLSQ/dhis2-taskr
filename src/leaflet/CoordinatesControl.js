@@ -20,7 +20,6 @@ L.Control.MousePosition = L.Control.extend({
   onAdd: function(map) {
     this._container = L.DomUtil.create("div", "leaflet-control-mouseposition");
     L.DomEvent.disableClickPropagation(this._container);
-    debugger;
     map.on("mousemove", this._onMouseMove, this);
     this._container.innerHTML = this.options.emptyString;
     return this._container;

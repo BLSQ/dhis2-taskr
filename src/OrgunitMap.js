@@ -1,12 +1,19 @@
 import * as turf from "@turf/turf";
 import React, { useState, useRef, useEffect } from "react";
 import { AsPrimitive } from "./AsPrimitive";
-import { Map, CircleMarker, Popup, TileLayer, GeoJSON } from "react-leaflet";
+import {
+  Map,
+  CircleMarker,
+  Popup,
+  TileLayer,
+  GeoJSON,
+  FeatureGroup
+} from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import CoordinatesControl from "./leaflet/CoordinatesControl";
 import InputLabel from "@material-ui/core/InputLabel";
 import FormControl from "@material-ui/core/FormControl";
-
+import Button from "@material-ui/core/Button";
 import MenuItem from "@material-ui/core/MenuItem";
 import Select from "@material-ui/core/Select";
 
@@ -45,7 +52,25 @@ function getRandomColor() {
 function OrgunitMap({ lines, position, showableMap }) {
   const [clicked, setClicked] = useState("");
   const [selectedLayer, setSelectedLayer] = useState(maps[0]);
-
+  const mapRef = useRef(null);
+  const handleClick = () => {
+    if (mapRef) {
+      const map = mapRef.current.leafletElement;
+      const bounds = Object.values(map._targets)
+        .filter((l, index) => (l.getBounds || l.getLatLng) && index > 0)
+        .map(l => (l.getBounds ? l.getBounds() : l.getLatLng().toBounds(10)));
+      const bound = bounds[0];
+      bounds.forEach(b => bound.extend(b));
+      if (bound) {
+        map.fitBounds(bound);
+      }
+    }
+  };
+  useEffect(() => {
+    setTimeout(() => {
+      handleClick();
+    }, 1000);
+  }, [mapRef]);
   if (lines == undefined) {
     return <></>;
   }
@@ -161,14 +186,21 @@ function OrgunitMap({ lines, position, showableMap }) {
 
   return (
     <>
-      <FormControl>
-        <InputLabel>Layer</InputLabel>
-        <Select onChange={mapSelected} value={selectedLayer}>
-          {maps.map(m => (
-            <MenuItem value={m}>{m.name}</MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+      <div
+        style={{
+          display: "flex"
+        }}
+      >
+        <FormControl>
+          <InputLabel>Layer</InputLabel>
+          <Select onChange={mapSelected} value={selectedLayer}>
+            {maps.map(m => (
+              <MenuItem value={m}>{m.name}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <Button onClick={handleClick}>Fit</Button>
+      </div>
       <div>
         {lines.length} records. {points.length} points displayed.{" "}
         {geojsons.length} zones displayed.{" "}
@@ -179,6 +211,7 @@ function OrgunitMap({ lines, position, showableMap }) {
         doubleClickZoom={false}
         center={position}
         zoom={3}
+        ref={mapRef}
         style={{
           width: "80%",
           height: "900px",
