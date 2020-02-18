@@ -1,4 +1,5 @@
 import { Results } from "./Results";
+import MarkdownPreview from "./MarkdownPreview";
 import React, { useState } from "react";
 import "./App.css";
 
@@ -266,6 +267,72 @@ function Editor({ recipe, dhis2, onSave, editable }) {
       <br />
       <br />
       <Results results={results} label={name || ""} position={position} />
+      <MarkdownPreview
+        text={`
+
+\${toc}
+
+# Hello
+
+
+## Apex graph
+
+this is an apex graph
+
+\`\`\`apex
+{
+    "chart": {
+      "type": "area",
+      "width": "500",
+      "height": "400"
+    },
+    "series": [{
+      "name": "sales",
+      "data": [30,40,45,50,49,60,70,91,125]
+    }],
+    "xaxis": {
+      "type": "datetime",
+      "categories": ["01/01/1991","01/01/1992","01/01/1993","01/01/1994","01/01/1995","01/01/1996","01/01/1997", "01/01/1998","01/01/1999"]
+    }
+}
+\`\`\`
+
+\`\`\`apex
+{
+  "series": [{ "name": "Series 1", "data": [80, 50, 30, 40, 100, 20] }],
+  "chart": { "height": "350", "type": "radar" },
+  "title": { "text": "Basic Radar Chart" },
+  "xaxis": {
+    "categories": ["January", "February", "March", "April", "May", "June"]
+  }
+}
+\`\`\`
+## mermaid 
+
+this is an mermaid graph
+
+
+\`\`\`graph TD
+    A[Christmas] -->|Get money| B(Go shopping)
+    B --> C{Let me think}
+    C -->|One| D[Laptop]
+    C -->|Two| E[iPhone]
+    C -->|Three| F[Car]
+\`\`\`
+
+## footnotes
+
+Here is a footnote reference,[^1] and another.[^longnote]
+
+[^1]: Here is the footnote.
+
+[^longnote]: Here's one with multiple blocks.
+
+    Subsequent paragraphs are indented to show that they
+belong to the previous footnote.
+
+`}
+      ></MarkdownPreview>
     </div>
   );
 }
