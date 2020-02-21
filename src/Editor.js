@@ -29,6 +29,9 @@ import parser from "prettier/parser-babylon";
 
 import Params from "./Params";
 import { TextareaAutosize } from "@material-ui/core";
+
+import IdyllReport from "./IdyllReport";
+
 const position = [-12.9487, 9.0131];
 const AsyncFunction = Object.getPrototypeOf(async function() {}).constructor;
 
@@ -266,6 +269,7 @@ function Editor({ recipe, dhis2, onSave, editable }) {
       <br />
       <br />
       <Results results={results} label={name || ""} position={position} />
+      <IdyllReport></IdyllReport>
     </div>
   );
 }
