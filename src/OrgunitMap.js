@@ -18,17 +18,18 @@ import MenuItem from "@material-ui/core/MenuItem";
 import Select from "@material-ui/core/Select";
 
 const maps = [
-  {
-    name: "Thunderforest - Outdoors",
-    attribution: "Thunderforest and OpenStreetMap contributors.",
-    url:
-      "https://{s}.tile.thunderforest.com/outdoors/{z}/{x}/{y}{r}.png?apikey=7c352c8ff1244dd8b732e349e0b0fe8d"
-  },
+
   {
     name: "Thunderforest - Landscapes",
     attribution: "Thunderforest and OpenStreetMap contributors.",
     url:
       "https://{s}.tile.thunderforest.com/landscape/{z}/{x}/{y}{r}.png?apikey=7c352c8ff1244dd8b732e349e0b0fe8d"
+  },
+  {
+    name: "Thunderforest - Outdoors",
+    attribution: "Thunderforest and OpenStreetMap contributors.",
+    url:
+      "https://{s}.tile.thunderforest.com/outdoors/{z}/{x}/{y}{r}.png?apikey=7c352c8ff1244dd8b732e349e0b0fe8d"
   },
   {
     name: "Google maps - Satelite",
@@ -49,12 +50,12 @@ function getRandomColor() {
   return color;
 }
 
-function OrgunitMap({ lines, position, showableMap }) {
+function OrgunitMap({ lines, position, showableMap, width, height }) {
   const [clicked, setClicked] = useState("");
   const [selectedLayer, setSelectedLayer] = useState(maps[0]);
   const mapRef = useRef(null);
   const handleClick = () => {
-    if (mapRef) {
+    if (mapRef && mapRef.current) {
       const map = mapRef.current.leafletElement;
       const bounds = Object.values(map._targets)
         .filter((l, index) => (l.getBounds || l.getLatLng) && index > 0)
@@ -213,8 +214,8 @@ function OrgunitMap({ lines, position, showableMap }) {
         zoom={3}
         ref={mapRef}
         style={{
-          width: "80%",
-          height: "900px",
+          width: width || "80%",
+          height: height || "900px",
           padding: "0px"
         }}
       >
