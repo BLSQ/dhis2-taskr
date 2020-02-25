@@ -43,6 +43,7 @@ export function Results({ results, label, position }) {
             lines={results}
             position={position}
             showableMap={showableMap}
+            showLayers={true}
           />
         )}
         {selectedTab == 1 && (

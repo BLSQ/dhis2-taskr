@@ -118,8 +118,7 @@ return userResp.users.map( user => {
       });
       return ou.organisationUnits.filter(ou => ou.featureTypeMatches == false);
     `
-  },
-
+    },
   {
     id: "d4pmpo12iMp",
     name: "Audit coordinates",
@@ -171,12 +170,48 @@ return userResp.users.map( user => {
             ? ((withCoordinates.pager.total / allOus.pager.total) * 100).toFixed(2)
             : "-"
       });
+      report.register("statsByLevel" + level.level, [
+        { x: "with", y: withCoordinates.pager.total },
+        { x: "without", y: withoutCoordinates.pager.total }
+      ]);
     });
 
     return stats;
 
 
- `
+ `,
+
+ report: `
+
+ [FlexBox]
+# Level 1
+[FlexBox]
+[Chart type:"pie" data:statsByLevel1 colorScale:\`["green", "grey" ]\` /]
+[AsJSON data:statsByLevel1 /]
+[/FlexBox]
+
+# Level 2
+[FlexBox]
+[Chart type:"pie" data:statsByLevel2 colorScale:\`["green", "grey" ]\` /]
+[AsJSON data:statsByLevel2 /]
+[/FlexBox]
+
+[/FlexBox]
+
+[FlexBox]
+# Level 3
+[FlexBox]
+[Chart type:"pie" data:statsByLevel3 colorScale:\`["green", "grey" ]\` /]
+[AsJSON data:statsByLevel3 /]
+[/FlexBox]
+
+# Level 4
+[FlexBox]
+[Chart type:"pie" data:statsByLevel4 colorScale:\`["green", "grey" ]\` /]
+[AsJSON data:statsByLevel4 /]
+[/FlexBox]
+[/FlexBox]
+   `
   },
   {
     id: "D5a1DVMw7FV",
@@ -1218,7 +1253,7 @@ return {
         "id,name,periodType,dataSetElements[dataElement[id,name,formName,code,valueType,categoryCombo[id,name,categoryOptionCombos[id,name,categoryOptions[id,name,code]]]"
     });
     const questions = [];
-    
+
     var collator = new Intl.Collator(undefined, {
       numeric: true,
       sensitivity: "base"
@@ -1226,27 +1261,27 @@ return {
     const dataSetElements = ds.dataSetElements.sort((a, b) =>
       collator.compare(a.dataElement.name, b.dataElement.name)
     );
-    
+
     function slugify(str) {
       str = str.replace(/^\s+|\s+$/g, ""); // trim
       str = str.toLowerCase();
-    
+
       // remove accents, swap ñ for n, etc
       var from = "àáãäâèéëêìíïîòóöôùúüûñç·/_,:;";
       var to = "aaaaaeeeeiiiioooouuuunc______";
-    
+
       for (var i = 0, l = from.length; i < l; i++) {
         str = str.replace(new RegExp(from.charAt(i), "g"), to.charAt(i));
       }
-    
+
       str = str
         .replace(/[^a-z0-9 -]/g, "") // remove invalid chars
         .replace(/\s+/g, "_") // collapse whitespace and replace by -
         .replace(/-+/g, "_"); // collapse dashes
-    
+
       return str;
     }
-    
+
     dataSetElements.forEach(dataSetElement => {
       const dataElement = dataSetElement.dataElement;
       dataElement.categoryCombo.categoryOptionCombos.forEach(coc => {
@@ -1255,7 +1290,7 @@ return {
         let constraint;
         let constraint_message;
         let required;
-    
+
         if (
           dataElement.valueType == "BOOLEAN" ||
           dataElement.valueType == "TRUE_ONLY"
@@ -1329,7 +1364,7 @@ return {
     sheet.cell("A1").value([questionFields])
     sheet.cell("A2").value(questions.map(question => questionFields.map(f => question[f])));
 
-    
+
     const sheetChoices = workbook.addSheet("choices");
     const optionChoices = [
       ["list_name", "name", "label"],
@@ -1346,11 +1381,112 @@ return {
 
     sheetSettings.cell("A1").value(settings);
 
-    XlsxPopulate.openAsBlob(workbook, slugify(ds.name)+".xslx");      
+    XlsxPopulate.openAsBlob(workbook, slugify(ds.name)+".xslx");
 
-    
+
     return questions;
     `
+  },
+  { id: 'ZZJcZFTSl49', name:"Coordinates coverage",
+  code:`
+  let stats = [];
+  const api = await dhis2.api();
+
+  const levels = await api.get("organisationUnitLevels", {
+    fields: "id,name,level",
+    order: "level"
+  });
+  function perc2color(perc) {
+    var r,
+      g,
+      b = 0;
+    if (perc < 50) {
+      r = 255;
+      g = Math.round(5.1 * perc);
+    } else {
+      g = 255;
+      r = Math.round(510 - 5.1 * perc);
+    }
+    var h = r * 0x10000 + g * 0x100 + b * 0x1;
+    return "#" + ("000000" + h.toString(16)).slice(-6);
   }
+  const system = await api.get("system/info");
+  const version = system.version;
+  const v = version.split(".");
+  const vfloat = parseFloat(v[0] + "." + v[1]);
+  const fieldCoordinates = vfloat >= 2.32 ? "geometry" : "coordinates";
+
+  let provinces = await api.get("organisationUnits", {
+    fields: "id,name,coordinates,geometry",
+    filter: ["level:eq:2"],
+    paging: false
+  });
+
+  for (province of provinces.organisationUnits) {
+    const children = await api.get("organisationUnits", {
+      fields: "id,name,coordinates,geometry",
+      filter: ["path:ilike:" + province.id],
+      paging: false
+    });
+    withCoordinates = children.organisationUnits.filter(
+      ou => ou.coordinates || ou.geometry
+    ).length;
+    withoutCoordinates = children.organisationUnits.filter(
+      ou => ou.coordinates == undefined && ou.geometry == undefined
+    ).length;
+    province.withCoordinates = withCoordinates;
+    province.withoutCoordinates = withoutCoordinates;
+    province.percentage =
+      (withCoordinates * 100) / (withCoordinates + withoutCoordinates);
+
+    province.fillColor = perc2color(province.percentage);
+    stats.push(province);
+  }
+
+  report.register("stats2", stats)
+  stats = []
+
+  provinces = await api.get("organisationUnits", {
+    fields: "id,name,coordinates,geometry",
+    filter: ["level:eq:3"],
+    paging: false
+  });
+
+  for (province of provinces.organisationUnits) {
+    const children = await api.get("organisationUnits", {
+      fields: "id,name,coordinates,geometry",
+      filter: ["path:ilike:" + province.id],
+      paging: false
+    });
+    withCoordinates = children.organisationUnits.filter(
+      ou => ou.coordinates || ou.geometry
+    ).length;
+    withoutCoordinates = children.organisationUnits.filter(
+      ou => ou.coordinates == undefined && ou.geometry == undefined
+    ).length;
+    province.withCoordinates = withCoordinates;
+    province.withoutCoordinates = withoutCoordinates;
+    province.percentage =
+      (withCoordinates * 100) / (withCoordinates + withoutCoordinates);
+
+    province.fillColor = perc2color(province.percentage);
+    stats.push(province);
+  }
+  report.register("stats3", stats)
+  return "";`,
+  report: `
+
+# Coverage
+[FlexBox]
+[OrgunitMap lines:stats2 /]
+[OrgunitMap lines:stats3 /]
+[/FlexBox]
+
+[DataTable data:\`stats2.map(l => _.omit(l, 'geometry'))\` label:"Province coverage data" perPage:20/]
+
+[br/][br/][br/]
+[DataTable data:\`stats3.map(l => _.omit(l, 'geometry'))\` label:"District coverage data"/]
+`
+}
 ];
 export default recipes;

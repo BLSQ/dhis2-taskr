@@ -18,7 +18,6 @@ import MenuItem from "@material-ui/core/MenuItem";
 import Select from "@material-ui/core/Select";
 
 const maps = [
-
   {
     name: "Thunderforest - Landscapes",
     attribution: "Thunderforest and OpenStreetMap contributors.",
@@ -50,7 +49,14 @@ function getRandomColor() {
   return color;
 }
 
-function OrgunitMap({ lines, position, showableMap, width, height }) {
+function OrgunitMap({
+  lines,
+  position,
+  showableMap,
+  width,
+  height,
+  showLayers
+}) {
   const [clicked, setClicked] = useState("");
   const [selectedLayer, setSelectedLayer] = useState(maps[0]);
   const mapRef = useRef(null);
@@ -72,7 +78,7 @@ function OrgunitMap({ lines, position, showableMap, width, height }) {
       handleClick();
     }, 1000);
   }, [mapRef]);
-  if (lines == undefined) {
+  if (lines == undefined || lines == null) {
     return <></>;
   }
 
@@ -187,21 +193,23 @@ function OrgunitMap({ lines, position, showableMap, width, height }) {
 
   return (
     <>
-      <div
-        style={{
-          display: "flex"
-        }}
-      >
-        <FormControl>
-          <InputLabel>Layer</InputLabel>
-          <Select onChange={mapSelected} value={selectedLayer}>
-            {maps.map(m => (
-              <MenuItem value={m}>{m.name}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <Button onClick={handleClick}>Fit</Button>
-      </div>
+      {showLayers && (
+        <div
+          style={{
+            display: "flex"
+          }}
+        >
+          <FormControl>
+            <InputLabel>Layer</InputLabel>
+            <Select onChange={mapSelected} value={selectedLayer}>
+              {maps.map(m => (
+                <MenuItem value={m}>{m.name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <Button onClick={handleClick}>Fit</Button>
+        </div>
+      )}
       <div>
         {lines.length} records. {points.length} points displayed.{" "}
         {geojsons.length} zones displayed.{" "}

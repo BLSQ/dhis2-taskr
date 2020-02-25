@@ -31,7 +31,11 @@ import Params from "./Params";
 import { TextareaAutosize } from "@material-ui/core";
 
 import IdyllReport from "./IdyllReport";
+import InputLabel from "@material-ui/core/InputLabel";
+import FormControl from "@material-ui/core/FormControl";
 
+import MenuItem from "@material-ui/core/MenuItem";
+import Select from "@material-ui/core/Select";
 const position = [-12.9487, 9.0131];
 const AsyncFunction = Object.getPrototypeOf(async function() {}).constructor;
 
@@ -54,20 +58,39 @@ const interceptor = FetchInterceptor.register({
   }
 });
 
+const markup = ``;
+
+class DataSets {
+  constructor() {
+    this.datasets = {};
+  }
+  register(datasetName, data) {
+    this.datasets[datasetName] = data
+    return this
+  }
+
+  asVars(){
+    return this.datasets
+  }
+}
+
+const dataSets = new DataSets()
+
 function Editor({ recipe, dhis2, onSave, editable }) {
   const [showEditor, setShowEditor] = useState(recipe.editable);
-  const [showParamsEditor, setShowParamsEditor] = useState(false);
+
   if (showEditor && editable == false) {
     setShowEditor(false);
-    setShowParamsEditor(false);
   }
+  const [propertyEdited, setPropertyEdited] = useState("code");
   const [name, setName] = useState(recipe.name);
   const [code, setCode] = useState(recipe.code);
+  const [report, setReport] = useState(recipe.report || markup);
   const [results, setResults] = useState(undefined);
   const [requests, setRequests] = useState([]);
   const [parameters, setParameters] = useState({});
   const [parameterDefinitionsJson, setParameterDefinitionsJson] = useState(
-    recipe.params ? JSON.stringify(recipe.params, null, 4) : []
+    recipe.params ? JSON.stringify(recipe.params, null, 4) : "[]"
   );
   const [parameterDefinitions, setParameterDefinitions] = useState(
     recipe.params
@@ -75,12 +98,12 @@ function Editor({ recipe, dhis2, onSave, editable }) {
 
   setOutRequest = setRequests;
   const [error, setError] = useState("");
-  const parametersDefinitionsChange = e => {
-    setParameterDefinitionsJson(e.target.value);
+  const parametersDefinitionsChange = value => {
+    setParameterDefinitionsJson(value);
     try {
-      setParameterDefinitions(JSON.parse(e.target.value));
+      setParameterDefinitions(JSON.parse(value));
     } catch (error) {
-      setError(error.message + " " + e.target.value);
+      setError(error.message + " " + value);
     }
   };
   async function onRun(code) {
@@ -105,6 +128,7 @@ function Editor({ recipe, dhis2, onSave, editable }) {
         "XlsxPopulate",
         "DatePeriods",
         "parameters",
+        "report",
         body
       )(
         dhis2,
@@ -115,7 +139,8 @@ function Editor({ recipe, dhis2, onSave, editable }) {
         PapaParse,
         XlsxPopulate,
         DatePeriods,
-        parameters
+        parameters,
+        dataSets
       );
 
       setResults(results);
@@ -136,13 +161,25 @@ function Editor({ recipe, dhis2, onSave, editable }) {
       name: name,
       code: code,
       editable: true,
-      params: parameterDefinitions
+      params: parameterDefinitions,
+      report: report
     };
     onSave(modifiedRecipe);
   }
   const dirty = recipe.code !== code || name !== recipe.name;
   const style = {
     marginLeft: "20px"
+  };
+  let editableContent = code;
+  if (propertyEdited == "code") {
+    editableContent = code;
+  } else if (propertyEdited == "parameters") {
+    editableContent = parameterDefinitionsJson || "";
+  } else if (propertyEdited == "report") {
+    editableContent = report;
+  }
+  const editablePropertySelected = (event, val) => {
+    setPropertyEdited(val.props.value);
   };
   return (
     <div>
@@ -162,44 +199,51 @@ function Editor({ recipe, dhis2, onSave, editable }) {
       {editable == false && <h2>{recipe.name}</h2>}
       <div style={{ color: "red" }}>{error}</div>
       <br />
+
       {editable && recipe && showEditor && (
-        <AceEditor
-          readOnly={recipe && recipe.editable === false}
-          name="script"
-          fontSize={18}
-          width={"80%"}
-          height={400}
-          mode="javascript"
-          theme="monokai"
-          value={code}
-          debounceChangePeriod={3}
-          enableBasicAutocompletion={true}
-          enableSnippets={true}
-          onChange={val => {
-            setCode(val);
-          }}
-          commands={[
-            {
-              name: "Run",
-              bindKey: { win: "Ctrl-r", mac: "Command-r" },
-              exec: editor => {
-                onRun(editor.getValue());
-              }
-            }
-          ]}
-        />
-      )}
-      {editable && recipe && showParamsEditor && showEditor && (
         <>
-          <h3>Parameter Definitions</h3>
-          <TextareaAutosize
-            cols={150}
-            value={parameterDefinitionsJson}
-            onChange={parametersDefinitionsChange}
-          ></TextareaAutosize>
-          <br></br>
+          <FormControl>
+            <InputLabel>Edit</InputLabel>
+            <Select onChange={editablePropertySelected} value={propertyEdited}>
+              {["code", "parameters", "report"].map(m => (
+                <MenuItem value={m}>{m}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <AceEditor
+            readOnly={recipe && recipe.editable === false}
+            name="script"
+            fontSize={18}
+            width={"80%"}
+            height={400}
+            mode="javascript"
+            theme="monokai"
+            value={editableContent}
+            debounceChangePeriod={3}
+            enableBasicAutocompletion={true}
+            enableSnippets={true}
+            onChange={val => {
+              if (propertyEdited == "code") {
+                setCode(val);
+              } else if (propertyEdited == "parameters") {
+                parametersDefinitionsChange(val);
+              } else if (propertyEdited == "report") {
+                setReport(val);
+              }
+            }}
+            commands={[
+              {
+                name: "Run",
+                bindKey: { win: "Ctrl-r", mac: "Command-r" },
+                exec: editor => {
+                  onRun(editor.getValue());
+                }
+              }
+            ]}
+          />
         </>
       )}
+
       {parameterDefinitions !== undefined &&
         parameterDefinitions !== [] &&
         parameterDefinitions !== {} && (
@@ -245,12 +289,7 @@ function Editor({ recipe, dhis2, onSave, editable }) {
             control={<Switch value={showEditor} />}
             label="Hide editor"
             onChange={() => setShowEditor(!showEditor)}
-          />{" "}
-          <FormControlLabel
-            control={<Switch value={showParamsEditor} />}
-            label="Hide params editor"
-            onChange={() => setShowParamsEditor(!showParamsEditor)}
-          />{" "}
+          />
         </>
       )}
 
@@ -269,7 +308,7 @@ function Editor({ recipe, dhis2, onSave, editable }) {
       <br />
       <br />
       <Results results={results} label={name || ""} position={position} />
-      <IdyllReport></IdyllReport>
+      <IdyllReport markup={report} dataSets={dataSets}></IdyllReport>
     </div>
   );
 }
