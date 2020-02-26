@@ -213,7 +213,16 @@ function OrgunitMap({
       <div>
         {lines.length} records. {points.length} points displayed.{" "}
         {geojsons.length} zones displayed.{" "}
-        {isString(clicked.name) ? clicked.name : ""}
+        {clicked &&
+          Object.keys(clicked)
+            .filter(k => !["geometry", "coordinates"].includes(k))
+            .map(k => {
+              return (
+                <div>
+                  <b>{k}</b> <AsPrimitive value={clicked[k]} />
+                </div>
+              );
+            })}
       </div>
 
       <Map

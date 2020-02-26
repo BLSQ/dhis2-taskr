@@ -1387,97 +1387,97 @@ return {
     return questions;
     `
   },
-  { id: 'ZZJcZFTSl49', name:"Coordinates coverage",
+  { id: 'ZZJcZFTSl50', name:"Coordinates coverage",
   code:`
-  let stats = [];
-  const api = await dhis2.api();
+let stats = [];
+const api = await dhis2.api();
 
-  const levels = await api.get("organisationUnitLevels", {
-    fields: "id,name,level",
-    order: "level"
-  });
-  function perc2color(perc) {
-    var r,
-      g,
-      b = 0;
-    if (perc < 50) {
-      r = 255;
-      g = Math.round(5.1 * perc);
-    } else {
-      g = 255;
-      r = Math.round(510 - 5.1 * perc);
-    }
-    var h = r * 0x10000 + g * 0x100 + b * 0x1;
-    return "#" + ("000000" + h.toString(16)).slice(-6);
+const levels = (await api.get("organisationUnitLevels", {
+  fields: "id,name,level",
+  order: "level"
+})).organisationUnitLevels;
+
+function perc2color(perc) {
+  var r,
+    g,
+    b = 0;
+  if (perc < 50) {
+    r = 255;
+    g = Math.round(5.1 * perc);
+  } else {
+    g = 255;
+    r = Math.round(510 - 5.1 * perc);
   }
-  const system = await api.get("system/info");
-  const version = system.version;
-  const v = version.split(".");
-  const vfloat = parseFloat(v[0] + "." + v[1]);
-  const fieldCoordinates = vfloat >= 2.32 ? "geometry" : "coordinates";
+  var h = r * 0x10000 + g * 0x100 + b * 0x1;
+  return "#" + ("000000" + h.toString(16)).slice(-6);
+}
+const system = await api.get("system/info");
+const version = system.version;
+const v = version.split(".");
+const vfloat = parseFloat(v[0] + "." + v[1]);
+const fieldCoordinates = vfloat >= 2.32 ? "geometry" : "coordinates";
 
-  let provinces = await api.get("organisationUnits", {
-    fields: "id,name,coordinates,geometry",
-    filter: ["level:eq:2"],
+let provinces = await api.get("organisationUnits", {
+  fields: "id,name,level,coordinates,geometry",
+  filter: ["level:eq:2"],
+  paging: false
+});
+let allOrgunits = [];
+const facilityLevel = levels[levels.length - 1];
+for (province of provinces.organisationUnits) {
+  const children = await api.get("organisationUnits", {
+    fields: "id,name,coordinates,geometry,ancestors[id,name],leaf,level",
+    filter: ["path:ilike:" + province.id],
     paging: false
   });
+  withCoordinates = children.organisationUnits.filter(
+    ou => ou.level == facilityLevel.level && (ou.coordinates || ou.geometry)
+  ).length;
+  withoutCoordinates = children.organisationUnits.filter(
+    ou =>
+      facilityLevel.level &&
+      (ou.coordinates == undefined && ou.geometry == undefined)
+  ).length;
+  province.withCoordinates = withCoordinates;
+  province.withoutCoordinates = withoutCoordinates;
+  province.percentage =
+    (withCoordinates * 100) / (withCoordinates + withoutCoordinates);
+  province.color = "blue";
+  province.fillColor = perc2color(province.percentage);
+  stats.push(province);
+  children.organisationUnits.forEach(ou => allOrgunits.push(ou));
+}
+report.register("organisationUnits", allOrgunits);
+report.register("stats2", stats);
+stats = []
+const districts = allOrgunits.filter(ou => ou.level == 3)
+for (district of districts ) {
+  children = allOrgunits.filter(ou => ou.ancestors[2] && ou.ancestors[2].id == district.id)
+  withCoordinates = children.filter(
+    ou => ou.level == facilityLevel.level && (ou.coordinates || ou.geometry)
+  ).length;
+  withoutCoordinates = children.filter(
+    ou =>
+      facilityLevel.level &&
+      (ou.coordinates == undefined && ou.geometry == undefined)
+  ).length;
+  district.withCoordinates = withCoordinates;
+  district.withoutCoordinates = withoutCoordinates;
+  district.percentage =
+    (withCoordinates * 100) / (withCoordinates + withoutCoordinates);
+  district.color = "blue";
+  district.fillColor = perc2color(district.percentage);
+  stats.push(district);
+}
 
-  for (province of provinces.organisationUnits) {
-    const children = await api.get("organisationUnits", {
-      fields: "id,name,coordinates,geometry",
-      filter: ["path:ilike:" + province.id],
-      paging: false
-    });
-    withCoordinates = children.organisationUnits.filter(
-      ou => ou.coordinates || ou.geometry
-    ).length;
-    withoutCoordinates = children.organisationUnits.filter(
-      ou => ou.coordinates == undefined && ou.geometry == undefined
-    ).length;
-    province.withCoordinates = withCoordinates;
-    province.withoutCoordinates = withoutCoordinates;
-    province.percentage =
-      (withCoordinates * 100) / (withCoordinates + withoutCoordinates);
-
-    province.fillColor = perc2color(province.percentage);
-    stats.push(province);
-  }
-
-  report.register("stats2", stats)
-  stats = []
-
-  provinces = await api.get("organisationUnits", {
-    fields: "id,name,coordinates,geometry",
-    filter: ["level:eq:3"],
-    paging: false
-  });
-
-  for (province of provinces.organisationUnits) {
-    const children = await api.get("organisationUnits", {
-      fields: "id,name,coordinates,geometry",
-      filter: ["path:ilike:" + province.id],
-      paging: false
-    });
-    withCoordinates = children.organisationUnits.filter(
-      ou => ou.coordinates || ou.geometry
-    ).length;
-    withoutCoordinates = children.organisationUnits.filter(
-      ou => ou.coordinates == undefined && ou.geometry == undefined
-    ).length;
-    province.withCoordinates = withCoordinates;
-    province.withoutCoordinates = withoutCoordinates;
-    province.percentage =
-      (withCoordinates * 100) / (withCoordinates + withoutCoordinates);
-
-    province.fillColor = perc2color(province.percentage);
-    stats.push(province);
-  }
-  report.register("stats3", stats)
-  return "";`,
+report.register("stats3", stats);
+return "";
+  `,
   report: `
 
 # Coverage
 [FlexBox]
+[OrgunitMap lines:organisationUnits /]
 [OrgunitMap lines:stats2 /]
 [OrgunitMap lines:stats3 /]
 [/FlexBox]
