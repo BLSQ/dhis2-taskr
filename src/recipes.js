@@ -118,7 +118,7 @@ return userResp.users.map( user => {
       });
       return ou.organisationUnits.filter(ou => ou.featureTypeMatches == false);
     `
-    },
+  },
   {
     id: "d4pmpo12iMp",
     name: "Audit coordinates",
@@ -181,7 +181,7 @@ return userResp.users.map( user => {
 
  `,
 
- report: `
+    report: `
 
  [FlexBox]
 # Level 1
@@ -1387,8 +1387,10 @@ return {
     return questions;
     `
   },
-  { id: 'ZZJcZFTSl50', name:"Coordinates coverage",
-  code:`
+  {
+    id: "ZZJcZFTSl50",
+    name: "Coordinates coverage",
+    code: `
 let stats = [];
 const api = await dhis2.api();
 
@@ -1416,9 +1418,9 @@ const version = system.version;
 const v = version.split(".");
 const vfloat = parseFloat(v[0] + "." + v[1]);
 const fieldCoordinates = vfloat >= 2.32 ? "geometry" : "coordinates";
-
+const ouFields = "id,name,coordinates,geometry,ancestors[id,name],leaf,level"
 let provinces = await api.get("organisationUnits", {
-  fields: "id,name,level,coordinates,geometry",
+  fields: ouFields,
   filter: ["level:eq:2"],
   paging: false
 });
@@ -1426,7 +1428,7 @@ let allOrgunits = [];
 const facilityLevel = levels[levels.length - 1];
 for (province of provinces.organisationUnits) {
   const children = await api.get("organisationUnits", {
-    fields: "id,name,coordinates,geometry,ancestors[id,name],leaf,level",
+    fields: ouFields,
     filter: ["path:ilike:" + province.id],
     paging: false
   });
@@ -1440,6 +1442,7 @@ for (province of provinces.organisationUnits) {
   ).length;
   province.withCoordinates = withCoordinates;
   province.withoutCoordinates = withoutCoordinates;
+  province.totalFacilities = withCoordinates + withoutCoordinates
   province.percentage =
     (withCoordinates * 100) / (withCoordinates + withoutCoordinates);
   province.color = "blue";
@@ -1450,43 +1453,68 @@ for (province of provinces.organisationUnits) {
 report.register("organisationUnits", allOrgunits);
 report.register("stats2", stats);
 stats = []
+allOrgunits.forEach(ou => turf.geometrify(ou))
 const districts = allOrgunits.filter(ou => ou.level == 3)
+const badPoints = []
 for (district of districts ) {
-  children = allOrgunits.filter(ou => ou.ancestors[2] && ou.ancestors[2].id == district.id)
+  children = allOrgunits.filter(ou => ou.level == facilityLevel.level && ou.ancestors[2] && ou.ancestors[2].id == district.id)
   withCoordinates = children.filter(
-    ou => ou.level == facilityLevel.level && (ou.coordinates || ou.geometry)
+    ou => (ou.coordinates || ou.geometry)
   ).length;
   withoutCoordinates = children.filter(
     ou =>
-      facilityLevel.level &&
       (ou.coordinates == undefined && ou.geometry == undefined)
   ).length;
+  children.filter(ou => ou.geometry).forEach( ou => {
+    ou.inside = turf.booleanPointInPolygon(ou.geometry, district.geometry);
+    ou.color = ou.inside ? "green" : "red"
+    if (ou.inside == false) {
+      badPoints.push(ou)
+    }
+  })
+
+  district.pointsInParentPolygon = children.filter(ou => ou.inside == true).length
   district.withCoordinates = withCoordinates;
   district.withoutCoordinates = withoutCoordinates;
+  district.totalFacilities = withCoordinates + withoutCoordinates
   district.percentage =
     (withCoordinates * 100) / (withCoordinates + withoutCoordinates);
+
+
   district.color = "blue";
   district.fillColor = perc2color(district.percentage);
   stats.push(district);
 }
 
 report.register("stats3", stats);
+report.register("stats4", stats.concat(badPoints));
 return "";
   `,
-  report: `
+    report: `
 
-# Coverage
+# Coordinates Coverage
+
+> Number of org units with coordinates
+> --------------------------------------------------------------------
+>                 Number of org units
+
 [FlexBox]
-[OrgunitMap lines:organisationUnits /]
 [OrgunitMap lines:stats2 /]
 [OrgunitMap lines:stats3 /]
 [/FlexBox]
 
-[DataTable data:\`stats2.map(l => _.omit(l, 'geometry'))\` label:"Province coverage data" perPage:20/]
+[DataTable data:\`stats2.map(l => _.omit(l, ['geometry','coordinates']))\` label:"Province coverage data" perPage:20/]
 
 [br/][br/][br/]
-[DataTable data:\`stats3.map(l => _.omit(l, 'geometry'))\` label:"District coverage data"/]
+[DataTable data:\`stats3.map(l => _.omit(l, ['geometry','coordinates']))\` label:"District coverage data" perPage:5/]
+
+# Coordinates not belonging to parent polygon
+
+[FlexBox]
+[OrgunitMap lines:organisationUnits width:"700px" height:"700px"/]
+[OrgunitMap lines:\`stats4.map(l => _.omit(l, ['color','fillColor']))\` width:"700px" height:"700px"/]
+[/FlexBox]
 `
-}
+  }
 ];
 export default recipes;

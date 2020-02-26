@@ -62,19 +62,50 @@ const markup = ``;
 
 class DataSets {
   constructor() {
+    this.registeredCount = 0;
     this.datasets = {};
   }
   register(datasetName, data) {
-    this.datasets[datasetName] = data
-    return this
+    this.datasets[datasetName] = data;
+    this.registeredCount += 1;
+    return this;
   }
 
-  asVars(){
-    return this.datasets
+  asVars() {
+    return this.datasets;
   }
+
 }
 
-const dataSets = new DataSets()
+const dataSets = new DataSets();
+
+turf.geometrify = line => {
+  let geometry = line.geometry;
+  try {
+    const latlong =
+      line.coordinate && line.coordinate.latitude && line.coordinate.longitude
+        ? [line.coordinate.latitude, line.coordinate.longitude]
+        : line.coordinates
+        ? JSON.parse(line.coordinates)
+        : line.geometry && line.geometry.coordinates;
+    geometry = turf.point(latlong);
+  } catch (ignored) {
+    try {
+      geometry = turf.polygon(JSON.parse(line.coordinates));
+    } catch (ignored) {
+      try {
+        geometry = turf.multiPolygon(JSON.parse(line.coordinates));
+      } catch (ignored) {}
+    }
+  }
+  if (geometry) {
+    if (geometry.properties) {
+      geometry.properties.line = line;
+    }
+  }
+  line.geometry = geometry;
+  return geometry;
+};
 
 function Editor({ recipe, dhis2, onSave, editable }) {
   const [showEditor, setShowEditor] = useState(recipe.editable);

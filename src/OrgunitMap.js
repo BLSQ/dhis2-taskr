@@ -9,6 +9,7 @@ import {
   GeoJSON,
   FeatureGroup
 } from "react-leaflet";
+import * as L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import CoordinatesControl from "./leaflet/CoordinatesControl";
 import InputLabel from "@material-ui/core/InputLabel";
@@ -16,6 +17,19 @@ import FormControl from "@material-ui/core/FormControl";
 import Button from "@material-ui/core/Button";
 import MenuItem from "@material-ui/core/MenuItem";
 import Select from "@material-ui/core/Select";
+
+const getCircularReplacer = () => {
+  const seen = new WeakSet();
+  return (key, value) => {
+    if (typeof value === "object" && value !== null) {
+      if (seen.has(value)) {
+        return;
+      }
+      seen.add(value);
+    }
+    return value;
+  };
+};
 
 const maps = [
   {
@@ -86,7 +100,46 @@ function OrgunitMap({
     return <p>Map will show if the lines contains a 'coordinates' field</p>;
   }
 
-  function onFeature(feature) {
+  function onFeature(feature, event) {
+    debugger;
+    if (event.originalEvent._stopped) {
+      return;
+    }
+
+    // get the target pane
+    var currentTarget = event.originalEvent.target;
+    var stopped;
+    var removed;
+
+    // hide the target node
+    removed = {
+      node: currentTarget,
+      pointerEvents: currentTarget.style.pointerEvents
+    };
+    currentTarget.style.pointerEvents = "none";
+
+    // attempt to grab the next layer below
+    let nextTarget = document.elementFromPoint(
+      event.originalEvent.clientX,
+      event.originalEvent.clientY
+    );
+
+    // we keep drilling down until we get stopped,
+    // or we reach the map container itself
+    if (
+      nextTarget &&
+      nextTarget.nodeName.toLowerCase() !== "body" &&
+      nextTarget.classList.value.indexOf("leaflet-container") === -1
+    ) {
+      var ev = new MouseEvent(event.originalEvent.type, event.originalEvent);
+      stopped = !nextTarget.dispatchEvent(ev);
+      if (stopped || ev._stopped) {
+        L.DomEvent.stop(event);
+      }
+    }
+
+    // restore pointerEvents
+    removed.node.style.pointerEvents = removed.pointerEvents;
     setClicked(feature);
   }
 
@@ -115,20 +168,27 @@ function OrgunitMap({
         }
       }
       const opacity = geometry.type == "LineString" ? 1 : 0.3;
+      line.fillColor = line.fillColor || getRandomColor();
+      const style = {
+        fillColor: line.fillColor,
+        color: line.color || getRandomColor(),
+        weight: line.opacity || opacity,
+        opacity: line.opacity || opacity,
+        fillOpacity: line.opacity || opacity
+      };
+      if (clicked == line) {
+        style.weight = 3;
+        style.opacity = 0.8;
+        style.dashArray = "5,5";
+      }
       return (
         <GeoJSON
           data={geometry}
-          key={"parent-" + index}
-          style={{
-            fillColor: line.fillColor || getRandomColor(),
-            color: line.color || getRandomColor(),
-            weight: line.opacity || opacity,
-            opacity: line.opacity || opacity,
-            fillOpacity: line.opacity || opacity
-          }}
-          title={JSON.stringify(line)}
-          onClick={() => {
-            onFeature(line);
+          key={"parent-" + index + (clicked == line ? "clicked" : "none")}
+          style={style}
+          title={JSON.stringify(line, getCircularReplacer())}
+          onClick={event => {
+            onFeature(line, event);
           }}
         />
       );
@@ -238,6 +298,7 @@ function OrgunitMap({
       >
         <TileLayer {...selectedLayer}></TileLayer>
         <CoordinatesControl position="top" coordinates="decimal" />
+
         {geojsons}
         {points}
       </Map>

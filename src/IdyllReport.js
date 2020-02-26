@@ -22,7 +22,10 @@ const FlexBox = props => {
   return (
     <div
       style={{
-        display: "flex"
+        display: "flex",
+        flexWrap: "wrap",
+        justifyContent: "space-evenly",
+        alignItems: "flex-end"
       }}
     >
       {props.children.map(item => (
@@ -98,7 +101,7 @@ const IdyllReport = ({ markup, dataSets }) => {
 
   return (
     <IdyllDocument
-      key={JSON.stringify(initialState)}
+      key={dataSets.registeredCount}
       theme="github"
       markup={markup}
       components={availableComponents}
