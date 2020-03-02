@@ -252,7 +252,7 @@ function OrgunitMap({
   };
 
   return (
-    <>
+    <div className="avoid-page-break">
       {showLayers && (
         <div
           style={{
@@ -302,7 +302,7 @@ function OrgunitMap({
         {geojsons}
         {points}
       </Map>
-    </>
+    </div>
   );
 }
 

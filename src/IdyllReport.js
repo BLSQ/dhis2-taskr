@@ -6,6 +6,43 @@ import IdyllVegaLite from "idyll-vega-lite";
 import { AsPrimitive } from "./AsPrimitive";
 import OrgunitBasicMap from "./OrgunitMap";
 
+const LandscapeOrientation = () => (
+  <React.Fragment>
+    <style type="text/css">
+      {
+        "@media print{@page {size: A4 landscape}; .reportPage {width: 100%; margin: 0; };"
+      }
+    </style>
+    <style type="text/css">
+      {
+        "@media screen {  .reportPage {    width: 29.7cm;    margin: auto  } } ;"
+      }
+    </style>
+  </React.Fragment>
+);
+
+const PortraitOrientation = () => (
+  <React.Fragment>
+    <style type="text/css">
+      {
+        "@media print{@page {size: A4 portrait}; .reportPage {width: 100%; margin: 0; }"
+      }
+    </style>
+    <style type="text/css">
+      {"@media screen {  .reportPage {    width: 21cm;    margin: auto  } } "}
+    </style>
+  </React.Fragment>
+);
+
+const PageOrientation = props => (
+  <React.Fragment>
+    {props.orientation === "landscape" && <LandscapeOrientation />}
+    {props.orientation === "portrait" && <PortraitOrientation />}
+  </React.Fragment>
+);
+
+const PageBreak = props => <div className="pagebreak"> </div>;
+
 const AsJSON = props => {
   const { idyll, hasError, updateProps, data, ...otherProps } = props;
 
@@ -47,8 +84,8 @@ const OrgunitMap = props => {
   );
 };
 
-const DataTable = ({data, label, perPage}) => {
-  const results = data || []
+const DataTable = ({ data, label, perPage }) => {
+  const results = data || [];
   const keySet = new Set();
   results.forEach(r => {
     if (r !== null && r !== undefined) {
@@ -91,7 +128,9 @@ const availableComponents = {
   AsJSON: AsJSON,
   OrgunitMap: OrgunitMap,
   FlexBox: FlexBox,
-  DataTable: DataTable
+  DataTable: DataTable,
+  PageOrientation: PageOrientation,
+  PageBreak: PageBreak
 };
 
 const IdyllReport = ({ markup, dataSets }) => {

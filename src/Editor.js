@@ -74,7 +74,6 @@ class DataSets {
   asVars() {
     return this.datasets;
   }
-
 }
 
 const dataSets = new DataSets();
@@ -214,128 +213,134 @@ function Editor({ recipe, dhis2, onSave, editable }) {
   };
   return (
     <div>
-      {editable && <Help></Help>}
-      {editable && (
-        <TextField
-          id="standard-name"
-          label="Name"
-          value={name}
-          style={{ width: "400px" }}
-          onChange={event => {
-            setName(event.target.value);
-          }}
-          margin="normal"
-        />
-      )}
-      {editable == false && <h2>{recipe.name}</h2>}
-      <div style={{ color: "red" }}>{error}</div>
-      <br />
-
-      {editable && recipe && showEditor && (
-        <>
-          <FormControl>
-            <InputLabel>Edit</InputLabel>
-            <Select onChange={editablePropertySelected} value={propertyEdited}>
-              {["code", "parameters", "report"].map(m => (
-                <MenuItem value={m}>{m}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <AceEditor
-            readOnly={recipe && recipe.editable === false}
-            name="script"
-            fontSize={18}
-            width={"80%"}
-            height={400}
-            mode="javascript"
-            theme="monokai"
-            value={editableContent}
-            debounceChangePeriod={3}
-            enableBasicAutocompletion={true}
-            enableSnippets={true}
-            onChange={val => {
-              if (propertyEdited == "code") {
-                setCode(val);
-              } else if (propertyEdited == "parameters") {
-                parametersDefinitionsChange(val);
-              } else if (propertyEdited == "report") {
-                setReport(val);
-              }
+      <div className="no-print">
+        {editable && <Help></Help>}
+        {editable && (
+          <TextField
+            id="standard-name"
+            label="Name"
+            value={name}
+            style={{ width: "400px" }}
+            onChange={event => {
+              setName(event.target.value);
             }}
-            commands={[
-              {
-                name: "Run",
-                bindKey: { win: "Ctrl-r", mac: "Command-r" },
-                exec: editor => {
-                  onRun(editor.getValue());
+            margin="normal"
+          />
+        )}
+        {editable == false && <h2>{recipe.name}</h2>}
+        <div style={{ color: "red" }}>{error}</div>
+        <br />
+
+        {editable && recipe && showEditor && (
+          <>
+            <FormControl>
+              <InputLabel>Edit</InputLabel>
+              <Select
+                onChange={editablePropertySelected}
+                value={propertyEdited}
+              >
+                {["code", "parameters", "report"].map(m => (
+                  <MenuItem value={m}>{m}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <AceEditor
+              readOnly={recipe && recipe.editable === false}
+              name="script"
+              fontSize={18}
+              width={"80%"}
+              height={400}
+              mode="javascript"
+              theme="monokai"
+              value={editableContent}
+              debounceChangePeriod={3}
+              enableBasicAutocompletion={true}
+              enableSnippets={true}
+              onChange={val => {
+                if (propertyEdited == "code") {
+                  setCode(val);
+                } else if (propertyEdited == "parameters") {
+                  parametersDefinitionsChange(val);
+                } else if (propertyEdited == "report") {
+                  setReport(val);
                 }
-              }
-            ]}
-          />
-        </>
-      )}
-
-      {parameterDefinitions !== undefined &&
-        parameterDefinitions !== [] &&
-        parameterDefinitions !== {} && (
-          <>
-            <Params
-              params={parameterDefinitions}
-              onParametersChange={setParameters}
-              dhis2={dhis2}
-            ></Params>
-            <br></br>
+              }}
+              commands={[
+                {
+                  name: "Run",
+                  bindKey: { win: "Ctrl-r", mac: "Command-r" },
+                  exec: editor => {
+                    onRun(editor.getValue());
+                  }
+                }
+              ]}
+            />
           </>
         )}
-      <Button
-        onClick={click => {
-          onRun(code);
-        }}
-        title="ctrl-r to run from the editor"
-        style={style}
-      >
-        <PlayArrowIcon />
-        Run
-      </Button>
 
-      {editable && (
-        <>
-          <Button
-            style={style}
-            onClick={click => {
-              setResults("");
-            }}
-          >
-            Clear
-          </Button>
-          <Button
-            style={style}
-            variant="contained"
-            onClick={save}
-            disabled={!dirty}
-          >
-            Save
-          </Button>{" "}
-          <FormControlLabel
-            control={<Switch value={showEditor} />}
-            label="Hide editor"
-            onChange={() => setShowEditor(!showEditor)}
-          />
-        </>
-      )}
+        {parameterDefinitions !== undefined &&
+          parameterDefinitions !== [] &&
+          parameterDefinitions !== {} && (
+            <>
+              <Params
+                params={parameterDefinitions}
+                onParametersChange={setParameters}
+                dhis2={dhis2}
+              ></Params>
+              <br></br>
+            </>
+          )}
+        <Button
+          onClick={click => {
+            onRun(code);
+          }}
+          title="ctrl-r to run from the editor"
+          style={style}
+        >
+          <PlayArrowIcon />
+          Run
+        </Button>
 
-      <span>
-        {requests && requests.length > 1 && (
+        <Button onClick={() => window.print()}>Print</Button>
+
+        {editable && (
           <>
-            <a href={requests[0]} target="_blank" rel="noopener noreferrer">
-              {decodeURIComponent(requests[0])}
-            </a>
-            {"     "}
-            {requests.slice(1).join(" | ")}
+            <Button
+              style={style}
+              onClick={click => {
+                setResults("");
+              }}
+            >
+              Clear
+            </Button>
+            <Button
+              style={style}
+              variant="contained"
+              onClick={save}
+              disabled={!dirty}
+            >
+              Save
+            </Button>{" "}
+            <FormControlLabel
+              control={<Switch value={showEditor} />}
+              label="Hide editor"
+              onChange={() => setShowEditor(!showEditor)}
+            />
           </>
         )}
-      </span>
 
+        <span>
+          {requests && requests.length > 1 && (
+            <>
+              <a href={requests[0]} target="_blank" rel="noopener noreferrer">
+                {decodeURIComponent(requests[0])}
+              </a>
+              {"     "}
+              {requests.slice(1).join(" | ")}
+            </>
+          )}
+        </span>
+      </div>
       <br />
       <br />
       <Results results={results} label={name || ""} position={position} />

@@ -1444,7 +1444,7 @@ for (province of provinces.organisationUnits) {
   province.withoutCoordinates = withoutCoordinates;
   province.totalFacilities = withCoordinates + withoutCoordinates
   province.percentage =
-    (withCoordinates * 100) / (withCoordinates + withoutCoordinates);
+    ((withCoordinates * 100) / (withCoordinates + withoutCoordinates)).toFixed(2);
   province.color = "blue";
   province.fillColor = perc2color(province.percentage);
   stats.push(province);
@@ -1478,7 +1478,7 @@ for (district of districts ) {
   district.withoutCoordinates = withoutCoordinates;
   district.totalFacilities = withCoordinates + withoutCoordinates
   district.percentage =
-    (withCoordinates * 100) / (withCoordinates + withoutCoordinates);
+    ((withCoordinates * 100) / (withCoordinates + withoutCoordinates)).toFixed(2);
 
 
   district.color = "blue";
@@ -1491,27 +1491,43 @@ report.register("stats4", stats.concat(badPoints));
 return "";
   `,
     report: `
-
+[PageOrientation orientation:"landscape" /]
 # Coordinates Coverage
 
 > Number of org units with coordinates
 > --------------------------------------------------------------------
 >                 Number of org units
 
+[PageBreak /]
+## At level 2 
 [FlexBox]
 [OrgunitMap lines:stats2 /]
+[/FlexBox]
+[PageBreak /]
+
+## At level 3
+[FlexBox]
 [OrgunitMap lines:stats3 /]
 [/FlexBox]
+[PageBreak /]
 
-[DataTable data:\`stats2.map(l => _.omit(l, ['geometry','coordinates']))\` label:"Province coverage data" perPage:20/]
+
+## Detailed data
+[DataTable data:\`stats2.map(l => _.omit(l, ['id','geometry','coordinates','ancestors','color','fillColor']))\` label:"Province coverage data" perPage:20/]
 
 [br/][br/][br/]
-[DataTable data:\`stats3.map(l => _.omit(l, ['geometry','coordinates']))\` label:"District coverage data" perPage:5/]
+[DataTable data:\`stats3.map(l => _.omit(l, ['id','geometry','coordinates','ancestors','color','fillColor']))\` label:"District coverage data" perPage:5/]
 
 # Coordinates not belonging to parent polygon
 
+## All points
 [FlexBox]
 [OrgunitMap lines:organisationUnits width:"700px" height:"700px"/]
+[/FlexBox]
+[PageBreak /]
+
+## All points not belonging to parent polygon
+[FlexBox]
 [OrgunitMap lines:\`stats4.map(l => _.omit(l, ['color','fillColor']))\` width:"700px" height:"700px"/]
 [/FlexBox]
 `

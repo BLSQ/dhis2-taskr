@@ -168,8 +168,8 @@ function App() {
     <Router>
       {recipes === undefined && <span>Loading...</span>}
       {recipes && (
-        <div className={classes.root}>
-          <AppBar position="static" color="primary">
+        <div className={classes.root + " reportPage"}>
+          <AppBar position="static" color="primary" className="no-print">
             <Toolbar>
               <IconButton
                 edge="start"
