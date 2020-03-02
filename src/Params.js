@@ -152,6 +152,26 @@ const Params = props => {
     });
   }
 
+  function parserJson(inputElement) {
+    const elementName = inputElement.target.name;
+    const files = inputElement.target.files || [];
+    var reader = new FileReader();
+    if (!files.length) return;
+    const file = files[0];
+    reader.onload = function(event) {
+      var jsonObj = JSON.parse(event.target.result);
+
+      const newParameters = {
+        ...parameters,
+        [elementName]: jsonObj
+      };
+      setParameters(newParameters);
+      props.onParametersChange(newParameters);
+    };
+
+    reader.readAsText(file);
+  }
+
   function parserCsv(evt) {
     const files = evt.target.files || [];
     if (!files.length) return;
@@ -241,6 +261,19 @@ const Params = props => {
                   name={k}
                   onChange={parserCsv}
                   accept=".csv"
+                  style={style}
+                ></input>
+                <Typography>{v.helperText}</Typography>
+              </>
+            )}
+            {v.type == "json" && (
+              <>
+                <InputLabel style={{ marginLeft: "10px" }}>{label}</InputLabel>
+                <input
+                  type="file"
+                  name={k}
+                  onChange={parserJson}
+                  accept=".json"
                   style={style}
                 ></input>
                 <Typography>{v.helperText}</Typography>
