@@ -841,7 +841,12 @@ if (dryRun) {
         label: "GADM level",
         type: "select",
         default: "1",
-        choices: [[0, "0"], [1, "1"], [2, "2"], [3, "3"]]
+        choices: [
+          [0, "0"],
+          [1, "1"],
+          [2, "2"],
+          [3, "3"]
+        ]
       }
     ],
     code: `
@@ -898,7 +903,10 @@ if (dryRun) {
         label: "Select run mode",
         type: "select",
         default: "dryRun",
-        choices: [["dryRun", "Dry run"], ["update", "update"]]
+        choices: [
+          ["dryRun", "Dry run"],
+          ["update", "update"]
+        ]
       }
     ],
     code: `
@@ -1531,6 +1539,29 @@ return "";
 [OrgunitMap lines:\`stats4.map(l => _.omit(l, ['color','fillColor']))\` width:"700px" height:"700px"/]
 [/FlexBox]
 `
+  },
+  {
+    id: "FP8cYl1lSF6",
+    name: "demo dashboard to pdf",
+    code: `
+
+// press crtl-r to run
+const api = await dhis2.api();
+const ou = await api.get("dashboards/nghVC4wtyzi", {
+  fields: "id,name,dashboardItems[type,chart[id,name],map[id,name]]",
+  paging: false
+});
+const vals = ou.dashboardItems.filter(d => d.chart || d.map);
+
+report.register("charts", vals);
+return "";
+`,
+
+    report: `
+[PageOrientation orientation:"landscape" /]
+[MyLoop value:charts]
+ [Dhis2Item data:\`MyLoop.item()\` /]
+[/MyLoop]`
   }
 ];
 export default recipes;

@@ -1,11 +1,12 @@
 import React from "react";
 import MUIDataTable from "mui-datatables";
 import IdyllDocument from "idyll-document";
+import { mapChildren } from "idyll-component-children";
 import * as components from "idyll-components";
 import IdyllVegaLite from "idyll-vega-lite";
 import { AsPrimitive } from "./AsPrimitive";
 import OrgunitBasicMap from "./OrgunitMap";
-
+import ErrorBoundary from "./ErrorBoundary";
 const LandscapeOrientation = () => (
   <React.Fragment>
     <style type="text/css">
@@ -122,6 +123,48 @@ const DataTable = ({ data, label, perPage }) => {
     />
   );
 };
+
+let myLoopItem = undefined;
+
+class MyLoop extends React.Component {
+  static item() {
+    return myLoopItem;
+  }
+  render() {
+    const { children, value } = this.props;
+
+    if (children && value) {
+      return value.map(val => {
+        myLoopItem = val;
+        return mapChildren(children, child => {
+          if (typeof child !== "object") {
+            return child;
+          }
+          let newProps = Object.assign({}, child.props);
+          newProps = Object.keys(child.props).reduce((props, elm) => {
+            props["iitem"] = val;
+            return props;
+          }, newProps);
+          return React.cloneElement(child, { ...newProps });
+        });
+      });
+    }
+    return null;
+  }
+}
+
+const Dhis2Item = props => {
+  const item = props.iitem;
+  if (item == undefined) {
+    return <></>;
+  }
+  debugger;
+  const propName = item.type.toLowerCase();
+  const url =
+    "../../" + propName.toLowerCase() + "s/" + item[propName].id + "/data.png";
+  return <img src={url} alt={item[propName].name}></img>;
+};
+
 const availableComponents = {
   ...components,
   IdyllVegaLite: IdyllVegaLite,
@@ -130,7 +173,9 @@ const availableComponents = {
   FlexBox: FlexBox,
   DataTable: DataTable,
   PageOrientation: PageOrientation,
-  PageBreak: PageBreak
+  PageBreak: PageBreak,
+  MyLoop: MyLoop,
+  Dhis2Item: Dhis2Item
 };
 
 const IdyllReport = ({ markup, dataSets }) => {
@@ -139,13 +184,15 @@ const IdyllReport = ({ markup, dataSets }) => {
   };
 
   return (
-    <IdyllDocument
-      key={dataSets.registeredCount}
-      theme="github"
-      markup={markup}
-      components={availableComponents}
-      initialState={initialState}
-    />
+    <ErrorBoundary>
+      <IdyllDocument
+        key={dataSets.registeredCount}
+        theme="github"
+        markup={markup}
+        components={availableComponents}
+        initialState={initialState}
+      />
+    </ErrorBoundary>
   );
 };
 
