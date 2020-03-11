@@ -71,24 +71,75 @@ return resources.resources.map( r => {
     name: "Basic - Super user audit",
     editable: true,
     code: `
-const api = await dhis2.api();
+    const api = await dhis2.api();
 
-const userResp = await api.get("users",{
-    fields:"id,name,email,userCredentials[userRoles[id,name]],organisationUnits[id,name,level]",
-    paging:false
-})
+    const userResp = await api.get("users", {
+      fields:
+        "id,name,email,userCredentials[userRoles[id,name],lastLogin],organisationUnits[id,name,level],created",
+      filter: "userCredentials.disabled:eq:false",
+      paging: false
+    });
+    const users = userResp.users
+      .map(user => {
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          superuser: user.userCredentials.userRoles.some(role =>
+            ["Superuser", "Administrateur Principal"].includes(role["name"])
+          )
+            ? "true"
+            : "",
+          manageOrganisationUnits: user.organisationUnits
+            .map(ou => ou.name)
+            .join(", "),
+          roles: user.userCredentials.userRoles.map(r => r.name).join(", "),
+          created: user.created,
+          lastLogin: user.userCredentials.lastLogin
+        };
+      })
+      .sort((a, b) => (a.superuser ? -1 : b.super_user ? -1 : 1));
 
-return userResp.users.map( user => {
-    return {
-        id: user.id,
-        name:user.name,
-        email: user.email,
-        superuser: user.userCredentials.userRoles.some(role => role["name"]==="Superuser") ? "super user !": "",
-        manageOrganisationUnits: user.organisationUnits.map(ou=> ou.name).join(", ")
-    }
-}).sort((a,b) => a.superuser ? -1 : b.super_user ? -1: 1)
+    const date = new Date();
+    const newDate = new Date(date.setMonth(date.getMonth() - 6));
+    const loginDate =  date.toJSON().substring(0, 7)
+      
+    report.register("superusers", users.filter(u => u.superuser));
+    report.register("created_notloggedin", users.filter(u => u.lastLogin == undefined));
+    report.register("oldLastLogin", users.filter(u => u.lastLogin && u.lastLogin <= loginDate ));
+    report.register("users", users);  
 
-  `
+    return "";
+    
+
+  `,
+    report: `
+# Admin users
+
+Limit the admin users to a small number
+
+[DataTable data:superusers label:"Admin users" perPage:50/]
+
+# Users created but never logged in
+
+User created but that never logged in. If they were created long time a ago, it's probably safer to disable them.
+
+[DataTable data:created_notloggedin label:"Created but never logged in" perPage:20/]
+
+# Last login more than 6 months
+
+These users didn't logged in since a while. It's probably safer to disable them.
+
+[DataTable data:oldLastLogin label:"Login more than 6 months" perPage:20/]
+
+# All enabled users
+
+You might want to audit the roles and orgunits of existing users
+
+[DataTable data:users label:"All users" perPage:20/]
+
+
+`
   },
   {
     id: "bifaoG4Ky23",
@@ -1543,11 +1594,23 @@ return "";
   {
     id: "FP8cYl1lSF6",
     name: "demo dashboard to pdf",
+    params: [
+      {
+        id: "dashboard",
+        label: "Search",
+        type: "dhis2",
+        resourceName: "dashboards",
+        default: {
+          name: "PLAY ANC dashboard",
+          id: "nghVC4wtyzi"
+        }
+      }
+    ],
     code: `
 
 // press crtl-r to run
 const api = await dhis2.api();
-const ou = await api.get("dashboards/nghVC4wtyzi", {
+const ou = await api.get("dashboards/"+parameters.dashboard.id, {
   fields: "id,name,dashboardItems[type,chart[id,name],map[id,name]]",
   paging: false
 });
@@ -1562,6 +1625,53 @@ return "";
 [MyLoop value:charts]
  [Dhis2Item data:\`MyLoop.item()\` /]
 [/MyLoop]`
+  },
+  {
+    id: "df",
+    name: "Last metadata changes (this months max 1000)",
+    code: `
+date = new Date();
+var newDate = new Date(date.setMonth(date.getMonth() - 1));
+const api = await dhis2.api();
+const ou = await api.get("metadataAudits", {
+  pageSize: 1000,
+  createdAt: date.toJSON().substring(0, 7)
+});
+ou.metadataAudits = ou.metadataAudits.sort(
+  (a, b) => -1 * a.createdAt.localeCompare(b.createdAt)
+);
+const format_value = mutation => {
+  if (mutation.path == "attributeValues") {
+    return mutation.value
+      .map(av => av.attribute.code + " => " + av.value)
+      .join("\\n");
+  }
+  if (mutation.path == "dataSetElements") {
+    return (
+      mutation.path + " => " + mutation.value.map(av => av.dataElement.name)
+    );
+  }
+  return mutation.path + " => " + mutation.value;
+};
+
+ou.metadataAudits.forEach(met => {
+  met.klass = met.klass.split(".")[met.klass.split(".").length - 1];
+  if (met.value) {
+    const value = JSON.parse(met.value);
+    let val = value.mutations
+      ? value.mutations
+          .filter(m => m.path !== "lastUpdated")
+          .map(m => format_value(m))
+      : [];
+    if (met.type === "CREATE" || met.type === "DELETE") {
+      val = [value.name + " (" + value.id + ")"];
+    }
+    delete met.value;
+    met.what = val.join("\\n ");
+  }
+});
+return ou.metadataAudits;
+`
   }
 ];
 export default recipes;

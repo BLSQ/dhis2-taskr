@@ -76,7 +76,7 @@ function RecipePage({
         editable={editable}
       />
       {editable && (
-        <Fab className={classes.fab} onClick={newRecipe}>
+        <Fab className={classes.fab + " no-print"} onClick={newRecipe}>
           <AddIcon />
         </Fab>
       )}

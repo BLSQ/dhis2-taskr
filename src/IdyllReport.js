@@ -7,6 +7,8 @@ import IdyllVegaLite from "idyll-vega-lite";
 import { AsPrimitive } from "./AsPrimitive";
 import OrgunitBasicMap from "./OrgunitMap";
 import ErrorBoundary from "./ErrorBoundary";
+import { createMuiTheme, MuiThemeProvider } from "@material-ui/core/styles";
+
 const LandscapeOrientation = () => (
   <React.Fragment>
     <style type="text/css">
@@ -95,47 +97,53 @@ const DataTable = ({ data, label, perPage }) => {
   });
   const keys = Array.from(keySet);
   const filename = (label || "Result List").replace(/\s/g, "_") + ".csv";
-  return (
-    <MUIDataTable
-      title={label || "Result List"}
-      data={results}
-      columns={keys.map(k => {
-        return {
-          name: k,
-          options: {
-            filter: true,
-            customBodyRender: value => <AsPrimitive value={value} />
+  const getMuiTheme = () =>
+    createMuiTheme({
+      overrides: {
+        MUIDataTable: {
+          paper: {
+            marginRight: "50px"
           }
-        };
-      })}
-      options={{
-        filterType: "dropdown",
-        print: false,
-        responsive: "scrollFullHeight",
-        selectableRows: "none",
-        downloadOptions: {
-          filename: filename,
-          separator: ","
-        },
-        rowsPerPageOptions: [1, 10, 20, 50, 100, 1000],
-        rowsPerPage: perPage || 20
-      }}
-    />
+        }
+      }
+    });
+  return (
+    <MuiThemeProvider theme={getMuiTheme()}>
+      <MUIDataTable
+        title={label || "Result List"}
+        data={results}
+        columns={keys.map(k => {
+          return {
+            name: k,
+            options: {
+              filter: true,
+              customBodyRender: value => <AsPrimitive value={value} />
+            }
+          };
+        })}
+        options={{
+          filterType: "dropdown",
+          print: false,
+          responsive: "scrollFullHeight",
+          selectableRows: "none",
+          downloadOptions: {
+            filename: filename,
+            separator: ","
+          },
+          rowsPerPageOptions: [1, 10, 20, 50, 100, 1000],
+          rowsPerPage: perPage || 20
+        }}
+      />
+    </MuiThemeProvider>
   );
 };
 
-let myLoopItem = undefined;
-
 class MyLoop extends React.Component {
-  static item() {
-    return myLoopItem;
-  }
   render() {
     const { children, value } = this.props;
 
     if (children && value) {
       return value.map(val => {
-        myLoopItem = val;
         return mapChildren(children, child => {
           if (typeof child !== "object") {
             return child;
@@ -158,7 +166,6 @@ const Dhis2Item = props => {
   if (item == undefined) {
     return <></>;
   }
-  debugger;
   const propName = item.type.toLowerCase();
   const url =
     "../../" + propName.toLowerCase() + "s/" + item[propName].id + "/data.png";
