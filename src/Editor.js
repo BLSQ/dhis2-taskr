@@ -29,6 +29,13 @@ import parser from "prettier/parser-babylon";
 
 import Params from "./Params";
 import { TextareaAutosize } from "@material-ui/core";
+
+import IdyllReport from "./IdyllReport";
+import InputLabel from "@material-ui/core/InputLabel";
+import FormControl from "@material-ui/core/FormControl";
+
+import MenuItem from "@material-ui/core/MenuItem";
+import Select from "@material-ui/core/Select";
 const position = [-12.9487, 9.0131];
 const AsyncFunction = Object.getPrototypeOf(async function() {}).constructor;
 
@@ -51,20 +58,69 @@ const interceptor = FetchInterceptor.register({
   }
 });
 
+const markup = ``;
+
+class DataSets {
+  constructor() {
+    this.registeredCount = 0;
+    this.datasets = {};
+  }
+  register(datasetName, data) {
+    this.datasets[datasetName] = data;
+    this.registeredCount += 1;
+    return this;
+  }
+
+  asVars() {
+    return this.datasets;
+  }
+}
+
+const dataSets = new DataSets();
+
+turf.geometrify = line => {
+  let geometry = line.geometry;
+  try {
+    const latlong =
+      line.coordinate && line.coordinate.latitude && line.coordinate.longitude
+        ? [line.coordinate.latitude, line.coordinate.longitude]
+        : line.coordinates
+        ? JSON.parse(line.coordinates)
+        : line.geometry && line.geometry.coordinates;
+    geometry = turf.point(latlong);
+  } catch (ignored) {
+    try {
+      geometry = turf.polygon(JSON.parse(line.coordinates));
+    } catch (ignored) {
+      try {
+        geometry = turf.multiPolygon(JSON.parse(line.coordinates));
+      } catch (ignored) {}
+    }
+  }
+  if (geometry) {
+    if (geometry.properties) {
+      geometry.properties.line = line;
+    }
+  }
+  line.geometry = geometry;
+  return geometry;
+};
+
 function Editor({ recipe, dhis2, onSave, editable }) {
   const [showEditor, setShowEditor] = useState(recipe.editable);
-  const [showParamsEditor, setShowParamsEditor] = useState(false);
+
   if (showEditor && editable == false) {
     setShowEditor(false);
-    setShowParamsEditor(false);
   }
+  const [propertyEdited, setPropertyEdited] = useState("code");
   const [name, setName] = useState(recipe.name);
   const [code, setCode] = useState(recipe.code);
+  const [report, setReport] = useState(recipe.report || markup);
   const [results, setResults] = useState(undefined);
   const [requests, setRequests] = useState([]);
   const [parameters, setParameters] = useState({});
   const [parameterDefinitionsJson, setParameterDefinitionsJson] = useState(
-    recipe.params ? JSON.stringify(recipe.params, null, 4) : []
+    recipe.params ? JSON.stringify(recipe.params, null, 4) : "[]"
   );
   const [parameterDefinitions, setParameterDefinitions] = useState(
     recipe.params
@@ -72,12 +128,12 @@ function Editor({ recipe, dhis2, onSave, editable }) {
 
   setOutRequest = setRequests;
   const [error, setError] = useState("");
-  const parametersDefinitionsChange = e => {
-    setParameterDefinitionsJson(e.target.value);
+  const parametersDefinitionsChange = value => {
+    setParameterDefinitionsJson(value);
     try {
-      setParameterDefinitions(JSON.parse(e.target.value));
+      setParameterDefinitions(JSON.parse(value));
     } catch (error) {
-      setError(error.message + " " + e.target.value);
+      setError(error.message + " " + value);
     }
   };
   async function onRun(code) {
@@ -102,6 +158,7 @@ function Editor({ recipe, dhis2, onSave, editable }) {
         "XlsxPopulate",
         "DatePeriods",
         "parameters",
+        "report",
         body
       )(
         dhis2,
@@ -112,7 +169,8 @@ function Editor({ recipe, dhis2, onSave, editable }) {
         PapaParse,
         XlsxPopulate,
         DatePeriods,
-        parameters
+        parameters,
+        dataSets
       );
 
       setResults(results);
@@ -133,7 +191,8 @@ function Editor({ recipe, dhis2, onSave, editable }) {
       name: name,
       code: code,
       editable: true,
-      params: parameterDefinitions
+      params: parameterDefinitions,
+      report: report
     };
     onSave(modifiedRecipe);
   }
@@ -141,131 +200,151 @@ function Editor({ recipe, dhis2, onSave, editable }) {
   const style = {
     marginLeft: "20px"
   };
+  let editableContent = code;
+  if (propertyEdited == "code") {
+    editableContent = code;
+  } else if (propertyEdited == "parameters") {
+    editableContent = parameterDefinitionsJson || "";
+  } else if (propertyEdited == "report") {
+    editableContent = report;
+  }
+  const editablePropertySelected = (event, val) => {
+    setPropertyEdited(val.props.value);
+  };
   return (
     <div>
-      {editable && <Help></Help>}
-      {editable && (
-        <TextField
-          id="standard-name"
-          label="Name"
-          value={name}
-          style={{ width: "400px" }}
-          onChange={event => {
-            setName(event.target.value);
-          }}
-          margin="normal"
-        />
-      )}
-      {editable == false && <h2>{recipe.name}</h2>}
-      <div style={{ color: "red" }}>{error}</div>
-      <br />
-      {editable && recipe && showEditor && (
-        <AceEditor
-          readOnly={recipe && recipe.editable === false}
-          name="script"
-          fontSize={18}
-          width={"80%"}
-          height={400}
-          mode="javascript"
-          theme="monokai"
-          value={code}
-          debounceChangePeriod={3}
-          enableBasicAutocompletion={true}
-          enableSnippets={true}
-          onChange={val => {
-            setCode(val);
-          }}
-          commands={[
-            {
-              name: "Run",
-              bindKey: { win: "Ctrl-r", mac: "Command-r" },
-              exec: editor => {
-                onRun(editor.getValue());
-              }
-            }
-          ]}
-        />
-      )}
-      {editable && recipe && showParamsEditor && showEditor && (
-        <>
-          <h3>Parameter Definitions</h3>
-          <TextareaAutosize
-            cols={150}
-            value={parameterDefinitionsJson}
-            onChange={parametersDefinitionsChange}
-          ></TextareaAutosize>
-          <br></br>
-        </>
-      )}
-      {parameterDefinitions !== undefined &&
-        parameterDefinitions !== [] &&
-        parameterDefinitions !== {} && (
-          <>
-            <Params
-              params={parameterDefinitions}
-              onParametersChange={setParameters}
-              dhis2={dhis2}
-            ></Params>
-            <br></br>
-          </>
-        )}
-      <Button
-        onClick={click => {
-          onRun(code);
-        }}
-        title="ctrl-r to run from the editor"
-        style={style}
-      >
-        <PlayArrowIcon />
-        Run
-      </Button>
-
-      {editable && (
-        <>
-          <Button
-            style={style}
-            onClick={click => {
-              setResults("");
+      <div className="no-print">
+        {editable && <Help></Help>}
+        {editable && (
+          <TextField
+            id="standard-name"
+            label="Name"
+            value={name}
+            style={{ width: "400px" }}
+            onChange={event => {
+              setName(event.target.value);
             }}
-          >
-            Clear
-          </Button>
-          <Button
-            style={style}
-            variant="contained"
-            onClick={save}
-            disabled={!dirty}
-          >
-            Save
-          </Button>{" "}
-          <FormControlLabel
-            control={<Switch value={showEditor} />}
-            label="Hide editor"
-            onChange={() => setShowEditor(!showEditor)}
-          />{" "}
-          <FormControlLabel
-            control={<Switch value={showParamsEditor} />}
-            label="Hide params editor"
-            onChange={() => setShowParamsEditor(!showParamsEditor)}
-          />{" "}
-        </>
-      )}
+            margin="normal"
+          />
+        )}
+        {editable == false && <h2>{recipe.name}</h2>}
+        <div style={{ color: "red" }}>{error}</div>
+        <br />
 
-      <span>
-        {requests && requests.length > 1 && (
+        {editable && recipe && showEditor && (
           <>
-            <a href={requests[0]} target="_blank" rel="noopener noreferrer">
-              {decodeURIComponent(requests[0])}
-            </a>
-            {"     "}
-            {requests.slice(1).join(" | ")}
+            <FormControl>
+              <InputLabel>Edit</InputLabel>
+              <Select
+                onChange={editablePropertySelected}
+                value={propertyEdited}
+              >
+                {["code", "parameters", "report"].map(m => (
+                  <MenuItem value={m}>{m}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <AceEditor
+              readOnly={recipe && recipe.editable === false}
+              name="script"
+              fontSize={18}
+              width={"80%"}
+              height={400}
+              mode="javascript"
+              theme="monokai"
+              value={editableContent}
+              debounceChangePeriod={3}
+              enableBasicAutocompletion={true}
+              enableSnippets={true}
+              onChange={val => {
+                if (propertyEdited == "code") {
+                  setCode(val);
+                } else if (propertyEdited == "parameters") {
+                  parametersDefinitionsChange(val);
+                } else if (propertyEdited == "report") {
+                  setReport(val);
+                }
+              }}
+              commands={[
+                {
+                  name: "Run",
+                  bindKey: { win: "Ctrl-r", mac: "Command-r" },
+                  exec: editor => {
+                    onRun(editor.getValue());
+                  }
+                }
+              ]}
+            />
           </>
         )}
-      </span>
 
+        {parameterDefinitions !== undefined &&
+          parameterDefinitions !== [] &&
+          parameterDefinitions !== {} && (
+            <>
+              <Params
+                params={parameterDefinitions}
+                onParametersChange={setParameters}
+                dhis2={dhis2}
+              ></Params>
+              <br></br>
+            </>
+          )}
+        <Button
+          onClick={click => {
+            onRun(code);
+          }}
+          title="ctrl-r to run from the editor"
+          style={style}
+        >
+          <PlayArrowIcon />
+          Run
+        </Button>
+
+        <Button onClick={() => window.print()}>Print</Button>
+
+        {editable && (
+          <>
+            <Button
+              style={style}
+              onClick={click => {
+                setResults("");
+              }}
+            >
+              Clear
+            </Button>
+            <Button
+              style={style}
+              variant="contained"
+              onClick={save}
+              disabled={!dirty}
+            >
+              Save
+            </Button>{" "}
+            <FormControlLabel
+              control={<Switch value={showEditor} />}
+              label="Hide editor"
+              onChange={() => setShowEditor(!showEditor)}
+            />
+          </>
+        )}
+
+        <span>
+          {requests && requests.length > 1 && (
+            <>
+              <a href={requests[0]} target="_blank" rel="noopener noreferrer">
+                {decodeURIComponent(requests[0])}
+              </a>
+              {"     "}
+              {requests.slice(1).join(" | ")}
+            </>
+          )}
+        </span>
+      </div>
       <br />
       <br />
       <Results results={results} label={name || ""} position={position} />
+      <IdyllReport markup={report} dataSets={dataSets}></IdyllReport>
     </div>
   );
 }

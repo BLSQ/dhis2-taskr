@@ -11,3 +11,61 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
 }
+img.leaflet-tile {
+  pointer-events: none;
+}
+
+
+@page {
+  margin-top: 10mm;
+  margin-bottom: 5mm;
+  margin-right: 1mm;
+  margin-left: 1mm;
+}
+@media print {
+  .pagebreak {
+    clear: both;
+    page-break-after: always;
+  }
+
+  .body {
+    font-size: 10pt;
+  }
+
+  .no-print,
+  .no-print * {
+    display: none !important;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    page-break-after: avoid !important;
+  }
+  .avoid-page-break,
+  p,
+  li,
+  blockquote,
+  figure,
+  img {
+    page-break-inside: avoid !important;
+  }
+}
+
+.avoid-page-break,
+p,
+li,
+blockquote,
+figure,
+img {
+  page-break-inside: avoid !important;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+}

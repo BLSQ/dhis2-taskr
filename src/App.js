@@ -76,7 +76,7 @@ function RecipePage({
         editable={editable}
       />
       {editable && (
-        <Fab className={classes.fab} onClick={newRecipe}>
+        <Fab className={classes.fab + " no-print"} onClick={newRecipe}>
           <AddIcon />
         </Fab>
       )}
@@ -168,8 +168,8 @@ function App() {
     <Router>
       {recipes === undefined && <span>Loading...</span>}
       {recipes && (
-        <div className={classes.root}>
-          <AppBar position="static" color="primary">
+        <div className={classes.root + " reportPage"}>
+          <AppBar position="static" color="primary" className="no-print">
             <Toolbar>
               <IconButton
                 edge="start"

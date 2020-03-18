@@ -71,24 +71,75 @@ return resources.resources.map( r => {
     name: "Basic - Super user audit",
     editable: true,
     code: `
-const api = await dhis2.api();
+    const api = await dhis2.api();
 
-const userResp = await api.get("users",{
-    fields:"id,name,email,userCredentials[userRoles[id,name]],organisationUnits[id,name,level]",
-    paging:false
-})
+    const userResp = await api.get("users", {
+      fields:
+        "id,name,email,userCredentials[userRoles[id,name],lastLogin],organisationUnits[id,name,level],created",
+      filter: "userCredentials.disabled:eq:false",
+      paging: false
+    });
+    const users = userResp.users
+      .map(user => {
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          superuser: user.userCredentials.userRoles.some(role =>
+            ["Superuser", "Administrateur Principal"].includes(role["name"])
+          )
+            ? "true"
+            : "",
+          manageOrganisationUnits: user.organisationUnits
+            .map(ou => ou.name)
+            .join(", "),
+          roles: user.userCredentials.userRoles.map(r => r.name).join(", "),
+          created: user.created,
+          lastLogin: user.userCredentials.lastLogin
+        };
+      })
+      .sort((a, b) => (a.superuser ? -1 : b.super_user ? -1 : 1));
 
-return userResp.users.map( user => {
-    return {
-        id: user.id,
-        name:user.name,
-        email: user.email,
-        superuser: user.userCredentials.userRoles.some(role => role["name"]==="Superuser") ? "super user !": "",
-        manageOrganisationUnits: user.organisationUnits.map(ou=> ou.name).join(", ")
-    }
-}).sort((a,b) => a.superuser ? -1 : b.super_user ? -1: 1)
+    const date = new Date();
+    const newDate = new Date(date.setMonth(date.getMonth() - 6));
+    const loginDate =  date.toJSON().substring(0, 7)
+      
+    report.register("superusers", users.filter(u => u.superuser));
+    report.register("created_notloggedin", users.filter(u => u.lastLogin == undefined));
+    report.register("oldLastLogin", users.filter(u => u.lastLogin && u.lastLogin <= loginDate ));
+    report.register("users", users);  
 
-  `
+    return "";
+    
+
+  `,
+    report: `
+# Admin users
+
+Limit the admin users to a small number
+
+[DataTable data:superusers label:"Admin users" perPage:50/]
+
+# Users created but never logged in
+
+User created but that never logged in. If they were created long time a ago, it's probably safer to disable them.
+
+[DataTable data:created_notloggedin label:"Created but never logged in" perPage:20/]
+
+# Last login more than 6 months
+
+These users didn't logged in since a while. It's probably safer to disable them.
+
+[DataTable data:oldLastLogin label:"Login more than 6 months" perPage:20/]
+
+# All enabled users
+
+You might want to audit the roles and orgunits of existing users
+
+[DataTable data:users label:"All users" perPage:20/]
+
+
+`
   },
   {
     id: "bifaoG4Ky23",
@@ -119,7 +170,6 @@ return userResp.users.map( user => {
       return ou.organisationUnits.filter(ou => ou.featureTypeMatches == false);
     `
   },
-
   {
     id: "d4pmpo12iMp",
     name: "Audit coordinates",
@@ -171,12 +221,48 @@ return userResp.users.map( user => {
             ? ((withCoordinates.pager.total / allOus.pager.total) * 100).toFixed(2)
             : "-"
       });
+      report.register("statsByLevel" + level.level, [
+        { x: "with", y: withCoordinates.pager.total },
+        { x: "without", y: withoutCoordinates.pager.total }
+      ]);
     });
 
     return stats;
 
 
- `
+ `,
+
+    report: `
+
+ [FlexBox]
+# Level 1
+[FlexBox]
+[Chart type:"pie" data:statsByLevel1 colorScale:\`["green", "grey" ]\` /]
+[AsJSON data:statsByLevel1 /]
+[/FlexBox]
+
+# Level 2
+[FlexBox]
+[Chart type:"pie" data:statsByLevel2 colorScale:\`["green", "grey" ]\` /]
+[AsJSON data:statsByLevel2 /]
+[/FlexBox]
+
+[/FlexBox]
+
+[FlexBox]
+# Level 3
+[FlexBox]
+[Chart type:"pie" data:statsByLevel3 colorScale:\`["green", "grey" ]\` /]
+[AsJSON data:statsByLevel3 /]
+[/FlexBox]
+
+# Level 4
+[FlexBox]
+[Chart type:"pie" data:statsByLevel4 colorScale:\`["green", "grey" ]\` /]
+[AsJSON data:statsByLevel4 /]
+[/FlexBox]
+[/FlexBox]
+   `
   },
   {
     id: "D5a1DVMw7FV",
@@ -806,7 +892,12 @@ if (dryRun) {
         label: "GADM level",
         type: "select",
         default: "1",
-        choices: [[0, "0"], [1, "1"], [2, "2"], [3, "3"]]
+        choices: [
+          [0, "0"],
+          [1, "1"],
+          [2, "2"],
+          [3, "3"]
+        ]
       }
     ],
     code: `
@@ -863,7 +954,10 @@ if (dryRun) {
         label: "Select run mode",
         type: "select",
         default: "dryRun",
-        choices: [["dryRun", "Dry run"], ["update", "update"]]
+        choices: [
+          ["dryRun", "Dry run"],
+          ["update", "update"]
+        ]
       }
     ],
     code: `
@@ -1218,7 +1312,7 @@ return {
         "id,name,periodType,dataSetElements[dataElement[id,name,formName,code,valueType,categoryCombo[id,name,categoryOptionCombos[id,name,categoryOptions[id,name,code]]]"
     });
     const questions = [];
-    
+
     var collator = new Intl.Collator(undefined, {
       numeric: true,
       sensitivity: "base"
@@ -1226,27 +1320,27 @@ return {
     const dataSetElements = ds.dataSetElements.sort((a, b) =>
       collator.compare(a.dataElement.name, b.dataElement.name)
     );
-    
+
     function slugify(str) {
       str = str.replace(/^\s+|\s+$/g, ""); // trim
       str = str.toLowerCase();
-    
+
       // remove accents, swap ñ for n, etc
       var from = "àáãäâèéëêìíïîòóöôùúüûñç·/_,:;";
       var to = "aaaaaeeeeiiiioooouuuunc______";
-    
+
       for (var i = 0, l = from.length; i < l; i++) {
         str = str.replace(new RegExp(from.charAt(i), "g"), to.charAt(i));
       }
-    
+
       str = str
         .replace(/[^a-z0-9 -]/g, "") // remove invalid chars
         .replace(/\s+/g, "_") // collapse whitespace and replace by -
         .replace(/-+/g, "_"); // collapse dashes
-    
+
       return str;
     }
-    
+
     dataSetElements.forEach(dataSetElement => {
       const dataElement = dataSetElement.dataElement;
       dataElement.categoryCombo.categoryOptionCombos.forEach(coc => {
@@ -1255,7 +1349,7 @@ return {
         let constraint;
         let constraint_message;
         let required;
-    
+
         if (
           dataElement.valueType == "BOOLEAN" ||
           dataElement.valueType == "TRUE_ONLY"
@@ -1329,7 +1423,7 @@ return {
     sheet.cell("A1").value([questionFields])
     sheet.cell("A2").value(questions.map(question => questionFields.map(f => question[f])));
 
-    
+
     const sheetChoices = workbook.addSheet("choices");
     const optionChoices = [
       ["list_name", "name", "label"],
@@ -1346,11 +1440,238 @@ return {
 
     sheetSettings.cell("A1").value(settings);
 
-    XlsxPopulate.openAsBlob(workbook, slugify(ds.name)+".xslx");      
+    XlsxPopulate.openAsBlob(workbook, slugify(ds.name)+".xslx");
 
-    
+
     return questions;
     `
+  },
+  {
+    id: "ZZJcZFTSl50",
+    name: "Coordinates coverage",
+    code: `
+let stats = [];
+const api = await dhis2.api();
+
+const levels = (await api.get("organisationUnitLevels", {
+  fields: "id,name,level",
+  order: "level"
+})).organisationUnitLevels;
+
+function perc2color(perc) {
+  var r,
+    g,
+    b = 0;
+  if (perc < 50) {
+    r = 255;
+    g = Math.round(5.1 * perc);
+  } else {
+    g = 255;
+    r = Math.round(510 - 5.1 * perc);
+  }
+  var h = r * 0x10000 + g * 0x100 + b * 0x1;
+  return "#" + ("000000" + h.toString(16)).slice(-6);
+}
+const system = await api.get("system/info");
+const version = system.version;
+const v = version.split(".");
+const vfloat = parseFloat(v[0] + "." + v[1]);
+const fieldCoordinates = vfloat >= 2.32 ? "geometry" : "coordinates";
+const ouFields = "id,name,coordinates,geometry,ancestors[id,name],leaf,level"
+let provinces = await api.get("organisationUnits", {
+  fields: ouFields,
+  filter: ["level:eq:2"],
+  paging: false
+});
+let allOrgunits = [];
+const facilityLevel = levels[levels.length - 1];
+for (province of provinces.organisationUnits) {
+  const children = await api.get("organisationUnits", {
+    fields: ouFields,
+    filter: ["path:ilike:" + province.id],
+    paging: false
+  });
+  withCoordinates = children.organisationUnits.filter(
+    ou => ou.level == facilityLevel.level && (ou.coordinates || ou.geometry)
+  ).length;
+  withoutCoordinates = children.organisationUnits.filter(
+    ou =>
+      facilityLevel.level &&
+      (ou.coordinates == undefined && ou.geometry == undefined)
+  ).length;
+  province.withCoordinates = withCoordinates;
+  province.withoutCoordinates = withoutCoordinates;
+  province.totalFacilities = withCoordinates + withoutCoordinates
+  province.percentage =
+    ((withCoordinates * 100) / (withCoordinates + withoutCoordinates)).toFixed(2);
+  province.color = "blue";
+  province.fillColor = perc2color(province.percentage);
+  stats.push(province);
+  children.organisationUnits.forEach(ou => allOrgunits.push(ou));
+}
+report.register("organisationUnits", allOrgunits);
+report.register("stats2", stats);
+stats = []
+allOrgunits.forEach(ou => turf.geometrify(ou))
+const districts = allOrgunits.filter(ou => ou.level == 3)
+const badPoints = []
+for (district of districts ) {
+  children = allOrgunits.filter(ou => ou.level == facilityLevel.level && ou.ancestors[2] && ou.ancestors[2].id == district.id)
+  withCoordinates = children.filter(
+    ou => (ou.coordinates || ou.geometry)
+  ).length;
+  withoutCoordinates = children.filter(
+    ou =>
+      (ou.coordinates == undefined && ou.geometry == undefined)
+  ).length;
+  children.filter(ou => ou.geometry).forEach( ou => {
+    ou.inside = turf.booleanPointInPolygon(ou.geometry, district.geometry);
+    ou.color = ou.inside ? "green" : "red"
+    if (ou.inside == false) {
+      badPoints.push(ou)
+    }
+  })
+
+  district.pointsInParentPolygon = children.filter(ou => ou.inside == true).length
+  district.withCoordinates = withCoordinates;
+  district.withoutCoordinates = withoutCoordinates;
+  district.totalFacilities = withCoordinates + withoutCoordinates
+  district.percentage =
+    ((withCoordinates * 100) / (withCoordinates + withoutCoordinates)).toFixed(2);
+
+
+  district.color = "blue";
+  district.fillColor = perc2color(district.percentage);
+  stats.push(district);
+}
+
+report.register("stats3", stats);
+report.register("stats4", stats.concat(badPoints));
+return "";
+  `,
+    report: `
+[PageOrientation orientation:"landscape" /]
+# Coordinates Coverage
+
+> Number of org units with coordinates
+> --------------------------------------------------------------------
+>                 Number of org units
+
+[PageBreak /]
+## At level 2 
+[FlexBox]
+[OrgunitMap lines:stats2 /]
+[/FlexBox]
+[PageBreak /]
+
+## At level 3
+[FlexBox]
+[OrgunitMap lines:stats3 /]
+[/FlexBox]
+[PageBreak /]
+
+
+## Detailed data
+[DataTable data:\`stats2.map(l => _.omit(l, ['id','geometry','coordinates','ancestors','color','fillColor']))\` label:"Province coverage data" perPage:20/]
+
+[br/][br/][br/]
+[DataTable data:\`stats3.map(l => _.omit(l, ['id','geometry','coordinates','ancestors','color','fillColor']))\` label:"District coverage data" perPage:5/]
+
+# Coordinates not belonging to parent polygon
+
+## All points
+[FlexBox]
+[OrgunitMap lines:organisationUnits width:"700px" height:"700px"/]
+[/FlexBox]
+[PageBreak /]
+
+## All points not belonging to parent polygon
+[FlexBox]
+[OrgunitMap lines:\`stats4.map(l => _.omit(l, ['color','fillColor']))\` width:"700px" height:"700px"/]
+[/FlexBox]
+`
+  },
+  {
+    id: "FP8cYl1lSF6",
+    name: "demo dashboard to pdf",
+    params: [
+      {
+        id: "dashboard",
+        label: "Search",
+        type: "dhis2",
+        resourceName: "dashboards",
+        default: {
+          name: "PLAY ANC dashboard",
+          id: "nghVC4wtyzi"
+        }
+      }
+    ],
+    code: `
+
+// press crtl-r to run
+const api = await dhis2.api();
+const ou = await api.get("dashboards/"+parameters.dashboard.id, {
+  fields: "id,name,dashboardItems[type,chart[id,name],map[id,name]]",
+  paging: false
+});
+const vals = ou.dashboardItems.filter(d => d.chart || d.map);
+
+report.register("charts", vals);
+return "";
+`,
+
+    report: `
+[PageOrientation orientation:"landscape" /]
+[MyLoop value:charts]
+ [Dhis2Item data:\`MyLoop.item()\` /]
+[/MyLoop]`
+  },
+  {
+    id: "df",
+    name: "Last metadata changes (this months max 1000)",
+    code: `
+date = new Date();
+var newDate = new Date(date.setMonth(date.getMonth() - 1));
+const api = await dhis2.api();
+const ou = await api.get("metadataAudits", {
+  pageSize: 1000,
+  createdAt: date.toJSON().substring(0, 7)
+});
+ou.metadataAudits = ou.metadataAudits.sort(
+  (a, b) => -1 * a.createdAt.localeCompare(b.createdAt)
+);
+const format_value = mutation => {
+  if (mutation.path == "attributeValues") {
+    return mutation.value
+      .map(av => av.attribute.code + " => " + av.value)
+      .join("\\n");
+  }
+  if (mutation.path == "dataSetElements") {
+    return (
+      mutation.path + " => " + mutation.value.map(av => av.dataElement.name)
+    );
+  }
+  return mutation.path + " => " + mutation.value;
+};
+
+ou.metadataAudits.forEach(met => {
+  met.klass = met.klass.split(".")[met.klass.split(".").length - 1];
+  if (met.value) {
+    const value = JSON.parse(met.value);
+    let val = value.mutations
+      ? value.mutations
+          .filter(m => m.path !== "lastUpdated")
+          .map(m => format_value(m))
+      : [];
+    if (met.type === "CREATE" || met.type === "DELETE") {
+      val = [value.name + " (" + value.id + ")"];
+    }
+    delete met.value;
+    met.what = val.join("\\n ");
+  }
+});
+return ou.metadataAudits;
+`
   }
 ];
 export default recipes;

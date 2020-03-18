@@ -6,7 +6,6 @@ import OrgunitMap from "./OrgunitMap";
 import { AsPrimitive } from "./AsPrimitive";
 import ErrorBoundary from "./ErrorBoundary";
 
-
 export function Results({ results, label, position }) {
   const [selectedTab, setSelectedTab] = useState(1);
   if (Array.isArray(results)) {
@@ -29,7 +28,7 @@ export function Results({ results, label, position }) {
 
     const filename = (label || "Result List").replace(/\s/g, "_") + ".csv";
     return (
-      <div style={{ width: "95%" }}>
+      <div style={{ width: "80%", maxWidth: "80%" }}>
         <Tabs
           value={selectedTab}
           onChange={handleChange}
@@ -43,6 +42,7 @@ export function Results({ results, label, position }) {
             lines={results}
             position={position}
             showableMap={showableMap}
+            showLayers={true}
           />
         )}
         {selectedTab == 1 && (
@@ -67,7 +67,7 @@ export function Results({ results, label, position }) {
                 filename: filename,
                 separator: ","
               },
-              rowsPerPageOptions: [1, 20 ,50, 100, 1000]
+              rowsPerPageOptions: [1, 20, 50, 100, 1000]
             }}
           />
         )}
