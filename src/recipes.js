@@ -103,14 +103,14 @@ return resources.resources.map( r => {
     const date = new Date();
     const newDate = new Date(date.setMonth(date.getMonth() - 6));
     const loginDate =  date.toJSON().substring(0, 7)
-      
+
     report.register("superusers", users.filter(u => u.superuser));
     report.register("created_notloggedin", users.filter(u => u.lastLogin == undefined));
     report.register("oldLastLogin", users.filter(u => u.lastLogin && u.lastLogin <= loginDate ));
-    report.register("users", users);  
+    report.register("users", users);
 
     return "";
-    
+
 
   `,
     report: `
@@ -1558,7 +1558,7 @@ return "";
 >                 Number of org units
 
 [PageBreak /]
-## At level 2 
+## At level 2
 [FlexBox]
 [OrgunitMap lines:stats2 /]
 [/FlexBox]
@@ -1601,8 +1601,8 @@ return "";
         type: "dhis2",
         resourceName: "dashboards",
         default: {
-          name: "PLAY ANC dashboard",
-          id: "nghVC4wtyzi"
+          name: "PLAY Delivery",
+          id: "iMnYyBfSxmM"
         }
       }
     ],
@@ -1611,10 +1611,10 @@ return "";
 // press crtl-r to run
 const api = await dhis2.api();
 const ou = await api.get("dashboards/"+parameters.dashboard.id, {
-  fields: "id,name,dashboardItems[type,chart[id,name],map[id,name]]",
+  fields: "id,name,dashboardItems[type,chart[id,name],map[id,name],reportTable[id,name]]",
   paging: false
 });
-const vals = ou.dashboardItems.filter(d => d.chart || d.map);
+const vals = ou.dashboardItems.filter(d => d.chart || d.map|| d.reportTable);
 
 report.register("charts", vals);
 return "";
@@ -1622,8 +1622,11 @@ return "";
 
     report: `
 [PageOrientation orientation:"landscape" /]
+
+
 [MyLoop value:charts]
- [Dhis2Item data:\`MyLoop.item()\` /]
+ [Dhis2Item /]
+ [PageBreak /]
 [/MyLoop]`
   },
   {
