@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import MUIDataTable from "mui-datatables";
 import IdyllDocument from "idyll-document";
 import { mapChildren } from "idyll-component-children";
@@ -37,16 +37,16 @@ const PortraitOrientation = () => (
   </React.Fragment>
 );
 
-const PageOrientation = props => (
+const PageOrientation = (props) => (
   <React.Fragment>
     {props.orientation === "landscape" && <LandscapeOrientation />}
     {props.orientation === "portrait" && <PortraitOrientation />}
   </React.Fragment>
 );
 
-const PageBreak = props => <div className="pagebreak"> </div>;
+const PageBreak = (props) => <div className="pagebreak"> </div>;
 
-const AsJSON = props => {
+const AsJSON = (props) => {
   const { idyll, hasError, updateProps, data, ...otherProps } = props;
 
   return (
@@ -56,7 +56,7 @@ const AsJSON = props => {
   );
 };
 
-const FlexBox = props => {
+const FlexBox = (props) => {
   const { idyll, hasError, updateProps, data, ...otherProps } = props;
 
   return (
@@ -65,17 +65,17 @@ const FlexBox = props => {
         display: "flex",
         flexWrap: "wrap",
         justifyContent: "space-evenly",
-        alignItems: "flex-end"
+        alignItems: "flex-end",
       }}
     >
-      {props.children.map(item => (
+      {props.children.map((item) => (
         <div style={{ padding: "10px" }}>{item}</div>
       ))}
     </div>
   );
 };
 
-const OrgunitMap = props => {
+const OrgunitMap = (props) => {
   return (
     <OrgunitBasicMap
       showableMap={true}
@@ -90,9 +90,9 @@ const OrgunitMap = props => {
 const DataTable = ({ data, label, perPage }) => {
   const results = data || [];
   const keySet = new Set();
-  results.forEach(r => {
+  results.forEach((r) => {
     if (r !== null && r !== undefined) {
-      Object.keys(r).forEach(k => keySet.add(k));
+      Object.keys(r).forEach((k) => keySet.add(k));
     }
   });
   const keys = Array.from(keySet);
@@ -102,23 +102,23 @@ const DataTable = ({ data, label, perPage }) => {
       overrides: {
         MUIDataTable: {
           paper: {
-            marginRight: "50px"
-          }
-        }
-      }
+            marginRight: "50px",
+          },
+        },
+      },
     });
   return (
     <MuiThemeProvider theme={getMuiTheme()}>
       <MUIDataTable
         title={label || "Result List"}
         data={results}
-        columns={keys.map(k => {
+        columns={keys.map((k) => {
           return {
             name: k,
             options: {
               filter: true,
-              customBodyRender: value => <AsPrimitive value={value} />
-            }
+              customBodyRender: (value) => <AsPrimitive value={value} />,
+            },
           };
         })}
         options={{
@@ -128,10 +128,10 @@ const DataTable = ({ data, label, perPage }) => {
           selectableRows: "none",
           downloadOptions: {
             filename: filename,
-            separator: ","
+            separator: ",",
           },
           rowsPerPageOptions: [1, 10, 20, 50, 100, 1000],
-          rowsPerPage: perPage || 20
+          rowsPerPage: perPage || 20,
         }}
       />
     </MuiThemeProvider>
@@ -143,8 +143,8 @@ class MyLoop extends React.Component {
     const { children, value } = this.props;
 
     if (children && value) {
-      return value.map(val => {
-        return mapChildren(children, child => {
+      return value.map((val) => {
+        return mapChildren(children, (child) => {
           if (typeof child !== "object") {
             return child;
           }
@@ -161,15 +161,51 @@ class MyLoop extends React.Component {
   }
 }
 
-const Dhis2Item = props => {
+const Dhis2Item = (props) => {
   const item = props.iitem;
+  const propName =
+    item && item.type
+      ? item.type == "REPORT_TABLE"
+        ? "reportTable"
+        : item.type.toLowerCase()
+      : "";
+
+  const itemName = item && item[propName] ? item[propName].name : "";
+  const [html, setHtml] = React.useState("");
+  const [imgUrl, setImgUrl] = React.useState("");
+
+  useEffect(() => {
+    if (propName !== "") {
+      const prefixUrl = props.prefixUrl || "../../";
+      let resourceName = undefined;
+      if (propName == "reportTable") {
+        resourceName = "reportTables";
+      } else {
+        resourceName = propName.toLowerCase() + "s";
+      }
+
+      const url = prefixUrl + resourceName + "/" + item[propName].id + "/data";
+      const fetchData = async () => {
+        const result = await fetch(url + ".html+css").then((r) => r.text());
+        setHtml(result);
+      };
+      if (propName !== "reportTable") {
+        setHtml("");
+        setImgUrl(url + ".png");
+      } else {
+        fetchData();
+      }
+    }
+  }, [setHtml]);
+
   if (item == undefined) {
-    return <></>;
+    return <p>hello</p>;
   }
-  const propName = item.type.toLowerCase();
-  const url =
-    "../../" + propName.toLowerCase() + "s/" + item[propName].id + "/data.png";
-  return <img src={url} alt={item[propName].name}></img>;
+  if (propName === "reportTable") {
+    return <div dangerouslySetInnerHTML={{ __html: html }} />;
+  } else {
+    return <img src={imgUrl} alt={itemName}></img>;
+  }
 };
 
 const availableComponents = {
@@ -182,12 +218,12 @@ const availableComponents = {
   PageOrientation: PageOrientation,
   PageBreak: PageBreak,
   MyLoop: MyLoop,
-  Dhis2Item: Dhis2Item
+  Dhis2Item: Dhis2Item,
 };
 
 const IdyllReport = ({ markup, dataSets }) => {
   const initialState = {
-    ...dataSets.asVars()
+    ...dataSets.asVars(),
   };
 
   return (

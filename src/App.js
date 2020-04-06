@@ -35,7 +35,7 @@ const useStyles = makeStyles(theme => ({
   },
   paper: {
     paddingBottom: "100%",
-    paddingLeft: "100px",
+    paddingLeft: "20px",
     backgroundColor: "#eeeeee"
   },
   fab: {
