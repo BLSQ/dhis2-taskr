@@ -1,5 +1,5 @@
 import { Results } from "./Results";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./App.css";
 
 import _ from "./support/lodash";
@@ -106,7 +106,7 @@ turf.geometrify = line => {
   return geometry;
 };
 
-function Editor({ recipe, dhis2, onSave, editable }) {
+function Editor({ recipe, dhis2, onSave, editable, autorun }) {
   const [showEditor, setShowEditor] = useState(recipe.editable);
 
   if (showEditor && editable == false) {
@@ -184,6 +184,12 @@ function Editor({ recipe, dhis2, onSave, editable }) {
       );
     }
   }
+
+  useEffect(() => {
+    if (autorun && results == undefined) {
+      onRun(code);
+    }
+  }, [autorun, code, onRun, results]);
 
   async function save() {
     const modifiedRecipe = {

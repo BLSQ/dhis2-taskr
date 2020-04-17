@@ -18,7 +18,8 @@ import {
   Switch,
   Route,
   Link,
-  Redirect
+  Redirect,
+  useLocation
 } from "react-router-dom";
 import { generateUid } from "d2/lib/uid";
 import { asyncForEach } from "./support/asyncForEach";
@@ -45,6 +46,10 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
+function useQuery() {
+  return new URLSearchParams(useLocation().search);
+}
+
 function RecipePage({
   classes,
   match,
@@ -55,6 +60,9 @@ function RecipePage({
   onSave,
   editable
 }) {
+  const query = useQuery();
+  const autorun = query.get("autorun") === "true";
+
   let recipe = recipes.find(r => r.id === match.params.recipeId);
   if (recipe === undefined) {
     recipe = recipes[0];
@@ -74,6 +82,7 @@ function RecipePage({
         dhis2={dhis2}
         onSave={onSave}
         editable={editable}
+        autorun={autorun}
       />
       {editable && (
         <Fab className={classes.fab + " no-print"} onClick={newRecipe}>
@@ -140,7 +149,7 @@ function App() {
 
   useEffect(() => {
     loadRecipes();
-  }, [recipes, setRecipes]);
+  }, [loadRecipes, recipes, setRecipes]);
 
   async function onSave(modifiedRecipe) {
     try {
@@ -164,6 +173,7 @@ function App() {
   }
 
   const [recipe, setRecipe] = useState(undefined);
+
   return (
     <Router>
       {recipes === undefined && <span>Loading...</span>}
@@ -201,18 +211,20 @@ function App() {
               <Route
                 path={`/recipes/:recipeId`}
                 exact={true}
-                render={props => (
-                  <RecipePage
-                    classes={classes}
-                    recipes={recipes}
-                    match={props.match}
-                    setRecipe={setRecipe}
-                    setRecipes={setRecipes}
-                    history={props.history}
-                    onSave={onSave}
-                    editable={true}
-                  />
-                )}
+                render={props => {
+                  return (
+                    <RecipePage
+                      classes={classes}
+                      recipes={recipes}
+                      match={props.match}
+                      setRecipe={setRecipe}
+                      setRecipes={setRecipes}
+                      history={props.history}
+                      onSave={onSave}
+                      editable={true}
+                    />
+                  );
+                }}
               />
               <Route
                 path={`/recipes/:recipeId/run`}
