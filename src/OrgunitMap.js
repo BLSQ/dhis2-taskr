@@ -101,7 +101,6 @@ function OrgunitMap({
   }
 
   function onFeature(feature, event) {
-    debugger;
     if (event.originalEvent._stopped) {
       return;
     }

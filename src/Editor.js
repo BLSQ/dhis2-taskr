@@ -112,6 +112,7 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
   if (showEditor && editable == false) {
     setShowEditor(false);
   }
+  const [autorunStarted, setAutorunStarted] = useState(false);
   const [propertyEdited, setPropertyEdited] = useState("code");
   const [name, setName] = useState(recipe.name);
   const [code, setCode] = useState(recipe.code);
@@ -186,10 +187,17 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
   }
 
   useEffect(() => {
-    if (autorun && results == undefined) {
+    if (autorun && autorunStarted === false) {
       onRun(code);
+      setAutorunStarted(true);
     }
-  }, [autorun, code, onRun, results]);
+  }, [
+    autorun,
+    code,
+    onRun,
+    autorunStarted,
+    setAutorunStarted
+  ]);
 
   async function save() {
     const modifiedRecipe = {
