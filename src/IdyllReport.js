@@ -161,6 +161,16 @@ class MyLoop extends React.Component {
   }
 }
 
+
+const Dhis2Content = (props) => {
+  const item = props.iitem;
+  if (item.contentType === "html") {
+    return <div dangerouslySetInnerHTML={{ __html: item.content }} />;
+  } else {
+    return <img src={item.content} alt=""></img>;
+  }
+}
+
 const Dhis2Item = (props) => {
   const item = props.iitem;
   const propName =
@@ -219,6 +229,7 @@ const availableComponents = {
   PageBreak: PageBreak,
   MyLoop: MyLoop,
   Dhis2Item: Dhis2Item,
+  Dhis2Content: Dhis2Content,
 };
 
 const IdyllReport = ({ markup, dataSets }) => {
