@@ -1607,10 +1607,11 @@ return "";
       }
     ],
     code: `
-
+    let params = new URLSearchParams(window.location.href.split("?")[1]);
+    const dashboardId = params.get("dashboardId") || parameters.dashboard.id
 // press crtl-r to run
 const api = await dhis2.api();
-const ou = await api.get("dashboards/"+parameters.dashboard.id, {
+const ou = await api.get("dashboards/"+dashboardId, {
   fields: "id,name,dashboardItems[type,chart[id,name],map[id,name],reportTable[id,name]]",
   paging: false
 });
