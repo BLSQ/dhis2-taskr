@@ -1631,6 +1631,94 @@ return "";
 [/MyLoop]`
   },
   {
+    id: "azwst23HaO2",
+    name: "demo dashboard to pdf 2",
+    params: [
+      {
+        id: "dashboard",
+        label: "Search",
+        type: "dhis2",
+        resourceName: "dashboards",
+        default: {
+          name: "PLAY Delivery",
+          id: "iMnYyBfSxmM"
+        }
+      }
+    ],
+    code: `
+    let params = new URLSearchParams(window.location.href.split("?")[1]);
+    const dashboardId = params.get("dashboardId") || parameters.dashboard.id
+    const api = await dhis2.api();
+
+    const toDataURL = url =>
+      fetch(url)
+        .then(response => response.blob())
+        .then(
+          blob =>
+            new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result);
+              reader.onerror = reject;
+              reader.readAsDataURL(blob);
+            })
+        );
+
+    const ou = await api.get("dashboards/" + dashboardId, {
+      fields:
+        "id,name,dashboardItems[type,chart[id,name],map[id,name],reportTable[id,name]]",
+      paging: false
+    });
+    const dashboardItems = ou.dashboardItems.filter(
+      d => d.chart || d.map || d.reportTable
+    );
+
+    const results = [];
+    for (item of dashboardItems) {
+      const prefixUrl = "../../";
+      const propName =
+        item && item.type
+          ? item.type == "REPORT_TABLE"
+            ? "reportTable"
+            : item.type.toLowerCase()
+          : "";
+
+      const itemName = item && item[propName] ? item[propName].name : "";
+      let resourceName = undefined;
+      if (propName == "reportTable") {
+        resourceName = "reportTables";
+      } else {
+        resourceName = propName.toLowerCase() + "s";
+      }
+      let url = prefixUrl + resourceName + "/" + item[propName].id + "/data";
+      let content = undefined;
+      let contentType
+      if (propName == "reportTable") {
+        url += ".html+css";
+        contentType = "html";
+        content = await fetch(url).then(r => r.text());
+      } else {
+        url += ".png";
+        contentType = "img";
+        content = await toDataURL(url);
+      }
+
+      results.push({ item, url, content, contentType });
+    }
+    report.register("charts", results);
+    return null;
+
+`,
+
+    report: `
+[PageOrientation orientation:"landscape" /]
+
+
+[MyLoop value:charts]
+ [Dhis2Content /]
+ [PageBreak /]
+[/MyLoop]`
+  },
+  {
     id: "df",
     name: "Last metadata changes (this months max 1000)",
     code: `
