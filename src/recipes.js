@@ -892,12 +892,7 @@ if (dryRun) {
         label: "GADM level",
         type: "select",
         default: "1",
-        choices: [
-          [0, "0"],
-          [1, "1"],
-          [2, "2"],
-          [3, "3"]
-        ]
+        choices: [[0, "0"], [1, "1"], [2, "2"], [3, "3"]]
       }
     ],
     code: `
@@ -954,10 +949,7 @@ if (dryRun) {
         label: "Select run mode",
         type: "select",
         default: "dryRun",
-        choices: [
-          ["dryRun", "Dry run"],
-          ["update", "update"]
-        ]
+        choices: [["dryRun", "Dry run"], ["update", "update"]]
       }
     ],
     code: `
@@ -1763,6 +1755,102 @@ ou.metadataAudits.forEach(met => {
   }
 });
 return ou.metadataAudits;
+`
+  },
+  {
+    id: "vgSvwOMNAvQ",
+    name: "Data values for a given orgUnit, dataSet and periods",
+    params: [
+      {
+        id: "dataSet",
+        type: "dhis2",
+        resourceName: "dataSets"
+      },
+      {
+        id: "orgUnit",
+        type: "dhis2",
+        resourceName: "organisationUnits"
+      },
+      {
+        id: "periods",
+        type: "text"
+      }
+    ],
+    code: `
+    // #/recipes/VJSWf8Ktrao?dataSet=aLpVgfXiz0f&orgUnit=U514Dz4v9pv&periods=2018,2019&autorun=true
+    let params = new URLSearchParams(window.location.href.split("?")[1]);
+const periods = params.get("periods") || parameters.periods;
+const dataSetId = params.get("dataSet") || parameters.dataSet.id;
+const orgUnitId = params.get("orgUnit") || parameters.orgUnit.id;
+const api = await dhis2.api();
+
+const dataSet = await api.get("dataSets/" + dataSetId, {
+  fields:
+    "id,dataSetElements[dataElement[id,name,categoryCombo[id,name,categoryOptionCombos[id,name]"
+});
+
+const dataElementsById = {};
+
+const categoryOptionCombosById = {};
+
+dataSet.dataSetElements.forEach(dse => {
+  const dataElement = dse.dataElement;
+  dataElementsById[dataElement.id] = {
+    id: dataElement.id,
+    name: dataElement.name
+  };
+  const categoryOptionCombos = dataElement.categoryCombo.categoryOptionCombos;
+  categoryOptionCombos.forEach(coc => (categoryOptionCombosById[coc.id] = coc));
+});
+
+const periodsQuery =
+  "period=" +
+  periods
+    .split(",")
+    .map(p => p.trim())
+    .join("&period=");
+const ouQuery = "orgUnit=" + orgUnitId;
+
+const url =
+  "dataValueSets?" + periodsQuery + "&" + ouQuery + "&dataSet=" + dataSetId;
+const vals = await api.get(url);
+
+if (!vals.dataValues) {
+  return "no data";
+}
+
+vals.dataValues.forEach(dv => {
+  dv.dataElement = dataElementsById[dv.dataElement];
+  dv.categoryOptionCombo = categoryOptionCombosById[dv.categoryOptionCombo];
+});
+
+const values = _.flattenObjects(vals.dataValues);
+const workbook = await XlsxPopulate.fromBlankAsync();
+const columns = Object.keys(values[0]);
+
+const sheet = workbook.sheet(0);
+sheet
+  .cell("A1")
+  .value([columns])
+  .style("fontColor", "ff0000");
+
+const r = sheet.cell("A2");
+
+r.value(values.map(dv => columns.map(col => dv[col])));
+sheet.column("A").width(30);
+sheet.column("B").width(30);
+sheet.column("C").width(30);
+sheet.column("D").width(30);
+sheet.column("E").width(30);
+sheet.column("F").width(30);
+sheet.column("G").width(30);
+sheet.column("H").width(30);
+
+XlsxPopulate.openAsBlob(
+  workbook,
+  "datavalues-" + orgUnitId + "-" + dataSetId + "-" + periods + "" + ".xlsx"
+);
+return vals.dataValues;
 `
   }
 ];
