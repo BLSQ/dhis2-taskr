@@ -1888,6 +1888,62 @@ XlsxPopulate.openAsBlob(
 );
 return vals.dataValues;
 `
+  },
+
+  {
+
+      id: "azdflm3HaO2",
+      name: "Play : Audit, select and fix orgunit name demo",
+      report:`
+# Hello
+
+* Run once, select a few orgunits
+* then click "Fix me"
+* then confirm
+* this will patch the orgunits name and
+* relaunch the recipe
+
+[DataTable data:organisationUnits label:"organisationUnits" perPage:20 selectableRows:"multiple" ]
+[DataTableAction label:"Fix me" onClick:organisationUnitsOnClick/]
+[DataTableAction label:"Unfix me" onClick:organisationUnitsOnClick/]
+[/DataTable]
+
+demo
+      `,
+    code:`
+
+// press crtl-r to run
+const api = await dhis2.api();
+
+const ou = await api.get("organisationUnits", {
+  fields: "id,name,coordinates,geometry",
+  paging: false
+});
+
+report.register("organisationUnits", ou.organisationUnits);
+report.register("organisationUnitsOnClick", async selectedRows => {
+  const details = [];
+  const confirm = prompt(
+    "Please confirm you want to modify all " +
+      selectedRows.length +
+      " orgunits. (Can't be undone !!)",
+    "Yes"
+  );
+  if (confirm == "Yes") {
+    for (selected of selectedRows) {
+      details.push(
+        await api.patch("organisationUnits/" + selected.id, {
+          name: selected.name + " (modified by this recipe)"
+        })
+      );
+    }
+    report.reset("run");
+    // report.reset("clear");
+  }
+});
+
+return "";
+`
   }
 ];
 export default recipes;

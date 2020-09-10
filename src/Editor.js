@@ -70,13 +70,25 @@ class DataSets {
     this.registeredCount += 1;
     return this;
   }
+  reset(mode) {
+    for (var member in this.datasets) {
+      delete this.datasets[member];
+    }
+    this.registeredCount = 0;
+    if (mode == "run" && this.reRun) {
+      this.reRun();
+    }
+    if (mode == "clear" && this.clearResults) {
+      this.clearResults();
+    }
+  }
 
   asVars() {
     return this.datasets;
   }
 }
 
-const dataSets = new DataSets();
+
 
 turf.geometrify = line => {
   let geometry = line.geometry;
@@ -108,7 +120,7 @@ turf.geometrify = line => {
 
 function Editor({ recipe, dhis2, onSave, editable, autorun }) {
   const [showEditor, setShowEditor] = useState(recipe.editable);
-
+  const [dataSets, setDataSets] = useState(new DataSets());
   if (showEditor && editable == false) {
     setShowEditor(false);
   }
@@ -186,18 +198,22 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
     }
   }
 
+  const reRun = () => {
+    onRun(code);
+  };
+  const clear = () => {
+    setResults("");
+    setDataSets(new DataSets())
+  };
+
   useEffect(() => {
+    dataSets.reRun = reRun;
+    dataSets.clearResults = clear;
     if (autorun && autorunStarted === false) {
       onRun(code);
       setAutorunStarted(true);
     }
-  }, [
-    autorun,
-    code,
-    onRun,
-    autorunStarted,
-    setAutorunStarted
-  ]);
+  }, [autorun, code, onRun, autorunStarted, setAutorunStarted, reRun]);
 
   async function save() {
     const modifiedRecipe = {
@@ -322,7 +338,7 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
             <Button
               style={style}
               onClick={click => {
-                setResults("");
+                clear()
               }}
             >
               Clear
@@ -358,7 +374,11 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
       <br />
       <br />
       <Results results={results} label={name || ""} position={position} />
-      <IdyllReport markup={report} dataSets={dataSets}></IdyllReport>
+      <IdyllReport
+        key={dataSets.registeredCount}
+        markup={report}
+        dataSets={dataSets}
+      ></IdyllReport>
     </div>
   );
 }
