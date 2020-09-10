@@ -773,17 +773,42 @@ line,name
   },
   {
     id: "hV9ISZaPz2w",
-    name: "Play - Create users from csv",
+    name: "Users - Create users from csv",
     editable: true,
+    params: [
+      {
+          "id": "file",
+          "type": "csv",
+          "label": "Pick csv with event values"
+      },
+      {
+          "id": "mode",
+          "type": "select",
+          "label": "Select run mode",
+          "choices": [
+              [
+                  "dryRun",
+                  "Import from csv - Dry run"
+              ],
+              [
+                  "import",
+                  "Import from csv - create users"
+              ]
+          ],
+          "default": "dryRun"
+      }
+  ],
     code: `
 
-const api = await dhis2.api();
-const dryRun = true;
 const rawData = \`
-firstName,surname,email,username,password,userRole
-John,Doe,johndoe@mail.com,johndoe123,Your-password-123,Data entry clerk
+firstName,surname,email,username,password,userRole,organisationUnits,dataViewOrganisationUnits
+John,Doe,johndoe@mail.com,johndoe123,Your-password-123,Data entry clerk,DHIS2OUID,DHIS2OUID
 \`;
-const users = PapaParse.parse(rawData.trim(), { header: true }).data;
+
+const api = await dhis2.api();
+const dryRun = parameters.mode == "dryRun";
+
+const users = parameters.file.data;
 
 const ur = await api.get("userRoles");
 const userRoles = {};
@@ -808,11 +833,21 @@ dhis2_users = users.map(user => {
       },
       username: user.username,
       password: user.password
-    }
+    },
+    organisationUnits: user.organisationUnits.split(",").map(id => {
+      return { id };
+    }),
+    dataViewOrganisationUnits: user.dataViewOrganisationUnits
+      .split(",")
+      .map(id => {
+        return { id };
+      })
   };
   dhis2user.userRoles = [user.userRole].map(u => {
     return { id: userRoles[u.userRole] };
   });
+
+  dhis2user.userCredentials.userRoles = dhis2user.userRoles;
   return dhis2user;
 });
 if (dryRun) {
@@ -821,6 +856,7 @@ if (dryRun) {
   const resp = await api.post("metadata", { users: dhis2_users });
   return resp;
 }
+
     `
   },
   {
