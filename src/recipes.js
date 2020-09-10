@@ -773,17 +773,42 @@ line,name
   },
   {
     id: "hV9ISZaPz2w",
-    name: "Play - Create users from csv",
+    name: "Users - Create users from csv",
     editable: true,
+    params: [
+      {
+          "id": "file",
+          "type": "csv",
+          "label": "Pick csv with event values"
+      },
+      {
+          "id": "mode",
+          "type": "select",
+          "label": "Select run mode",
+          "choices": [
+              [
+                  "dryRun",
+                  "Import from csv - Dry run"
+              ],
+              [
+                  "import",
+                  "Import from csv - create users"
+              ]
+          ],
+          "default": "dryRun"
+      }
+  ],
     code: `
 
-const api = await dhis2.api();
-const dryRun = true;
 const rawData = \`
-firstName,surname,email,username,password,userRole
-John,Doe,johndoe@mail.com,johndoe123,Your-password-123,Data entry clerk
+firstName,surname,email,username,password,userRole,organisationUnits,dataViewOrganisationUnits
+John,Doe,johndoe@mail.com,johndoe123,Your-password-123,Data entry clerk,DHIS2OUID,DHIS2OUID
 \`;
-const users = PapaParse.parse(rawData.trim(), { header: true }).data;
+
+const api = await dhis2.api();
+const dryRun = parameters.mode == "dryRun";
+
+const users = parameters.file.data;
 
 const ur = await api.get("userRoles");
 const userRoles = {};
@@ -808,11 +833,21 @@ dhis2_users = users.map(user => {
       },
       username: user.username,
       password: user.password
-    }
+    },
+    organisationUnits: user.organisationUnits.split(",").map(id => {
+      return { id };
+    }),
+    dataViewOrganisationUnits: user.dataViewOrganisationUnits
+      .split(",")
+      .map(id => {
+        return { id };
+      })
   };
   dhis2user.userRoles = [user.userRole].map(u => {
     return { id: userRoles[u.userRole] };
   });
+
+  dhis2user.userCredentials.userRoles = dhis2user.userRoles;
   return dhis2user;
 });
 if (dryRun) {
@@ -821,6 +856,7 @@ if (dryRun) {
   const resp = await api.post("metadata", { users: dhis2_users });
   return resp;
 }
+
     `
   },
   {
@@ -1851,6 +1887,62 @@ XlsxPopulate.openAsBlob(
   "datavalues-" + orgUnitId + "-" + dataSetId + "-" + periods + "" + ".xlsx"
 );
 return vals.dataValues;
+`
+  },
+
+  {
+
+      id: "azdflm3HaO2",
+      name: "Play : Audit, select and fix orgunit name demo",
+      report:`
+# Hello
+
+* Run once, select a few orgunits
+* then click "Fix me"
+* then confirm
+* this will patch the orgunits name and
+* relaunch the recipe
+
+[DataTable data:organisationUnits label:"organisationUnits" perPage:20 selectableRows:"multiple" ]
+[DataTableAction label:"Fix me" onClick:organisationUnitsOnClick/]
+[DataTableAction label:"Unfix me" onClick:organisationUnitsOnClick/]
+[/DataTable]
+
+demo
+      `,
+    code:`
+
+// press crtl-r to run
+const api = await dhis2.api();
+
+const ou = await api.get("organisationUnits", {
+  fields: "id,name,coordinates,geometry",
+  paging: false
+});
+
+report.register("organisationUnits", ou.organisationUnits);
+report.register("organisationUnitsOnClick", async selectedRows => {
+  const details = [];
+  const confirm = prompt(
+    "Please confirm you want to modify all " +
+      selectedRows.length +
+      " orgunits. (Can't be undone !!)",
+    "Yes"
+  );
+  if (confirm == "Yes") {
+    for (selected of selectedRows) {
+      details.push(
+        await api.patch("organisationUnits/" + selected.id, {
+          name: selected.name + " (modified by this recipe)"
+        })
+      );
+    }
+    report.reset("run");
+    // report.reset("clear");
+  }
+});
+
+return "";
 `
   }
 ];
