@@ -36,6 +36,7 @@
     - [Then test on the first record](#then-test-on-the-first-record)
     - [Then run on all users](#then-run-on-all-users)
     - [If the recipe is here to stay](#if-the-recipe-is-here-to-stay)
+  - [We want more](#we-want-more)
 
 
 # Disclaimer
@@ -147,12 +148,12 @@ In js some trivial function are not in the language, to avoid coding your own fu
 
 ```js
 // create dataelement lookup by id
-const dataElementById = _.keyBy(de.dataElements, de => de.id);
+const dataElementById = _.keyBy(resp.dataElements, de => de.id);
 ```
 
 Let's say you are working on a project setting up a health facility registry. You received data from a partner and need to integrate it with our existing facilities.
 
-You might want to find nearest healthcenter, or the parents orgunits that contains that point. That's why https://turfjs.org/ is integrated in the taskr.
+You might want to find nearest healthcenter, or the parents orgunits that contains that point. That's why https://turfjs.org/ is integrated in taskr.
 
 Find possible parents based on the coordinates of the point and parent shapes
 
@@ -324,7 +325,7 @@ The recipe has a report in markdown referencing these datasets, adding some cont
 ## 10. Accessing multiple dhis2 instances
 
 Some recipes can access 2 dhis2 instances to "compare" and "align" their metadata.
-This is also possible but requires credentials on both dhis2.
+This is also possible but requires credentials on both dhis2, and correct CORS settings.
 
 ```js
 const apiDestination = await dhis2.api();
@@ -352,16 +353,15 @@ The prefered installation mode is via the application management app and the [dh
       - Users created but never logged in
       - Last login more than 6 months
       - All enabled users
-   - list orgunits and do some audit on their coordinates
+   - List orgunits and do some audit on their coordinates
       - number of orgunits with coordinates per level
       - orgunits not in the parent shape
-   - create users based on a csv
-   - tracker to xlsform
-   - dataset to xlsform
-   - dhis2 upgrade detect/fix "bad" geojson
+   - Create users based on a csv
+   - Tracker program to an xlsform
+   - Dataset to an xlsform
+   - Dhis2 upgrade detect/fix "bad" geojson
 
-
-
+Want to promote your recipe in the standard one, open a [pull request](https://github.com/BLSQ/dhis2-taskr) against the recipes.js !
 
 ## Specific recipes
 
@@ -431,6 +431,8 @@ return ou;
 ```
 
 Click run, you will only get the fosa in that province !
+
+
 
 ## Generate a csv to create users based on the level 3
 
@@ -656,3 +658,6 @@ Make sure if defaults to true ;)
 
 
 
+## We want more
+
+see the [recipes.js](https://github.com/BLSQ/dhis2-taskr/blob/master/src/recipes.js) for inspirations
