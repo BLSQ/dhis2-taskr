@@ -11,7 +11,7 @@
   - [2. Coding a dhis2 app is sometimes too much work for just a one shot specific task](#2-coding-a-dhis2-app-is-sometimes-too-much-work-for-just-a-one-shot-specific-task)
   - [3. Combining multiple api calls is hard for exemple in postman.](#3-combining-multiple-api-calls-is-hard-for-exemple-in-postman)
   - [4. Data can come in/out in various format](#4-data-can-come-inout-in-various-format)
-  - [5. Sometimes we need GIS power](#5-sometimes-we-need-gis-power)
+  - [5. Sometimes we need JS or GIS super power](#5-sometimes-we-need-js-or-gis-super-power)
   - [6. End user autonomy to re-run the recipe at will](#6-end-user-autonomy-to-re-run-the-recipe-at-will)
   - [7. Standard recipes reusable accross dhis2](#7-standard-recipes-reusable-accross-dhis2)
   - [8. Recipes can accept parameters](#8-recipes-can-accept-parameters)
@@ -111,9 +111,11 @@ CSV will be parsed by [papaparse](https://www.papaparse.com/) library.
 XLSX will be parsed by [xlsx-populate](https://github.com/dtjohnson/xlsx-populate#usage), the recipe can also produce xlsx.
 
 
-## 5. Sometimes we need GIS power
+## 5. Sometimes we need JS or GIS super power
 
-Let's you are working on project setting up a health facility registry. You received data from a partner and need to integrate it with our existing facilities.
+In js some trivial function are not in the language, to avoid coding your own function each time in all your recipes [lodash](https://lodash.com/docs) is available in the recipe code
+
+Let's say you are working on project setting up a health facility registry. You received data from a partner and need to integrate it with our existing facilities.
 
 You might want to find nearest healthcenter, or the parents orgunits that contains that point. That's why https://turfjs.org/ is integrated in the taskr.
 
