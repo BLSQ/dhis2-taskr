@@ -113,9 +113,42 @@ XLSX will be parsed by [xlsx-populate](https://github.com/dtjohnson/xlsx-populat
 
 ## 5. Sometimes we need GIS power
 
-Let's you are working on project setting up a health facility registry. You received data from a partner and need to integrate it with our existing facilitiies.
-You might want to find nearest healthcenter, or the parents orgunits that contains that point. That's why  https://turfjs.org/
+Let's you are working on project setting up a health facility registry. You received data from a partner and need to integrate it with our existing facilities.
 
+You might want to find nearest healthcenter, or the parents orgunits that contains that point. That's why https://turfjs.org/ is integrated in the taskr.
+
+Find possible parents based on the coordinates of the point and parent shapes
+
+```js
+allOrgunits.forEach(ou => turf.geometrify(ou))
+points.forEach(point => {
+  const parents = allOrgunits.filter(ou => {
+    try {
+      return ou.geometry && turf.inside(point, ou.geometry);
+    } catch (ignored) {
+      return false;
+    }
+  });
+  point.parents = parents.map(ou => ou.name).join(",");
+});
+
+```
+
+Find organisation unit within 50 meters
+
+```js
+points.forEach(point => {
+  const nearBy = ouFosa.organisationUnits
+    .filter(ou => {
+      return (
+        ou.geometry &&
+        point.geometry &&
+        turf.distance(ou.geometry, point.geometry, { units: "meters" }) < 50
+      );
+    });
+    point.nearBy = nearBy
+})
+```
 
 ## 6. End user autonomy to re-run the recipe at will
 
@@ -126,9 +159,16 @@ Some recipes needs to be re-run multiple times, ideally without a developer help
 
 ## 7. Standard recipes reusable accross dhis2
 
-   - some recipes are quiet common to all dhis2 and it should be easy to install the app (without asking a developer to do it)
-       - create users based on csv with username, name, email , roles, password, managed orgunit
-       --> opensource in the dhis2 appstore
+Some recipes are quiet common to all dhis2 and it should be easy to install the app (without asking a developer to do it)
+
+   - user audit
+   - coordinates/geometry audit
+   - create users based on csv with username, name, email, roles, password, managed orgunit
+   - export events as csv
+   - generate an xlsform based on a program
+   - ...
+
+Make sure to always have the latest version of taskr.
 
 ## 8. Recipes can accept parameters
 
@@ -138,7 +178,74 @@ Some recipes needs to be re-run multiple times, ideally without a developer help
       - a string
       - a select between options
 
+![](./user-manual-recipe-parameters.jpg)
 
+The parameters are defined currenly as json like this
+```json
+[
+    {
+        "id": "program",
+        "label": "Search for program",
+        "type": "dhis2",
+        "resourceName": "programs",
+        "default": "sample"
+    },
+    {
+        "id": "datalementTracker",
+        "label": "Search for tracker data element",
+        "type": "dhis2",
+        "resourceName": "dataElements",
+        "filter": "domainType:eq:TRACKER"
+    },
+    {
+        "id": "datalementAggregate",
+        "label": "Search for aggregate data element",
+        "type": "dhis2",
+        "resourceName": "dataElements",
+        "filter": "domainType:eq:AGGREGATE"
+    },
+    {
+        "id": "mode",
+        "label": "Select run mode",
+        "type": "select",
+        "default": "generateEmptyCsv",
+        "choices": [
+            [
+                "generateEmptyCsv",
+                "Generate an empty csv"
+            ],
+            [
+                "dryRun",
+                "Import from csv - Dry run"
+            ],
+            [
+                "import",
+                "Import from csv - import events"
+            ]
+        ]
+    },
+    {
+        "id": "file",
+        "label": "Pick csv with event values",
+        "type": "csv",
+        "helperText": "you can use 'Generate an empty csv' run mode to generate a template"
+    },
+     {
+        "id": "filexlsx",
+        "label": "Pick xlsx with the data",
+        "type": "xlsx",
+        "helperText": "you can use 'Generate an empty csv' run mode to generate a template"
+    }
+]
+```
+
+These parameters are then available in the recipe code
+
+```js
+const programId = parameters.program.id;
+
+const dryRun = parameters.mode =="dryRun";
+```
 
 ## 9. Recipe can return more than a table
 
@@ -186,8 +293,8 @@ The recipe has report in markdown referencing these datasets.
 
 ## 10. Accessing multiple dhis2 instances
 
-Some recipes can access 2 dhis2 for "compare" and "align".
-This is also possible.
+Some recipes can access 2 dhis2 for "compare" and "align" their metadata.
+This is also possible but requires credentials on both dhis2.
 
 # Getting started
 
@@ -202,10 +309,6 @@ The prefered installation mode is via the application management app and the [dh
    - create users based on a csv
    - tracker to xlsform : need to move in the "standard" recipes https://trackerdev.snisrdc.com/api/apps/Dhis2-Taskr/index.html#/recipes/RQKTozhp2Ax
    - dataset to xlsform : need to move in the "standard" recipes https://dhis2.fbrcameroun.org/api/apps/Dhis2-Taskr/index.html#/recipes/zE1oDoaqGeV
-
-3. Fill in parameters and run
-
-4. Create your own recipe
 
 ### Create your own recipe
 
