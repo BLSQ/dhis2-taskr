@@ -20,8 +20,13 @@
 - [Getting started](#getting-started)
   - [Install the app](#install-the-app)
   - [Standard recipes](#standard-recipes)
-    - [Create your own recipe](#create-your-own-recipe)
-- [Specific recipes](#specific-recipes)
+  - [Specific recipes](#specific-recipes)
+    - [Turn an api call in to csv](#turn-an-api-call-in-to-csv)
+      - [v0.0 get all orgunits](#v00-get-all-orgunits)
+      - [v0.1 get all orgunits for a certain level as parameter](#v01-get-all-orgunits-for-a-certain-level-as-parameter)
+    - [Generate a csv to create users based on the level 3](#generate-a-csv-to-create-users-based-on-the-level-3)
+    - [Synchronous api calls in loop](#synchronous-api-calls-in-loop)
+    - [Generate a json with download prompt](#generate-a-json-with-download-prompt)
 
 
 # Disclaimer
@@ -260,7 +265,7 @@ Based on [idyll-lang](https://idyll-lang.org/)
 The recipe register some datasets.
 
 ```js
-report.register("stats2", stats);
+report.register("stats_level2", stats);
 ```
 
 The recipe has report in markdown referencing these datasets.
@@ -276,20 +281,9 @@ The recipe has report in markdown referencing these datasets.
 [PageBreak /]
 ## At level 2
 [FlexBox]
-[OrgunitMap lines:stats2 /]
+[OrgunitMap lines:stats_level2 /]
 [/FlexBox]
 [PageBreak /]
-
-## At level 3
-[FlexBox]
-[OrgunitMap lines:stats3 /]
-[/FlexBox]
-[PageBreak /]
-
-## All points not belonging to parent polygon
-[FlexBox]
-[OrgunitMap lines:`stats4.map(l => _.omit(l, ['color','fillColor']))` width:"700px" height:"700px"/]
-[/FlexBox]
 
 ```
 
@@ -298,6 +292,20 @@ The recipe has report in markdown referencing these datasets.
 Some recipes can access 2 dhis2 for "compare" and "align" their metadata.
 This is also possible but requires credentials on both dhis2.
 
+```js
+const apiDestination = await dhis2.api();
+const apiSource = _.cloneDeep(apiIhp);
+
+apiSource.setBaseUrl("https://source.dshi2.org/api");
+
+apiSource.setDefaultHeaders({
+  "x-requested-with": "XMLHttpRequest",
+  Authorization: "Basic " + btoa(user + ":" + password)
+});
+
+// ... then compare groups, orgunits, data element,...
+```
+
 # Getting started
 
 ## Install the app
@@ -305,21 +313,176 @@ This is also possible but requires credentials on both dhis2.
 The prefered installation mode is via the application management app and the [dhis2 app store](https://github.com/BLSQ/dhis2-taskr#install-from-the-app-store-recommanded)
 
 ## Standard recipes
-   - list users and do some audit (last login, admin, ...)
+   - List users and do some audit
+      - Users with Superuser role
+      - Users created but never logged in
+      - Last login more than 6 months
+      - All enabled users
    - list orgunits and do some audit on their coordinates
-   - dhis2 upgrade detect "bad" geojson
+      - number of orgunits with coordinates per level
+      - orgunits not in the parent shape
    - create users based on a csv
-   - tracker to xlsform : need to move in the "standard" recipes https://trackerdev.snisrdc.com/api/apps/Dhis2-Taskr/index.html#/recipes/RQKTozhp2Ax
-   - dataset to xlsform : need to move in the "standard" recipes https://dhis2.fbrcameroun.org/api/apps/Dhis2-Taskr/index.html#/recipes/zE1oDoaqGeV
+   - tracker to xlsform
+   - dataset to xlsform
+   - dhis2 upgrade detect/fix "bad" geojson
 
-### Create your own recipe
 
 
-# Specific recipes
-   - turn an api call in to csv
-   - generate a csv of users based on the zone de santé info https://tracker.snisrdc.com/api/apps/Dhis2-Taskr/index.html#/recipes/TJQu4bp3JLo
-   - import tracker data from covid xlsx
-   - pyramid chirugy : https://docs.google.com/presentation/d/1KfnBmsXu3IudhNkMJv-vQecYFaMRHMoLRxBFM0YF3TA/edit#slide=id.g7f1cca6a1c_2_1576
-   - mass renaming
-   - custom report
-   - migrate to contracts : https://fbp-burundi.bluesquare.org/api/apps/Dhis2-Taskr/index.html#/recipes/jRsD2NbELsg
+
+## Specific recipes
+
+### Turn an api call in to csv
+
+
+#### v0.0 get all orgunits
+
+Let's try to fetch all orgunits and their coordinates/geometry.
+
+```js
+const api = await dhis2.api();
+const ou = await api.get("organisationUnits", {
+  fields: "id,name,ancestors[id,name],geometry",
+  paging: false
+});
+
+return _.flattenObjects(ou.organisationUnits, ["geometry"]);
+```
+
+The code is in javascript, if you are not familiar with the language, you can follow numerous [tutorials](https://www.w3schools.com/js/) on the web.
+
+Going further, note :
+ - the 2 `await` to wait for the request to complete before processing the next line in the program.
+ - the `api` has a get method but also update, patch, delete methods
+ - the `"organisationUnits"` is the resource name and the behavior of these api are described in the dhis2 [documentation](https://docs.dhis2.org/master/en/developer/html/dhis2_developer_manual_full.html#webapi)
+ - the second parameter `{fields: "..." , paging: false, ...}` can also have a filter string or an array of filter string that follows these [namings](https://docs.dhis2.org/master/en/developer/html/dhis2_developer_manual_full.html#webapi_metadata_object_filter)
+
+#### v0.1 get all orgunits for a certain level as parameter
+
+in the "parameters" editor
+
+```json
+
+[
+    {
+        "id": "province",
+        "type": "dhis2",
+        "label": "Search for Provice",
+        "filter": "level:eq:2",
+        "resourceName": "organisationUnits"
+    }
+]
+
+```
+
+Fill in the paremeter `province` via the UI based on autocomplete.
+
+Adapt the code to now the filter on the province
+
+```js
+const api = await dhis2.api();
+const provinceId = parameters.province
+
+const ou = await api.get("organisationUnits", {
+  fields: "id,name,ancestors[id,name],geometry",
+  paging: false
+  filter: ["path:ilike:" + provinceId],
+  paging: false
+});
+return ou;
+```
+
+Click run, you will only get the fosa in that province !
+
+### Generate a csv to create users based on the level 3
+
+Let's try to get the level 3 orgunits
+
+```js
+
+const api = await dhis2.api();
+
+const ou = await api.get("organisationUnits", {
+  fields: "id,name,path,code,ancestors[id,name]",
+  filter: ["level:eq:3"],
+  paging: false
+});
+
+return ou.organisationUnits
+
+```
+
+this returns all the orgunits filtered on level 3
+
+Now let's add some code to map them as user
+replace the end of the script `return ou.organisationUnits` with some mapping code
+
+```js
+// utility functions
+const upcaseFirst = string => string.charAt(0).toUpperCase() + string.slice(1);
+
+const unaccent = string => string.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+const getRandomInt = max => Math.floor(Math.random() * Math.floor(max));
+
+const normalize = name => name.toLowerCase().replace(/ /g, "")
+
+
+// transform orgunits to users
+const users = ou.organisationUnits.map(ou => {
+  const zs_name = ou.name;
+
+  const user = {
+    firstName: zs_name,
+    surname: ou.code,
+    email: "ZS-" + ou.code + "@play.dhis2.org",
+    username: unaccent(normalize(zs_name)),
+    password:
+      upcaseFirst(normalize(zs_name)) +
+      "/" +
+      getRandomInt(9999999),
+    userRole: "Clerk",
+    organisationUnits: ou.id,
+    dataViewOrganisationUnits: ou.id
+  };
+  return user;
+});
+
+return users;
+```
+
+### Synchronous api calls in loop
+
+Don't use `collection.forEach` or `collection.map`, the remote calls will get executed in parallel and non synchronously, this might hurt your dhis2.
+
+Use the `for(... of ...)` notation, you will get the synchronous handling for free.
+
+```js
+for (selected of selectedRows) {
+    await api.patch("organisationUnits/" + selected.id, {
+      name: selected.name + " (modified by this recipe)"
+    })
+}
+```
+
+### Generate a json with download prompt
+
+This code snippet will turn the metadata variable into json, then trigger a download prompt in the browser.
+
+```js
+
+// generate a metadata json from api calls
+// then :
+
+var url = URL.createObjectURL(
+  new Blob([JSON.stringify(metadata, undefined, 2)], { type: "text/plain" })
+);
+var a = document.createElement("a");
+document.body.appendChild(a);
+a.href = url;
+a.download = "metadata.json";
+a.click();
+window.URL.revokeObjectURL(url);
+document.body.removeChild(a);
+```
+
+
