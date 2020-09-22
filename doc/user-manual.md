@@ -22,19 +22,20 @@
   - [Install the app](#install-the-app)
   - [Standard recipes](#standard-recipes)
   - [Specific recipes](#specific-recipes)
-    - [Turn an api call in to csv](#turn-an-api-call-in-to-csv)
-      - [v0.0 get all orgunits](#v00-get-all-orgunits)
-      - [v0.1 get all orgunits for a certain level as parameter](#v01-get-all-orgunits-for-a-certain-level-as-parameter)
-    - [Generate a csv to create users based on the level 3](#generate-a-csv-to-create-users-based-on-the-level-3)
-    - [Synchronous api calls in a loop](#synchronous-api-calls-in-a-loop)
-    - [Generate a json with download prompt](#generate-a-json-with-download-prompt)
-    - [Dhis2 periods](#dhis2-periods)
-    - [Let's update things](#lets-update-things)
-      - [First a readonly version](#first-a-readonly-version)
-      - [Then introduce a "dryRun" mode](#then-introduce-a-dryrun-mode)
-      - [Then test on the first record](#then-test-on-the-first-record)
-      - [Then run on all users](#then-run-on-all-users)
-      - [If the recipe is here to stay](#if-the-recipe-is-here-to-stay)
+- [Coding tutorial](#coding-tutorial)
+  - [Turn an api call in to a csv](#turn-an-api-call-in-to-a-csv)
+    - [v0.0 get all orgunits](#v00-get-all-orgunits)
+    - [v0.1 get all orgunits for a certain level as parameter](#v01-get-all-orgunits-for-a-certain-level-as-parameter)
+  - [Generate a csv to create users based on the level 3](#generate-a-csv-to-create-users-based-on-the-level-3)
+  - [Synchronous api calls in a loop](#synchronous-api-calls-in-a-loop)
+  - [Generate a json with download prompt](#generate-a-json-with-download-prompt)
+  - [Dhis2 periods](#dhis2-periods)
+  - [Let's update things](#lets-update-things)
+    - [First a readonly version](#first-a-readonly-version)
+    - [Then introduce a "dryRun" mode](#then-introduce-a-dryrun-mode)
+    - [Then test on the first record](#then-test-on-the-first-record)
+    - [Then run on all users](#then-run-on-all-users)
+    - [If the recipe is here to stay](#if-the-recipe-is-here-to-stay)
 
 
 # Disclaimer
@@ -84,9 +85,9 @@ If an error occur in the recipe (syntax or dhis2 api calls), it will show up on 
 If you are in the edit mode the recipe editor will show up.
 
 A recipe is composed of
- - the code
- - the paremeters definition (optional)
- - the report (optional)
+ - the code (javascript snippet)
+ - the paremeters definition (optional, json)
+ - the report (optional, markdown with idyll components)
 
 # Historical pains & motivations
 
@@ -125,6 +126,8 @@ Want to find all the tracker data elements not referenced by program stages ?
 There's no link between `/api/dataElements` api and the programs.
 The `/api/programs` only return used data elements.
 So here we need to combine the 2 calls to find unreferenced data elements.
+
+Since the api call is done via javascript, we can easily combine, merge, filter the results at our will.
 
 ## 4. Data can come in/out in various format
 
@@ -186,7 +189,7 @@ points.forEach(point => {
 
 ## 6. End user autonomy to re-run the recipe at will
 
-Some recipes needs to be re-run multiple times, ideally without a developer help :
+Some recipes needs to be re-run multiple times, ideally without a developer help, some possible use cases :
   - a quarterly export with the data in xlsx in a specific format
   - fixing dhis2 data/config, and re-run each time you fixed some of them, to review the remaining one.
   - import some data from last quarter in a known format (but not the one dhis2 expect by default)
@@ -206,11 +209,13 @@ Make sure to always have the latest version of taskr.
 
 ## 8. Recipes can accept parameters
 
-   - most recipes needs params
-      - dhis2 resources (a program, an orgunit, an orgunit of a given level, a dataset,...)
-      - files
-      - a string
-      - a select between options
+Most recipes will needs params
+   - a dhis2 resources (a program, an orgunit, an orgunit of a given level, a dataset,...)
+   - files (xlsx, json, csv)
+   - a string (a dhis2 period ?)
+   - a select between options
+
+Before running you'll get a small screen to enter them
 
 ![](./user-manual-recipe-parameters.jpg)
 
@@ -279,6 +284,8 @@ These parameters are then available in the recipe code
 const programId = parameters.program.id;
 
 const dryRun = parameters.mode =="dryRun";
+
+const events = parameters.file.data;
 ```
 
 ## 9. Recipe can return more than a table
@@ -295,7 +302,7 @@ The recipe register some datasets.
 report.register("stats_level2", stats);
 ```
 
-The recipe has report in markdown referencing these datasets.
+The recipe has a report in markdown referencing these datasets, adding some contextual content.
 
 ```markdown
 [PageOrientation orientation:"landscape" /]
@@ -316,7 +323,7 @@ The recipe has report in markdown referencing these datasets.
 
 ## 10. Accessing multiple dhis2 instances
 
-Some recipes can access 2 dhis2 for "compare" and "align" their metadata.
+Some recipes can access 2 dhis2 instances to "compare" and "align" their metadata.
 This is also possible but requires credentials on both dhis2.
 
 ```js
@@ -358,10 +365,15 @@ The prefered installation mode is via the application management app and the [dh
 
 ## Specific recipes
 
-### Turn an api call in to csv
+You can easily create your own recipes.
+See the Following chapter
+
+# Coding tutorial
+
+## Turn an api call in to a csv
 
 
-#### v0.0 get all orgunits
+### v0.0 get all orgunits
 
 Let's try to fetch all orgunits and their coordinates/geometry.
 
@@ -383,7 +395,7 @@ Going further, note :
  - the `"organisationUnits"` is the resource name and the behavior of these api are described in the dhis2 [documentation](https://docs.dhis2.org/master/en/developer/html/dhis2_developer_manual_full.html#webapi)
  - the second parameter `{fields: "..." , paging: false, ...}` can also have a filter string or an array of filter string that follows these [namings](https://docs.dhis2.org/master/en/developer/html/dhis2_developer_manual_full.html#webapi_metadata_object_filter)
 
-#### v0.1 get all orgunits for a certain level as parameter
+### v0.1 get all orgunits for a certain level as parameter
 
 In the "parameters" editor, you can paste
 
@@ -420,7 +432,7 @@ return ou;
 
 Click run, you will only get the fosa in that province !
 
-### Generate a csv to create users based on the level 3
+## Generate a csv to create users based on the level 3
 
 Let's try to get the level 3 orgunits
 
@@ -477,7 +489,7 @@ const users = ou.organisationUnits.map(ou => {
 return users;
 ```
 
-### Synchronous api calls in a loop
+## Synchronous api calls in a loop
 
 Don't use `collection.forEach` or `collection.map`, the remote calls will get executed in parallel and non synchronously, this might hurt your dhis2.
 
@@ -491,7 +503,7 @@ for (selected of selectedRows) {
 }
 ```
 
-### Generate a json with download prompt
+## Generate a json with download prompt
 
 This code snippet will turn the metadata variable into json, then trigger a download prompt in the browser.
 
@@ -512,7 +524,7 @@ window.URL.revokeObjectURL(url);
 document.body.removeChild(a);
 ```
 
-### Dhis2 periods
+## Dhis2 periods
 
 You might want to turn a year into dhis2 quarters or other frequencies.
 
@@ -540,12 +552,11 @@ return results;
 ```
 
 
-### Let's update things
+## Let's update things
 
 Be careful !
 
-
-#### First a readonly version
+### First a readonly version
 
 Let's say we created users with the wrong roles and they are all super user and we want them to be tracker encoder.
 
@@ -577,7 +588,7 @@ return usersToFix
 Note :
  - avoid spreading dhis2 ids all over the code. See how I reference them using roles.encoder
 
-#### Then introduce a "dryRun" mode
+### Then introduce a "dryRun" mode
 
 
 ```js
@@ -596,7 +607,7 @@ return usersToFix
 
 ```
 
-#### Then test on the first record
+### Then test on the first record
 
 ```js
 
@@ -615,11 +626,11 @@ return usersToFix
 
 - launch in dry run,
 - expect a single user,
-- change the dryRun to true and
+- change the dryRun to false and
 - click run
 - assert the good results in the dhis2 UI
 
-#### Then run on all users
+### Then run on all users
 
 ```js
 
@@ -636,7 +647,7 @@ return usersToFix
 
 ```
 
-#### If the recipe is here to stay
+### If the recipe is here to stay
 
 Turn the dryRun into UI parameters.
 
