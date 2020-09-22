@@ -808,11 +808,11 @@ John,Doe,johndoe@mail.com,johndoe123,Your-password-123,Data entry clerk,DHIS2OUI
 const api = await dhis2.api();
 const dryRun = parameters.mode == "dryRun";
 
-const users = parameters.file.data;
-
-const ur = await api.get("userRoles");
+const ur = await api.get("userRoles", { fields: "id,name", paging: false });
 const userRoles = {};
 ur.userRoles.forEach(u => (userRoles[u.name] = u.id));
+
+const users = parameters.file.data.filter(user => user.username);
 
 const ids = (await api.get("system/id?limit=" + 2 * users.length))["codes"];
 
@@ -843,8 +843,16 @@ dhis2_users = users.map(user => {
         return { id };
       })
   };
-  dhis2user.userRoles = [user.userRole].map(u => {
-    return { id: userRoles[u.userRole] };
+  dhis2user.userRoles = user.userRole.split(",").map(role => {
+    if (userRoles[role] == undefined) {
+      throw new Error(
+        "userRole not found : '" +
+          role +
+          "' known roles : " +
+          Object.keys(userRoles).join(" ,")
+      );
+    }
+    return { id: userRoles[role] };
   });
 
   dhis2user.userCredentials.userRoles = dhis2user.userRoles;
@@ -856,6 +864,7 @@ if (dryRun) {
   const resp = await api.post("metadata", { users: dhis2_users });
   return resp;
 }
+
 
     `
   },
