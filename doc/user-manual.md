@@ -4,6 +4,7 @@
 - [Table of content](#table-of-content)
 - [Disclaimer](#disclaimer)
 - [Small tour](#small-tour)
+  - [Open the app](#open-the-app)
   - [Recipes list](#recipes-list)
   - [Recipe page](#recipe-page)
 - [Historical pains & motivations](#historical-pains--motivations)
@@ -25,8 +26,15 @@
       - [v0.0 get all orgunits](#v00-get-all-orgunits)
       - [v0.1 get all orgunits for a certain level as parameter](#v01-get-all-orgunits-for-a-certain-level-as-parameter)
     - [Generate a csv to create users based on the level 3](#generate-a-csv-to-create-users-based-on-the-level-3)
-    - [Synchronous api calls in loop](#synchronous-api-calls-in-loop)
+    - [Synchronous api calls in a loop](#synchronous-api-calls-in-a-loop)
     - [Generate a json with download prompt](#generate-a-json-with-download-prompt)
+    - [Dhis2 periods](#dhis2-periods)
+    - [Let's update things](#lets-update-things)
+      - [First a readonly version](#first-a-readonly-version)
+      - [Then introduce a "dryRun" mode](#then-introduce-a-dryrun-mode)
+      - [Then test on the first record](#then-test-on-the-first-record)
+      - [Then run on all users](#then-run-on-all-users)
+      - [If the recipe is here to stay](#if-the-recipe-is-here-to-stay)
 
 
 # Disclaimer
@@ -46,6 +54,12 @@ What can harm a dhis2 by clicking the wrong option in a menu in the dataElement 
 
 # Small tour
 
+## Open the app
+
+Once the app installed you can locate the app in the menu.
+
+![recipes-list](./user-manual-taskr-app.jpg)
+
 ## Recipes list
 
 ![recipes-list](./user-manual-recipes-list.jpg)
@@ -63,9 +77,16 @@ Fill in the parameters if needed, click run, the results will show under the but
 
 ![recipes-list](./user-manual-recipe-page.jpg)
 
-If an error occur in the recipe, it will show up on the top of the screen.
+If an error occur in the recipe (syntax or dhis2 api calls), it will show up on the top of the screen.
 
-If you are in the edit mode the recipe editor will show up
+![recipes-list](./user-manual-error.jpg)
+
+If you are in the edit mode the recipe editor will show up.
+
+A recipe is composed of
+ - the code
+ - the paremeters definition (optional)
+ - the report (optional)
 
 # Historical pains & motivations
 
@@ -95,7 +116,7 @@ The orgunits table is clickable, zoomable, you can switch between different laye
 
 Let's say you want to rename all indicators starting by "INDX.Y name" to "IND X.Y - name".
 
-Setting up a dhis2 app requires time and developper knowledge. Taskr is a good tradeoff, you can install/update the app from app store. With basic programming knowledge or using the standard recipes you can automate already a few tasks without the *initial setup cost*.
+Setting up a dhis2 app requires time and developper knowledge. Taskr is a good tradeoff, you can install/update the app from the app store. With basic programming knowledge or using the standard recipes you can automate already a few tasks without the *initial setup cost*.
 
 ## 3. Combining multiple api calls is hard for exemple in postman.
 
@@ -108,9 +129,10 @@ So here we need to combine the 2 calls to find unreferenced data elements.
 ## 4. Data can come in/out in various format
 
 We receive data in various forms (csv, xlsx, json...)
-We want to produce various formats (csv, xlsx, json), a small ui to be able to filter
 
-Taskr recipes can accept them and make the recipe easy to code, it will recieved the already parsed data.
+We want to produce various formats (csv, xlsx, json), or show a small ui to be able to filter/explore the data.
+
+Taskr recipes can accept them and make the recipe easy to code, it will recieve the already parsed data.
 
 CSV will be parsed by [papaparse](https://www.papaparse.com/) library.
 XLSX will be parsed by [xlsx-populate](https://github.com/dtjohnson/xlsx-populate#usage), the recipe can also produce xlsx.
@@ -120,7 +142,12 @@ XLSX will be parsed by [xlsx-populate](https://github.com/dtjohnson/xlsx-populat
 
 In js some trivial function are not in the language, to avoid coding your own function each time in all your recipes [lodash](https://lodash.com/docs) is available in the recipe code
 
-Let's say you are working on project setting up a health facility registry. You received data from a partner and need to integrate it with our existing facilities.
+```js
+// create dataelement lookup by id
+const dataElementById = _.keyBy(de.dataElements, de => de.id);
+```
+
+Let's say you are working on a project setting up a health facility registry. You received data from a partner and need to integrate it with our existing facilities.
 
 You might want to find nearest healthcenter, or the parents orgunits that contains that point. That's why https://turfjs.org/ is integrated in the taskr.
 
@@ -358,7 +385,7 @@ Going further, note :
 
 #### v0.1 get all orgunits for a certain level as parameter
 
-in the "parameters" editor
+In the "parameters" editor, you can paste
 
 ```json
 
@@ -376,7 +403,7 @@ in the "parameters" editor
 
 Fill in the paremeter `province` via the UI based on autocomplete.
 
-Adapt the code to now the filter on the province
+Adapt the code to now filter on the province
 
 ```js
 const api = await dhis2.api();
@@ -411,7 +438,7 @@ return ou.organisationUnits
 
 ```
 
-this returns all the orgunits filtered on level 3
+This returns all the orgunits filtered on level 3
 
 Now let's add some code to map them as user
 replace the end of the script `return ou.organisationUnits` with some mapping code
@@ -450,7 +477,7 @@ const users = ou.organisationUnits.map(ou => {
 return users;
 ```
 
-### Synchronous api calls in loop
+### Synchronous api calls in a loop
 
 Don't use `collection.forEach` or `collection.map`, the remote calls will get executed in parallel and non synchronously, this might hurt your dhis2.
 
@@ -484,5 +511,137 @@ a.click();
 window.URL.revokeObjectURL(url);
 document.body.removeChild(a);
 ```
+
+### Dhis2 periods
+
+You might want to turn a year into dhis2 quarters or other frequencies.
+
+`DatePeriods.split(period, frequency)` is what you need
+
+```js
+const periods = ["2019", "2019S1", "2019Q3", "201907"];
+const frequencies = [
+  "monthly",
+  "quarterly",
+  "yearly",
+  "sixMonthly",
+  "financialJuly"
+];
+const results = [];
+periods.forEach(period => {
+  frequencies.forEach(frequency => {
+    results.push(
+      [period, frequency].concat(DatePeriods.split(period, frequency))
+    );
+  });
+});
+
+return results;
+```
+
+
+### Let's update things
+
+Be careful !
+
+
+#### First a readonly version
+
+Let's say we created users with the wrong roles and they are all super user and we want them to be tracker encoder.
+
+Let's assume in our case they all have emails like `@tracker.com`
+
+If you plan to use the api.update function, make sure to load ALL the fields and not only the one you need to make your selection.
+
+Let's load the users and identify the subset of users that needs to be fixed with a recipe like this
+
+```js
+const api = await dhis2.api();
+const ou = await api.get("users", {
+  fields: ":all,userCredentials[:all,userRoles[id,name]]",
+  filter: "email:ilike:@tracker.com",
+  paging: false
+});
+
+const roles = {
+  superuser: "yrB6vc5Ip3r",
+  encoder: "Mpmz1yuqSaF"
+};
+
+const usersToFix = ou.users.filter(
+  user => user.userCredentials.userRoles[0].id !== roles.encoder
+);
+
+return usersToFix
+```
+Note :
+ - avoid spreading dhis2 ids all over the code. See how I reference them using roles.encoder
+
+#### Then introduce a "dryRun" mode
+
+
+```js
+const dryRun = true
+
+// ... usersToFix
+
+for (user of usersToFix) {
+  user.userCredentials.userRoles = [{ id: roles.encoder }];
+  if (!dryRun) {
+    // will call the api here
+  }
+}
+
+return usersToFix
+
+```
+
+#### Then test on the first record
+
+```js
+
+// ... usersToFix
+
+for (user of usersToFix.slice(0,1)) {
+  user.userCredentials.userRoles = [{ id: roles.encoder }];
+  if (!dryRun) {
+    await api.update("users/" + user.id, user);
+  }
+}
+
+return usersToFix
+
+```
+
+- launch in dry run,
+- expect a single user,
+- change the dryRun to true and
+- click run
+- assert the good results in the dhis2 UI
+
+#### Then run on all users
+
+```js
+
+// ... usersToFix
+
+for (user of usersToFix) {
+  user.userCredentials.userRoles = [{ id: roles.encoder }];
+  if (!dryRun) {
+    await api.update("users/" + user.id, user);
+  }
+}
+
+return usersToFix
+
+```
+
+#### If the recipe is here to stay
+
+Turn the dryRun into UI parameters.
+
+Make sure if defaults to true ;)
+
+
 
 
