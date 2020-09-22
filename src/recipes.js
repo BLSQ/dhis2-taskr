@@ -1063,131 +1063,345 @@ return pi.attributeValues;
       }
     ],
     code: `
-    // press crtl-r to run
+    const api = await dhis2.api();
+    const pg = await api.get("programs/" + parameters.program.id + ".json", {
+      fields:
+        "id,name,trackedEntityType,programTrackedEntityAttributes[trackedEntityAttribute[id,generated,name,code,valueType,optionSet[id,name,code,options[id,code,name]]]],programStages[id,code,name,programStageSections[:all,id,name,code],programStageDataElements[compulsory,code,dataElement[id,name,formName,shortName,code,valueType,optionSet[id,code,name,options[code,name]]]]]",
+      paging: false
+    });
 
-const api = await dhis2.api();
-const pg = await api.get("programs/" + parameters.program.id, {
-  fields:
-    "id,name,programStages[programStageDataElements[compulsory,code,dataElement[id,name,formName,shortName,code,valueType,optionSet[id,code,name,options[code,name]]]]]",
-  paging: false
-});
+    const iaso_mappings = {};
 
-function slugify(string) {
-  const a = 'àáâäæãåāăąçćčđďèéêëēėęěğǵḧîïíīįìłḿñńǹňôöòóœøōõőṕŕřßśšşșťțûüùúūǘůűųẃẍÿýžźż·/_,:;'
-  const b = 'aaaaaaaaaacccddeeeeeeeegghiiiiiilmnnnnoooooooooprrsssssttuuuuuuuuuwxyyzzz______'
-  const p = new RegExp(a.split('').join('|'), 'g')
+    function toQuestion(valueType, optionSet, compulsory) {
+      let type = "";
+      let constraint = undefined;
+      let constraint_message = undefined;
+      let required = undefined;
+      let appearance = undefined;
 
-  return string.toString().toLowerCase()
-  .replace(/\\\s+/g, '_') // Replace spaces with -
-  .replace(p, c => b.charAt(a.indexOf(c))) // Replace special characters
-  .replace(/&/g, '_and_') // Replace & with 'and'
-  .replace(/[^[a-zA-Z0-9أ-ي]-]+/g, "") // Arabic support
-  .replace(/__+/g, '_') // Replace multiple - with single -
-  .replace(/^-+/, '') // Trim - from start of text
-  .replace(/_+$/, '') // Trim - from end of text
-  }
+      if (compulsory == true) {
+        required = "true";
+      }
 
-const workbook = await XlsxPopulate.fromBlankAsync();
-const sheet = workbook.sheet(0);
-const questions = [
-  [
-    "type",
-    "name",
-    "label",
-    "required",
-    "choice_filter",
-    "constraint",
-    "constraint_message",
-    "relevant",
-    "hint",
-    "appearance",
-    "calculation"
-  ]
-];
-
-
-pg.programStages.forEach(programStage => {
-  programStage.programStageDataElements.forEach(de => {
-    let type = "";
-    let constraint = undefined;
-    let constraint_message = undefined
-    let required = undefined
-    if (de.compulsory == true){
-      required = "true"
+      if (optionSet) {
+        type =
+          "select_one " +
+          (optionSet.code ||
+            slugify(optionSet.name) ||
+            slugify(optionSet.displayName));
+        appearance = "minimal";
+      } else if (valueType == "BOOLEAN" || valueType == "TRUE_ONLY") {
+        type = "select_one yesno";
+      } else if (valueType == "DATE") {
+        type = "date";
+      } else if (valueType == "TEXT" || valueType == "LONG_TEXT") {
+        type = "text";
+      } else if (valueType == "PERCENTAGE") {
+        type = "integer";
+      } else if (valueType == "INTEGER") {
+        type = "integer";
+      } else if (valueType == "INTEGER_POSITIVE") {
+        type = "integer";
+        constraint = ". > 0";
+        constraint_message = "must be non-zero positive number";
+      } else if (valueType == "INTEGER_ZERO_OR_POSITIVE") {
+        type = "integer";
+        constraint = ". >= 0";
+        constraint_message = "must be a positive number";
+      } else if (valueType == "INTEGER_ZERO_OR_NEGATIVE") {
+        type = "integer";
+        constraint = ". <= 0";
+        constraint_message = "must be a negative number";
+      } else if (valueType == "INTEGER_NEGATIVE") {
+        type = "integer";
+        constraint = ". < 0";
+        constraint_message = "must be non-zero negative number";
+      } else if (valueType == "NUMBER") {
+        type = "decimal";
+      } else if (valueType == "COORDINATE") {
+        type = "geopoint";
+      } else if (valueType == "EMAIL") {
+        type = "text";
+        constraint = "regex(., '[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+[.][A-Za-z]{2,10}')";
+        constraint_message = "should be a email";
+      } else if (valueType == "PHONE_NUMBER") {
+        type = "text";
+        constraint = "regex(., '[0-9._%+-]+[.]')";
+        constraint_message = "should be a phone number";
+      } else if (valueType == "ORGANISATION_UNIT") {
+        type = "select_one orgunit";
+      } else if (valueType == "FILE_RESOURCE") {
+        type = "file";
+      } else if (valueType == "TIME") {
+        type = "time";
+      } else if (valueType == "AGE") {
+        type = "date";
+      } else {
+        throw Error("valueType not supported " + valueType);
+      }
+      return {
+        type: type,
+        constraint: constraint,
+        constraint_message: constraint_message,
+        required: required,
+        appearance: appearance
+      };
     }
-    if (de.dataElement.optionSet) {
-      type = "select_one " + slugify(de.dataElement.optionSet.code || de.dataElement.optionSet.name);
-    } else if (de.dataElement.valueType == "BOOLEAN" || de.dataElement.valueType == "TRUE_ONLY") {
-      type = "select_one yesno";
-    } else if (de.dataElement.valueType == "DATE") {
-      type = "date";
-    } else if (de.dataElement.valueType == "TEXT") {
-      type = "text";
-    } else if (de.dataElement.valueType == "PERCENTAGE") {
-      type = "integer";
-    } else if (de.dataElement.valueType == "INTEGER") {
-      type = "integer";
-    } else if (de.dataElement.valueType == "INTEGER_POSITIVE"){
-      type = "integer";
-      constraint = ". > 0";
-      constraint_message = "must be non-zero positive number"
-    } else if (de.dataElement.valueType == "INTEGER_ZERO_OR_POSITIVE"){
-      type = "integer";
-      constraint = ". >= 0";
-      constraint_message = "must be a positive number"
-    } else if (de.dataElement.valueType == "INTEGER_ZERO_OR_NEGATIVE"){
-      type = "integer";
-      constraint = ". <= 0";
-      constraint_message = "must be a negative number"
-    } else if (de.dataElement.valueType == "INTEGER_NEGATIVE"){
-      type = "integer";
-      constraint = ". < 0";
-      constraint_message = "must be non-zero negative number"
-    } else if (de.dataElement.valueType == "NUMBER") {
-      type = "decimal";
-    } else if ( de.dataElement.valueType == "COORDINATE") {
-      type = "geopoint"
+
+    function slugify(string) {
+      if (string == undefined) {
+        return undefined;
+      }
+      string = string.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+
+      return string
+        .toString()
+        .toLowerCase()
+        .replace("(", "_")
+        .replace(")", "_")
+        .replace(/[‘’]/g, "_")
+        .replace(/[“”]/g, "_")
+        .replace(/\\s+/g, "_") // Replace spaces with -
+        .replace(/&/g, "_and_") // Replace & with 'and'
+        .replace(/[^[a-zA-Z0-9?-?]-]+/g, "") // Arabic support
+        .replace(/__+/g, "_") // Replace multiple - with single -
+        .replace(/^-+/, "") // Trim - from start of text
+        .replace(/_+$/, ""); // Trim - from end of text
     }
-    questions.push([type, de.dataElement.code, de.dataElement.formName || de.dataElement.name, required, undefined, constraint, constraint_message]);
-  });
-})
-questions.push(["image", "imgUrl", "Photo de la structure"]);
-questions.push(["geopoint", "gps", "Coordonnées GPS"]);
 
-sheet.name("survey");
-sheet.cell("A1").value(questions);
+    const workbook = await XlsxPopulate.fromBlankAsync();
+    const sheet = workbook.sheet(0);
+    const questions = [
+      [
+        "type",
+        "name",
+        "label",
+        "required",
+        "choice_filter",
+        "constraint",
+        "constraint_message",
+        "relevant",
+        "hint",
+        "appearance",
+        "calculation"
+      ]
+    ];
 
-const sheetChoices = workbook.addSheet("choices");
-const dataElementsWithOptionSets = pg.programStages[0].programStageDataElements.filter(
-  de => de.dataElement.optionSet
-);
-const optionChoices = [
-  ["list_name", "name", "label"],
-  ["yesno", "yes", "1"],
-  ["yesno", "no", "0"]
-];
-dataElementsWithOptionSets.forEach(de => {
-  de.dataElement.optionSet.options.forEach(option => {
-    optionChoices.push([
-      slugify(de.dataElement.optionSet.code || de.dataElement.optionSet.name),
-      option.code,
-      option.name
-    ]);
-  });
-});
+    function append_to_mappings(question_name, mapping) {
+      if (iaso_mappings[question_name] == undefined) {
+        iaso_mappings[question_name] = [];
+      }
+      iaso_mappings[question_name].push(mapping);
+    }
 
-const sheetSettings = workbook.addSheet("settings");
-const settings = [
-  ["form_title","form_id"],
-  [pg.name,pg.code]
-];
-sheetSettings.cell("A1").value(settings);
+    pg.programTrackedEntityAttributes.forEach(de => {
+      const question = toQuestion(
+        de.trackedEntityAttribute.valueType,
+        de.trackedEntityAttribute.optionSet,
+        de.compulsory
+      );
+      const question_name =
+        de.trackedEntityAttribute.code || slugify(de.trackedEntityAttribute.name);
 
-sheetChoices.cell("A1").value(optionChoices);
+      append_to_mappings(question_name, de);
 
-XlsxPopulate.openAsBlob(workbook, "orgunits.xslx");
+      questions.push([
+        question.type,
+        question_name,
+        de.trackedEntityAttribute.formName || de.trackedEntityAttribute.name,
+        question.required,
+        undefined,
+        question.constraint,
+        question.constraint_message,
+        undefined,
+        undefined,
+        question.appearance
+      ]);
+    });
 
-return pg;
+    let stageIndex = 1;
+
+    pg.programStages.forEach(programStage => {
+      questions.push([
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined
+      ]);
+      questions.push([
+        "begin group",
+        slugify(programStage.name),
+        programStage.name,
+        undefined,
+        undefined,
+        undefined,
+        undefined
+      ]);
+      let sectionIndex = 1;
+      if (programStage.programStageSections.length == 0) {
+        programStage.programStageSections.push({
+          dataElements: programStage.programStageDataElements.map(
+            psde => psde.dataElement
+          )
+        });
+      }
+
+      programStage.programStageSections.forEach(programStageSection => {
+        questions.push([
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined
+        ]);
+        questions.push([
+          "begin group",
+          "section_" +
+            stageIndex +
+            "_" +
+            sectionIndex +
+            "_" +
+            slugify(programStageSection.name),
+          programStageSection.name,
+          undefined,
+          undefined,
+          undefined,
+          undefined
+        ]);
+        programStageSection.dataElements.forEach(programStageSectionDe => {
+          const de = programStage.programStageDataElements.find(
+            psde => programStageSectionDe.id == psde.dataElement.id
+          );
+          const question_name = de.dataElement.code || slugify(de.dataElement.name);
+          append_to_mappings(question_name, {
+            program: pg.id,
+            programStage: programStage.id,
+            ...de
+          });
+
+          const valueType = de.dataElement.valueType;
+          const optionSet = de.dataElement.optionSet;
+          const question = toQuestion(valueType, optionSet, de.compulsory);
+          "type",
+            "name",
+            "label",
+            "required",
+            "choice_filter",
+            "constraint",
+            "constraint_message",
+            "relevant",
+            "hint",
+            "appearance",
+            "calculation";
+          questions.push([
+            question.type,
+            question_name,
+            de.dataElement.formName || de.dataElement.name,
+            question.required,
+            undefined,
+            question.constraint,
+            question.constraint_message,
+            undefined,
+            undefined,
+            question.appearance
+          ]);
+        });
+        questions.push([
+          "end group",
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined
+        ]);
+        sectionIndex = sectionIndex + 1;
+      });
+      questions.push([
+        "end group",
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined
+      ]);
+      stageIndex = stageIndex + 1;
+    });
+    //questions.push(["image", "imgUrl", "Photo de la structure"]);
+    //questions.push(["geopoint", "gps", "Coordonnées GPS"]);
+
+    sheet.name("survey");
+    sheet.cell("A1").value(questions);
+
+    const sheetChoices = workbook.addSheet("choices");
+    const dataElementsWithOptionSets = pg.programStages
+      .flatMap(ps => ps.programStageDataElements)
+      .filter(de => de.dataElement.optionSet);
+    const optionChoices = [
+      ["list_name", "name", "label"],
+      ["orgunit", "TODO", "TODO"],
+      ["yesno", "1", "Oui"],
+      ["yesno", "0", "Non"]
+    ];
+
+    const alreadyPushedOptionSet = new Set();
+    dataElementsWithOptionSets.forEach(de => {
+      if (!alreadyPushedOptionSet.has(de.dataElement.optionSet.id)) {
+        de.dataElement.optionSet.options.forEach(option => {
+          optionChoices.push([
+            slugify(de.dataElement.optionSet.code) ||
+              slugify(de.dataElement.optionSet.name),
+            option.code,
+            option.name
+          ]);
+        });
+        alreadyPushedOptionSet.add(de.dataElement.optionSet.id);
+      }
+    });
+
+    pg.programTrackedEntityAttributes.forEach(de => {
+      if (de.trackedEntityAttribute.optionSet) {
+        if (!alreadyPushedOptionSet.has(de.trackedEntityAttribute.optionSet.id)) {
+          de.trackedEntityAttribute.optionSet.options.forEach(option => {
+            optionChoices.push([
+              slugify(de.trackedEntityAttribute.optionSet.code) ||
+                slugify(de.trackedEntityAttribute.optionSet.name),
+              option.code,
+              option.name
+            ]);
+          });
+          alreadyPushedOptionSet.add(de.trackedEntityAttribute.optionSet.id);
+        }
+      }
+    });
+
+    const sheetSettings = workbook.addSheet("settings");
+    const settings = [
+      ["form_title", "form_id"],
+      [pg.name, slugify(pg.code) || slugify(pg.name)]
+    ];
+    sheetSettings.cell("A1").value(settings);
+
+    sheetChoices.cell("A1").value(optionChoices);
+
+    XlsxPopulate.openAsBlob(workbook, slugify(pg.name) + ".xlsx");
+    const identifier = pg.programTrackedEntityAttributes.find(
+      e => e.trackedEntityAttribute.generated == true
+    );
+    return {
+      program_id: pg.id,
+      tracked_entity_identifier: identifier.trackedEntityAttribute.id,
+      tracked_entity_type: pg.trackedEntityType.id,
+      question_mappings: iaso_mappings
+    };
+    return pg;
+
 `
   },
   {
