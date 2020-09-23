@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Box from "@material-ui/core/Box";
 import MarkdownIt from "markdown-it";
 import MarkdownItAnchor from "markdown-it-anchor";
+import MarkDownItHighlight from "markdown-it-highlightjs";
 import "./DocPage.css";
 
 const docPath =
@@ -38,7 +39,10 @@ function DocPage({ match }) {
         fixedText = fixedText.replace(toReplace, docPath);
 
         setMarkdown(
-          new MarkdownIt().use(MarkdownItAnchor, { slugify }).render(fixedText)
+          new MarkdownIt()
+            .use(MarkdownItAnchor, { slugify })
+            .use(MarkDownItHighlight, { inline: true })
+            .render(fixedText)
         );
         console.log(match);
         if (match.params.section) {
