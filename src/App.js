@@ -3,6 +3,7 @@ import "./App.css";
 import { makeStyles } from "@material-ui/core/styles";
 import Typography from "@material-ui/core/Typography";
 import AppBar from "@material-ui/core/AppBar";
+import Button from "@material-ui/core/Button";
 import Paper from "@material-ui/core/Paper";
 import Toolbar from "@material-ui/core/Toolbar";
 import IconButton from "@material-ui/core/IconButton";
@@ -10,9 +11,11 @@ import MenuIcon from "@material-ui/icons/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 import Select from "@material-ui/core/Select";
 import Fab from "@material-ui/core/Fab";
+import Grid from "@material-ui/core/Grid";
 import AddIcon from "@material-ui/icons/Add";
 
 import Editor from "./Editor";
+import DocPage from "./DocPage";
 import {
   HashRouter as Router,
   Switch,
@@ -181,22 +184,42 @@ function App() {
         <div className={classes.root + " reportPage"}>
           <AppBar position="static" color="primary" className="no-print">
             <Toolbar>
-              <IconButton
-                edge="start"
-                className={classes.menuButton}
-                color="inherit"
-                aria-label="menu"
-                href={"#/recipes/"}
-              >
-                <MenuIcon />
-              </IconButton>
-              <Typography variant="h6" color="inherit">
-                Taskr : your task runner.
-              </Typography>
+              <Grid container spacing={10} justify="space-between" alignItems="center" alignContent="center">
+                <Grid item>
+                  <IconButton
+                    edge="start"
+                    className={classes.menuButton}
+                    color="inherit"
+                    aria-label="menu"
+                    href={"#/recipes/"}
+                  >
+                    <MenuIcon />
+                  </IconButton>
+                </Grid>
+                <Grid item>
+                  <Typography variant="h6" color="inherit">
+                    Taskr : your task runner.
+                  </Typography>
+                </Grid>
+                <Grid item>
+                  <Button href={"#/doc/"} color="inherit">
+                    Documentation
+                  </Button>
+                </Grid>
+              </Grid>
             </Toolbar>
           </AppBar>
           <Paper className={classes.paper}>
             <Switch>
+              <Route
+                path={`/doc`}
+                exact={true}
+                render={props => <DocPage match={props.match} />}
+              />
+              <Route
+                path={`/doc/:section`}
+                render={props => <DocPage match={props.match} />}
+              />
               <Route
                 path={`/recipes`}
                 exact={true}
