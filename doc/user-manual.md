@@ -22,13 +22,13 @@
   - [Install the app](#install-the-app)
   - [Standard recipes](#standard-recipes)
     - [Users - Super user, inactive user, never logged in audit](#users---super-user-inactive-user-never-logged-in-audit)
-    - [Coordinates](#coordinates)
     - [Users : Create users based on a csv](#users--create-users-based-on-a-csv)
+    - [Coordinates](#coordinates)
     - [XLSForm - Generate a basic xlsform for a program](#xlsform---generate-a-basic-xlsform-for-a-program)
     - [XLSForm - generate a xlsform from a DataSet](#xlsform---generate-a-xlsform-from-a-dataset)
     - [XLSForm - Diff two xlsform](#xlsform---diff-two-xlsform)
     - [Dataviz - update custom attributes of program indicator](#dataviz---update-custom-attributes-of-program-indicator)
-    - [You recipe ?](#you-recipe-)
+    - [Your recipe ?](#your-recipe-)
   - [Specific recipes](#specific-recipes)
 - [Coding tutorial](#coding-tutorial)
   - [Turn an api call in to a csv](#turn-an-api-call-in-to-a-csv)
@@ -364,6 +364,19 @@ The prefered installation mode is via the application management app and the [dh
       - Last login more than 6 months
       - All enabled users
 
+### Users : Create users based on a csv
+
+Take a csv like
+
+```js
+firstName,surname,email,username,password,userRole,organisationUnits,dataViewOrganisationUnits
+John,Doe,johndoe@mail.com,johndoe123,Your-password-123,Data entry clerk,DHIS2OUID,DHIS2OUID
+```
+
+and create corresponding users.
+You can run the recipe in dryMode first to see the end result.
+Once ok select the create mode.
+
 ### Coordinates
 
 **Coordinates - Coordinates coverage**
@@ -382,19 +395,6 @@ Here the red points are not in their parent's shape, green one are ok.
 Verify per organisation unit level the number of orgunits of that level that do have coordinates/shapes.
 
 ![](./user-manual-user-stats-by-level.jpg)
-
-### Users : Create users based on a csv
-
-Take a csv like
-
-```js
-firstName,surname,email,username,password,userRole,organisationUnits,dataViewOrganisationUnits
-John,Doe,johndoe@mail.com,johndoe123,Your-password-123,Data entry clerk,DHIS2OUID,DHIS2OUID
-```
-
-and create corresponding users.
-You can run the recipe in dryMode first to see the end result.
-Once ok select the create mode.
 
 ### XLSForm - Generate a basic xlsform for a program
 
@@ -435,7 +435,7 @@ With this recipe you can review
 The ui on program indicator seem broken to set custom attributes
 on program indicator
 
-### You recipe ?
+### Your recipe ?
 
 Want to promote your recipe in the standard one, open a [pull request](https://github.com/BLSQ/dhis2-taskr) against the recipes.js !
 
