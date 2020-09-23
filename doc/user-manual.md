@@ -499,15 +499,14 @@ const provinceId = parameters.province
 
 const ou = await api.get("organisationUnits", {
   fields: "id,name,ancestors[id,name],geometry",
-  paging: false
   filter: ["path:ilike:" + provinceId],
   paging: false
 });
-return ou;
+
+return _.flattenObjects(ou.organisationUnits, ["geometry"]);
 ```
 
 Click run, you will only get the fosa in that province !
-
 
 
 ## Generate a csv to create users based on the level 3
