@@ -16,7 +16,7 @@
     "idyll-vega-lite": "^2.0.0",
     "leaflet": "^1.5.1",
     "lodash": "^4.17.15",
-    "marked": "^1.1.1",
+    "markdown-it-anchor": "^5.3.0",
     "mui-datatables": "^3.4.1",
     "prettier": "^1.18.2",
     "react": "^16.12.0",

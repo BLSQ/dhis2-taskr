@@ -1,54 +1,56 @@
 import React, { useState, useEffect } from "react";
 import Box from "@material-ui/core/Box";
-import { makeStyles } from "@material-ui/core/styles";
-import marked from "marked";
+import MarkdownIt from "markdown-it";
+import MarkdownItAnchor from "markdown-it-anchor";
+import "./DocPage.css";
 
-const useStyles = makeStyles({
-  search: {
-    width: 280,
-    margin: 10,
-    paddingLeft: 10,
-  },
-  card: {
-    minWidth: 275,
-    maxWidth: 300,
-    minHeight: 150,
-    maxHeight: 250,
-    margin: "10px",
-  },
-  bullet: {
-    display: "inline-block",
-    margin: "0 2px",
-    transform: "scale(0.8)",
-  },
-  title: {
-    fontSize: 18,
-  },
-  pos: {
-    marginBottom: 12,
-  },
-});
+const docPath =
+  "https://raw.githubusercontent.com/BLSQ/dhis2-taskr/user-manual/doc/";
+const readmePath = docPath + "/user-manual.md";
 
-function DocPage() {
-  const classes = useStyles();
-  const readmePath =
-    "https://raw.githubusercontent.com/BLSQ/dhis2-taskr/user-manual/doc/user-manual.md";
+const slugify = s =>
+  encodeURIComponent(
+    String(s)
+      .trim()
+      .toLowerCase()
+      .replace(/"/g, "")
+      .replace(/:/g, " ")
+      .replace(/,/g, "")
+      .replace(/\?/g, "")
+      .replace(/\./g, "")
+      .replace(/\s+/g, "-")
+  );
 
+function DocPage({ match }) {
   let [markdown, setMarkdown] = useState(null);
   useEffect(() => {
     fetch(readmePath)
-      .then((response) => {
+      .then(response => {
         return response.text();
       })
-      .then((text) => {
-        let imagePathPrefix =
-          "https://raw.githubusercontent.com/BLSQ/dhis2-taskr/user-manual/doc/";
-        let toReplace = /\.\//g;
-        let nexText = text.replace(toReplace, imagePathPrefix);
-        console.log(nexText);
-        setMarkdown(marked(nexText));
+      .then(text => {
+        const toReplace = /\.\//g;
+        let fixedText = text
+          .split("](#")
+          .join(
+            "](" + window.location.toString().replace(/\/#\/doc(.*)/, "/#doc/")
+          );
+        fixedText = fixedText.replace(toReplace, docPath);
+
+        setMarkdown(
+          new MarkdownIt().use(MarkdownItAnchor, { slugify }).render(fixedText)
+        );
+        console.log(match);
+        if (match.params.section) {
+          setTimeout(function() {
+            var ele = document.getElementById(match.params.section);
+            if (ele) {
+              window.scrollTo(ele.offsetLeft, ele.offsetTop);
+            }
+          }, 500);
+        }
       });
-  }, [setMarkdown]);
+  }, [match, setMarkdown]);
 
   return (
     <>
@@ -60,7 +62,11 @@ function DocPage() {
         alignItems="flex-start"
         alignContent="space-around"
       >
-        <article dangerouslySetInnerHTML={{ __html: markdown }}></article>
+        <article
+          className="markdown-body"
+          dangerouslySetInnerHTML={{ __html: markdown }}
+        ></article>
+        )}
       </Box>
     </>
   );

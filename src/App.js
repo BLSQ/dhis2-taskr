@@ -208,6 +208,10 @@ function App() {
                 render={(props) => <DocPage match={props.match} />}
               />
               <Route
+                path={`/doc/:section`}
+                render={(props) => <DocPage match={props.match} />}
+              />
+              <Route
                 path={`/recipes`}
                 exact={true}
                 render={(props) => (
