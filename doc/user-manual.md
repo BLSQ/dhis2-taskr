@@ -51,15 +51,15 @@
 
 > When the only tool you have is TaskR, everything start to look like a recipe
 
-It gets adictive, you can spend hours automating something that could have been done in 10 minutes clicking in a few screens.
+It gets addictive, you can spend hours automating something that could have been done in 10 minutes clicking in a few screens.
 
 > With great power comes great responsibility
 
-Taskr recipes runs with the user privilege. If you are admin the recipes all the possibilities the admin has.
+Taskr recipes runs with the user privilege. If you are admin the recipe has all the possibilities the admin has.
 
 > To err is human, but for a real disaster you need a computer"
 
-What can harm a dhis2 by clicking the wrong option in a menu in the dataElement option, can turn into a disaster when the same operation is repeated in a loop in taskr. It can get worst when what is in the loop is not the correct action or was not meant on all data elements. Be careful.
+What can harm a dhis2 by clicking the wrong option in a menu in the dataElement option, can turn into a disaster when the same operation is repeated in a loop in taskr. It can get worst when what is in the loop is not the correct action or was not meant to run on all data elements. Be careful.
 
 
 # Small tour
