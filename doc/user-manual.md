@@ -373,7 +373,7 @@ Produce chloropleth or map with number of fosa with coordinate, list orgunit not
 A chloropleth with the ratio of number of orgunits without coordinates and the total number of orgunits.
 ![](./user-manual-chloropleth.jpg)
 
-Here the red points are not their parent shapes, green one are ok.
+Here the red points are not in their parent's shape, green one are ok.
 ![](./user-manual-points-quality.jpg)
 
 
