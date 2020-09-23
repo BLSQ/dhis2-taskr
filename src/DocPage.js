@@ -41,7 +41,12 @@ function DocPage() {
         return response.text();
       })
       .then((text) => {
-        setMarkdown(marked(text));
+        let imagePathPrefix =
+          "https://raw.githubusercontent.com/BLSQ/dhis2-taskr/user-manual/doc/";
+        let toReplace = /\.\//g;
+        let nexText = text.replace(toReplace, imagePathPrefix);
+        console.log(nexText);
+        setMarkdown(marked(nexText));
       });
   }, [setMarkdown]);
 
