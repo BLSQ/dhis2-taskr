@@ -3,6 +3,7 @@ import "./App.css";
 import { makeStyles } from "@material-ui/core/styles";
 import Typography from "@material-ui/core/Typography";
 import AppBar from "@material-ui/core/AppBar";
+import Button from "@material-ui/core/Button";
 import Paper from "@material-ui/core/Paper";
 import Toolbar from "@material-ui/core/Toolbar";
 import IconButton from "@material-ui/core/IconButton";
@@ -13,13 +14,14 @@ import Fab from "@material-ui/core/Fab";
 import AddIcon from "@material-ui/icons/Add";
 
 import Editor from "./Editor";
+import DocPage from "./DocPage";
 import {
   HashRouter as Router,
   Switch,
   Route,
   Link,
   Redirect,
-  useLocation
+  useLocation,
 } from "react-router-dom";
 import { generateUid } from "d2/lib/uid";
 import { asyncForEach } from "./support/asyncForEach";
@@ -28,22 +30,22 @@ import Dhis2 from "./support/Dhis2";
 
 import builtInRecipes from "./recipes";
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   root: {
     width: "100%",
     margin: "auto",
-    backgroundColor: "#eeeeee"
+    backgroundColor: "#eeeeee",
   },
   paper: {
     paddingBottom: "100%",
     paddingLeft: "20px",
-    backgroundColor: "#eeeeee"
+    backgroundColor: "#eeeeee",
   },
   fab: {
     position: "absolute",
     bottom: theme.spacing(2),
-    right: theme.spacing(2)
-  }
+    right: theme.spacing(2),
+  },
 }));
 
 function useQuery() {
@@ -58,12 +60,12 @@ function RecipePage({
   setRecipes,
   history,
   onSave,
-  editable
+  editable,
 }) {
   const query = useQuery();
   const autorun = query.get("autorun") === "true";
 
-  let recipe = recipes.find(r => r.id === match.params.recipeId);
+  let recipe = recipes.find((r) => r.id === match.params.recipeId);
   if (recipe === undefined) {
     recipe = recipes[0];
   }
@@ -107,7 +109,7 @@ paging: false
 return ou.organisationUnits
 `,
     editable: true,
-    fresh: true
+    fresh: true,
   };
 }
 
@@ -122,11 +124,11 @@ function App() {
       const api = await dhis2.api();
       try {
         const keys = await api.get("dataStore/taskr");
-        await asyncForEach(keys, async key => {
+        await asyncForEach(keys, async (key) => {
           const response = await fetch(
             api.baseUrl + "/dataStore/taskr/" + key,
             {
-              headers: api.defaultHeaders
+              headers: api.defaultHeaders,
             }
           );
           const buffer = await response.arrayBuffer();
@@ -193,14 +195,22 @@ function App() {
               <Typography variant="h6" color="inherit">
                 Taskr : your task runner.
               </Typography>
+              <Button href={"#/doc/"} color="inherit">
+                Doc
+              </Button>
             </Toolbar>
           </AppBar>
           <Paper className={classes.paper}>
             <Switch>
               <Route
+                path={`/doc`}
+                exact={true}
+                render={(props) => <DocPage match={props.match} />}
+              />
+              <Route
                 path={`/recipes`}
                 exact={true}
-                render={props => (
+                render={(props) => (
                   <RecipesPage
                     classes={classes}
                     recipes={recipes}
@@ -211,7 +221,7 @@ function App() {
               <Route
                 path={`/recipes/:recipeId`}
                 exact={true}
-                render={props => {
+                render={(props) => {
                   return (
                     <RecipePage
                       classes={classes}
@@ -228,7 +238,7 @@ function App() {
               />
               <Route
                 path={`/recipes/:recipeId/run`}
-                render={props => (
+                render={(props) => (
                   <RecipePage
                     classes={classes}
                     recipes={recipes}
