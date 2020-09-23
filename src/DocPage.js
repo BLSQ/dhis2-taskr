@@ -70,7 +70,6 @@ function DocPage({ match }) {
           className="markdown-body"
           dangerouslySetInnerHTML={{ __html: markdown }}
         ></article>
-        )}
       </Box>
     </>
   );
