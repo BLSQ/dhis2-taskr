@@ -143,7 +143,7 @@ function App() {
         tasks.push(freshRecipe());
       }
 
-      setRecipes(tasks.concat(builtInRecipes));
+      setRecipes(tasks.concat(builtInRecipes.sort((a, b) => (a.name > b.name))));
     }
   }
 

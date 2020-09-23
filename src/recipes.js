@@ -68,7 +68,7 @@ return resources.resources.map( r => {
   },
   {
     id: "RWYYgYTGumd",
-    name: "Basic - Super user audit",
+    name: "Users - Super user, inactive user, never logged in audit",
     editable: true,
     code: `
     const api = await dhis2.api();
@@ -143,7 +143,7 @@ You might want to audit the roles and orgunits of existing users
   },
   {
     id: "bifaoG4Ky23",
-    name: "Investigate GEOJSON data quality",
+    name: "Coordinates - Investigate GEOJSON data quality",
     editable: false,
     code: `
       const api = await dhis2.api();
@@ -172,7 +172,7 @@ You might want to audit the roles and orgunits of existing users
   },
   {
     id: "d4pmpo12iMp",
-    name: "Audit coordinates",
+    name: "Coordinates - coordinates stats per level",
     editable: true,
     code: `
     const stats = [];
@@ -508,7 +508,52 @@ return ccc.categoryCombos;
     var line = turf.lineString([[0, 10], [20, 20]]);
     var tin = turf.tin(turf.featureCollection(points), "z");
     return points.concat([line]).concat(tin["features"]);
-
+`
+  },
+  {
+    id: "turfds123az",
+    name: "Turf - demo - geocoding, geojson",
+    editable: true,
+    code: `
+    const data = [
+      { address: "4000 Glain, belgique" },
+      { address: "Chaussée de Tirlemont 45 5030 Gembloux" },
+      { address: "avenue de la Station 101-103 5030 Gembloux" },
+      { address: "Route de Hannut 181 5021 Boninne, belgique" },
+      { address: "Rue Lamarck, 57 4000 Liège" },
+      { address: "rue du Marché au beurre 25 6700 Arlon" }
+    ];
+    ​
+    const provinces = await fetch(
+      "https://mestachs.github.io/belgium/provinces.geo.json"
+    ).then(r => r.json());
+    ​
+    const communes = await fetch(
+      "https://mestachs.github.io/belgium/communes-be-2019.geojson"
+    ).then(r => r.json());
+    ​
+    for (record of data) {
+      const localisation = await fetch(
+        "https://nominatim.openstreetmap.org/search?q=" +
+          record.address +
+          "&format=json&polygon=1&addressdetails=1"
+      ).then(resp => resp.json());
+      if (localisation.length > 0) {
+        record.localisation = localisation[0];
+        record.coordinates = JSON.stringify([
+          parseFloat(localisation[0].lon),
+          parseFloat(localisation[0].lat)
+        ]);
+        turf.geometrify(record);
+      }
+    }
+    const matched_communes = communes.features.filter(commune =>
+      data.some(ou => ou.geometry && turf.inside(ou.geometry, commune))
+    );
+    const matched_provinces = provinces.features.filter(commune =>
+      data.some(ou => ou.geometry && turf.inside(ou.geometry, commune))
+    );
+    return data.concat(matched_provinces).concat(matched_communes);
 `
   },
   {
@@ -646,7 +691,7 @@ line,name
   },
   {
     id: "UMHyEfFHCcr",
-    name: "Create event based on csv",
+    name: "Simple event - Create event based on csv (not tracker)",
     editable: true,
     params: [
       {
@@ -970,7 +1015,7 @@ if (dryRun) {
   },
   {
     id: "dHC94p8sbdE",
-    name: "update custom attributes of program indicator",
+    name: "Dataviz - update custom attributes of program indicator",
     params: [
       {
         id: "programIndicator",
@@ -1573,12 +1618,12 @@ return {
     );
 
     function slugify(str) {
-      str = str.replace(/^\s+|\s+$/g, ""); // trim
+      str = str.replace(/^\\s+|\\s+$/g, ""); // trim
       str = str.toLowerCase();
-
+      str = str.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
       // remove accents, swap ñ for n, etc
-      var from = "àáãäâèéëêìíïîòóöôùúüûñç·/_,:;";
-      var to = "aaaaaeeeeiiiioooouuuunc______";
+      var from = "·/_,:;";
+      var to = "______";
 
       for (var i = 0, l = from.length; i < l; i++) {
         str = str.replace(new RegExp(from.charAt(i), "g"), to.charAt(i));
@@ -1586,7 +1631,7 @@ return {
 
       str = str
         .replace(/[^a-z0-9 -]/g, "") // remove invalid chars
-        .replace(/\s+/g, "_") // collapse whitespace and replace by -
+        .replace(/\\s+/g, "_") // collapse whitespace and replace by -
         .replace(/-+/g, "_"); // collapse dashes
 
       return str;
@@ -1699,7 +1744,7 @@ return {
   },
   {
     id: "ZZJcZFTSl50",
-    name: "Coordinates coverage",
+    name: "Coordinates - Coordinates coverage",
     code: `
 let stats = [];
 const api = await dhis2.api();
@@ -1971,7 +2016,7 @@ return "";
   },
   {
     id: "df",
-    name: "Last metadata changes (this months max 1000)",
+    name: "Users - Last metadata changes (this months max 1000)",
     code: `
 date = new Date();
 var newDate = new Date(date.setMonth(date.getMonth() - 1));
@@ -2018,7 +2063,7 @@ return ou.metadataAudits;
   },
   {
     id: "vgSvwOMNAvQ",
-    name: "Data values for a given orgUnit, dataSet and periods",
+    name: "Export - Data values for a given orgUnit, dataSet and periods",
     params: [
       {
         id: "dataSet",
@@ -2036,80 +2081,80 @@ return ou.metadataAudits;
       }
     ],
     code: `
-    // #/recipes/VJSWf8Ktrao?dataSet=aLpVgfXiz0f&orgUnit=U514Dz4v9pv&periods=2018,2019&autorun=true
+    // #/recipes/vgSvwOMNAvQ?dataSet=aLpVgfXiz0f&orgUnit=U514Dz4v9pv&periods=2018,2019&autorun=true
     let params = new URLSearchParams(window.location.href.split("?")[1]);
-const periods = params.get("periods") || parameters.periods;
-const dataSetId = params.get("dataSet") || parameters.dataSet.id;
-const orgUnitId = params.get("orgUnit") || parameters.orgUnit.id;
-const api = await dhis2.api();
+    const periods = params.get("periods") || parameters.periods;
+    const dataSetId = params.get("dataSet") || parameters.dataSet.id;
+    const orgUnitId = params.get("orgUnit") || parameters.orgUnit.id;
+    const api = await dhis2.api();
 
-const dataSet = await api.get("dataSets/" + dataSetId, {
-  fields:
-    "id,dataSetElements[dataElement[id,name,categoryCombo[id,name,categoryOptionCombos[id,name]"
-});
+    const dataSet = await api.get("dataSets/" + dataSetId, {
+      fields:
+        "id,dataSetElements[dataElement[id,name,categoryCombo[id,name,categoryOptionCombos[id,name]"
+    });
 
-const dataElementsById = {};
+    const dataElementsById = {};
 
-const categoryOptionCombosById = {};
+    const categoryOptionCombosById = {};
 
-dataSet.dataSetElements.forEach(dse => {
-  const dataElement = dse.dataElement;
-  dataElementsById[dataElement.id] = {
-    id: dataElement.id,
-    name: dataElement.name
-  };
-  const categoryOptionCombos = dataElement.categoryCombo.categoryOptionCombos;
-  categoryOptionCombos.forEach(coc => (categoryOptionCombosById[coc.id] = coc));
-});
+    dataSet.dataSetElements.forEach(dse => {
+      const dataElement = dse.dataElement;
+      dataElementsById[dataElement.id] = {
+        id: dataElement.id,
+        name: dataElement.name
+      };
+      const categoryOptionCombos = dataElement.categoryCombo.categoryOptionCombos;
+      categoryOptionCombos.forEach(coc => (categoryOptionCombosById[coc.id] = coc));
+    });
 
-const periodsQuery =
-  "period=" +
-  periods
-    .split(",")
-    .map(p => p.trim())
-    .join("&period=");
-const ouQuery = "orgUnit=" + orgUnitId;
+    const periodsQuery =
+      "period=" +
+      periods
+        .split(",")
+        .map(p => p.trim())
+        .join("&period=");
+    const ouQuery = "orgUnit=" + orgUnitId;
 
-const url =
-  "dataValueSets?" + periodsQuery + "&" + ouQuery + "&dataSet=" + dataSetId;
-const vals = await api.get(url);
+    const url =
+      "dataValueSets?" + periodsQuery + "&" + ouQuery + "&dataSet=" + dataSetId;
+    const vals = await api.get(url);
 
-if (!vals.dataValues) {
-  return "no data";
-}
+    if (!vals.dataValues) {
+      return "no data";
+    }
 
-vals.dataValues.forEach(dv => {
-  dv.dataElement = dataElementsById[dv.dataElement];
-  dv.categoryOptionCombo = categoryOptionCombosById[dv.categoryOptionCombo];
-});
+    vals.dataValues.forEach(dv => {
+      dv.dataElement = dataElementsById[dv.dataElement];
+      dv.categoryOptionCombo = categoryOptionCombosById[dv.categoryOptionCombo];
+    });
 
-const values = _.flattenObjects(vals.dataValues);
-const workbook = await XlsxPopulate.fromBlankAsync();
-const columns = Object.keys(values[0]);
+    const values = _.flattenObjects(vals.dataValues);
+    const workbook = await XlsxPopulate.fromBlankAsync();
+    const columns = Object.keys(values[0]);
 
-const sheet = workbook.sheet(0);
-sheet
-  .cell("A1")
-  .value([columns])
-  .style("fontColor", "ff0000");
+    const sheet = workbook.sheet(0);
+    sheet
+      .cell("A1")
+      .value([columns])
+      .style("fontColor", "ff0000");
 
-const r = sheet.cell("A2");
+    const r = sheet.cell("A2");
 
-r.value(values.map(dv => columns.map(col => dv[col])));
-sheet.column("A").width(30);
-sheet.column("B").width(30);
-sheet.column("C").width(30);
-sheet.column("D").width(30);
-sheet.column("E").width(30);
-sheet.column("F").width(30);
-sheet.column("G").width(30);
-sheet.column("H").width(30);
+    r.value(values.map(dv => columns.map(col => dv[col])));
+    sheet.column("A").width(30);
+    sheet.column("B").width(30);
+    sheet.column("C").width(30);
+    sheet.column("D").width(30);
+    sheet.column("E").width(30);
+    sheet.column("F").width(30);
+    sheet.column("G").width(30);
+    sheet.column("H").width(30);
 
-XlsxPopulate.openAsBlob(
-  workbook,
-  "datavalues-" + orgUnitId + "-" + dataSetId + "-" + periods + "" + ".xlsx"
-);
-return vals.dataValues;
+    XlsxPopulate.openAsBlob(
+      workbook,
+      "datavalues-" + orgUnitId + "-" + dataSetId + "-" + periods + "" + ".xlsx"
+    );
+    return vals.dataValues;
 `
   },
 

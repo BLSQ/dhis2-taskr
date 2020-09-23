@@ -21,6 +21,14 @@
 - [Getting started](#getting-started)
   - [Install the app](#install-the-app)
   - [Standard recipes](#standard-recipes)
+    - [Users - Super user, inactive user, never logged in audit](#users---super-user-inactive-user-never-logged-in-audit)
+    - [Coordinates](#coordinates)
+    - [Users : Create users based on a csv](#users--create-users-based-on-a-csv)
+    - [XLSForm - Generate a basic xlsform for a program](#xlsform---generate-a-basic-xlsform-for-a-program)
+    - [XLSForm - generate a xlsform from a DataSet](#xlsform---generate-a-xlsform-from-a-dataset)
+    - [XLSForm - Diff two xlsform](#xlsform---diff-two-xlsform)
+    - [Dataviz - update custom attributes of program indicator](#dataviz---update-custom-attributes-of-program-indicator)
+    - [You recipe ?](#you-recipe-)
   - [Specific recipes](#specific-recipes)
 - [Coding tutorial](#coding-tutorial)
   - [Turn an api call in to a csv](#turn-an-api-call-in-to-a-csv)
@@ -348,18 +356,86 @@ apiSource.setDefaultHeaders({
 The prefered installation mode is via the application management app and the [dhis2 app store](https://github.com/BLSQ/dhis2-taskr#install-from-the-app-store-recommanded)
 
 ## Standard recipes
+
+### Users - Super user, inactive user, never logged in audit
    - List users and do some audit
       - Users with Superuser role
       - Users created but never logged in
       - Last login more than 6 months
       - All enabled users
-   - List orgunits and do some audit on their coordinates
-      - number of orgunits with coordinates per level
-      - orgunits not in the parent shape
-   - Create users based on a csv
-   - Tracker program to an xlsform
-   - Dataset to an xlsform
-   - Dhis2 upgrade detect/fix "bad" geojson
+
+### Coordinates
+
+**Coordinates - Coordinates coverage**
+
+Produce chloropleth or map with number of fosa with coordinate, list orgunit not in their "parent" shape.
+
+A chloropleth with the ratio of number of orgunits without coordinates and the total number of orgunits.
+![](./user-manual-chloropleth.jpg)
+
+Here the red points are not their parent shapes, green one are ok.
+![](./user-manual-points-quality.jpg)
+
+
+**Coordinates - coordinates stats per level**
+
+Verify per organisation unit level the number of orgunits of that level that do have coordinates/shapes.
+
+![](./user-manual-user-stats-by-level.jpg)
+
+### Users : Create users based on a csv
+
+Take a csv like
+
+```js
+firstName,surname,email,username,password,userRole,organisationUnits,dataViewOrganisationUnits
+John,Doe,johndoe@mail.com,johndoe123,Your-password-123,Data entry clerk,DHIS2OUID,DHIS2OUID
+```
+
+and create corresponding users.
+You can run the recipe in dryMode first to see the end result.
+Once ok select the create mode.
+
+### XLSForm - Generate a basic xlsform for a program
+
+The recipe produce a skelleton of odk xlsform containing questions and choices.
+
+For the best results, assign codes to your data elements.
+
+For Tracker program, it assumes one of the tracked entity attribute is generated.
+
+After that you will need to add/modify
+  - add skip logic
+  - validations/constraints
+  - appearance
+  - handle special types like AGE, ORGANISATION_UNIT
+
+Sample result on the child programme on play
+
+![child-programm](./user-manual-child_programme-odk.png)
+
+### XLSForm - generate a xlsform from a DataSet
+
+Nearly the same results as the previous recipe but for aggregate data elements. It tries to handle category option combo.
+
+Results are less impressive then for programs but it's still a good basis to work on.
+
+### XLSForm - Diff two xlsform
+
+Want to review the differences between two xlsform ?
+
+With this recipe you can review
+- added/removed questions
+- modified formulas
+- ...
+
+
+### Dataviz - update custom attributes of program indicator
+
+The ui on program indicator seem broken to set custom attributes
+on program indicator
+
+### You recipe ?
 
 Want to promote your recipe in the standard one, open a [pull request](https://github.com/BLSQ/dhis2-taskr) against the recipes.js !
 
