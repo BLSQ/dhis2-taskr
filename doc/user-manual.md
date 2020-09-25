@@ -40,33 +40,33 @@
   - [Dhis2 periods](#dhis2-periods)
   - [Let's update things](#lets-update-things)
     - [First a readonly version](#first-a-readonly-version)
-    - [Then introduce a "dryRun" mode](#then-introduce-a-dryrun-mode)
-    - [Then test on the first record](#then-test-on-the-first-record)
-    - [Then run on all users](#then-run-on-all-users)
+    - [Introduce a "dryRun" mode](#introduce-a-dryrun-mode)
+    - [Test on the first record](#test-on-the-first-record)
+    - [Run on all users](#run-on-all-users)
     - [If the recipe is here to stay](#if-the-recipe-is-here-to-stay)
-  - [We want more](#we-want-more)
+  - [Want more?](#want-more)
 
 
 # Disclaimer
 
 > When the only tool you have is TaskR, everything start to look like a recipe
 
-It gets addictive, you can spend hours automating something that could have been done in 10 minutes clicking in a few screens.
+It gets addictive, you can spend hours automating something that could have been done in 10 minutes clicking around in a few screens.
 
 > With great power comes great responsibility
 
-Taskr recipes runs with the user privilege. If you are admin the recipe has all the possibilities the admin has.
+Taskr recipes run with the user's privilege. If you are admin the recipe has all the possibilities the admin has.
 
-> To err is human, but for a real disaster you need a computer"
+> "To err is human, but for a real disaster you need a computer"
 
-What can harm a dhis2 by clicking the wrong option in a menu in the dataElement option, can turn into a disaster when the same operation is repeated in a loop in taskr. It can get worst when what is in the loop is not the correct action or was not meant to run on all data elements. Be careful.
+What can harm a dhis2 by clicking the wrong option in a menu in the dataElement option, can turn into a disaster when the same operation is repeated in a loop in taskr. It can get worse when what is in the loop is not the correct action or was not meant to run on all data elements. Be careful.
 
 
 # Small tour
 
 ## Open the app
 
-Once the app installed you can locate the app in the menu.
+Once the app is installed you can locate it in the menu.
 
 ![recipes-list](./user-manual-taskr-app.jpg)
 
@@ -75,11 +75,11 @@ Once the app installed you can locate the app in the menu.
 ![recipes-list](./user-manual-recipes-list.jpg)
 
 
-The recipes list screen is accessible via the top left hamburger menu icon. A list of recipes is shown :
-   - grey out recipes are "built in".
-   - blank recipees are the one created and saved in your dhis2
+The recipes list screen is accessible via the top left hamburger menu icon. A list of recipes is shown:
+   - grey out recipes are "built-in".
+   - blank recipees are the ones created and saved in your dhis2
 
-Click on the run button, you arrive fill on the recipe page.
+Clicking on the run button, you arrive fill on the recipe page.
 
 ## Recipe page
 
@@ -87,22 +87,22 @@ Fill in the parameters if needed, click run, the results will show under the but
 
 ![recipes-list](./user-manual-recipe-page.jpg)
 
-If an error occur in the recipe (syntax or dhis2 api calls), it will show up on the top of the screen.
+If an error occurs in the recipe (syntax or dhis2 api calls), it will show up on the top of your screen.
 
 ![recipes-list](./user-manual-error.jpg)
 
-If you are in the edit mode the recipe editor will show up.
+If you are in edit mode the recipe editor will show up.
 
 A recipe is composed of
  - the code (javascript snippet)
  - the paremeters definition (optional, json)
- - the report (optional, markdown with idyll components)
+ - the report (optional, markdown with [idyll](https://idyll-lang.org/) components)
 
 # Historical pains & motivations
 
-## 1. Turning an api call results to csv or a map was not easy
+## 1. Turning api call results into csv or a map was not easy
 
-Lets get all orgunits with their coordinates and ancestors as a csv. If the recipe return an array of things with a geometry/coordinates/coordinate field taskr will try to display it also as a map.
+Let's get all orgunits with their coordinates and ancestors as a csv. If the recipe returns an array of things with a geometry/coordinates/coordinate field taskr will also try to display it as a map.
 
 ```js
 const api = await dhis2.api();
@@ -118,52 +118,73 @@ The table is filterable either via the search icon or more accurately via the fi
 
 ![orgunit-map](./user-manual-orgunit-table.jpg)
 
-The orgunits table is clickable, zoomable, you can switch between different layers. It supports simple coordinates or shapes as defined by dhis2 geometry/coordinates field.
+The orgunits map is clickable, zoomable and you can switch between different layers. It supports simple coordinates or shapes as defined by dhis2 geometry/coordinates field.
 
 ![orgunit-map](./user-manual-orgunit-map.jpg )
 
-## 2. Coding a dhis2 app is sometimes too much work for just a one shot specific task
+## 2. Coding a dhis2 app is sometimes too much work for just a specific one-shot task
 
-Let's say you want to rename all indicators starting by "INDX.Y name" to "IND X.Y - name".
+Let's say you want to rename all indicators starting with "INDX.Y name" to "IND X.Y - name".
 
-Setting up a dhis2 app requires time and developper knowledge. Taskr is a good tradeoff, you can install/update the app from the app store. With basic programming knowledge or using the standard recipes you can automate already a few tasks without the *initial setup cost*.
+Setting up a dhis2 app requires time and developer knowledge. Taskr is a good tradeoff, you can install/update the app from the app store. With basic programming knowledge or using the standard recipes you can already automate a few tasks without the *initial setup cost*.
 
-## 3. Combining multiple api calls is hard for exemple in postman.
+An additional benefit of a recipe versus a script running on a developer machine is that it can be run again (and not only by a developer) and is deployed with the DHIS2 instance so will not be lost on a single person machine.
+
+## 3. Combining multiple api calls is hard (for example in [postman](https://www.postman.com/downloads/))
 
 Want to find all the tracker data elements not referenced by program stages ?
 
-There's no link between `/api/dataElements` api and the programs.
-The `/api/programs` only return used data elements.
+There is no link between `/api/dataElements` and the programs, and the `/api/programs` only returns the used data elements.
+
 So here we need to combine the 2 calls to find unreferenced data elements.
 
-Since the api call is done via javascript, we can easily combine, merge, filter the results at our will.
+Since the api call is done via javascript, we can easily combine, merge and filter the results at our will.
 
-## 4. Data can come in/out in various format
+```js
+const api = await dhis2.api();
+const elements = await api.get("dataElements", {
+});
+
+const programs = await api.get("programs", {
+});
+
+// TODO: Write out example here
+return _.flattenObjects(ou.organisationUnits, ["geometry"]);
+```
+
+## 4. Data can come in and out in various formats
 
 We receive data in various forms (csv, xlsx, json...)
 
-We want to produce various formats (csv, xlsx, json), or show a small ui to be able to filter/explore the data.
+We want to produce various formats (csv, xlsx, json), or show a small UI to be able to filter/explore the data.
 
-Taskr recipes can accept them and make the recipe easy to code, it will recieve the already parsed data.
+Taskr recipes can accept all of them and makes the recipe easy to code, as it will already parse the data.
 
-CSV will be parsed by [papaparse](https://www.papaparse.com/) library.
-XLSX will be parsed by [xlsx-populate](https://github.com/dtjohnson/xlsx-populate#usage), the recipe can also produce xlsx.
+CSV will be parsed by the [papaparse](https://www.papaparse.com/) library.
+XLSX will be parsed by the [xlsx-populate](https://github.com/dtjohnson/xlsx-populate#usage), the recipe can also produce xlsx.
+JSON will be parsed by the browser itself.
 
 
 ## 5. Sometimes we need JS or GIS super power
 
-In js some trivial function are not in the language, to avoid coding your own function each time in all your recipes [lodash](https://lodash.com/docs) is available in the recipe code
+In js some trivial functions are not in the language, to help with this [lodash](https://lodash.com/docs) is available in the recipe code.
+
+> Lodash makes JavaScript easier by taking the hassle out of working with arrays, numbers, objects, strings, etc.
+
+Lodash is available in the `_`, so you can use `_.keyBy` for example:
 
 ```js
 // create dataelement lookup by id
 const dataElementById = _.keyBy(resp.dataElements, de => de.id);
 ```
 
-Let's say you are working on a project setting up a health facility registry. You received data from a partner and need to integrate it with our existing facilities.
+Let's say you are working on a project setting up a health facility registry. You received data from a partner and need to integrate it with your existing facilities.
 
-You might want to find nearest healthcenter, or the parents orgunits that contains that point. That's why https://turfjs.org/ is integrated in taskr.
+You might want to find nearest healthcenter, or the parent orgunits containing that point. That's why [turfjs](https://turfjs.org) is integrated in taskr.
 
-Find possible parents based on the coordinates of the point and parent shapes
+> TurfJS: Advanced geospatial analysis for browsers and Node.js
+
+Find possible parents based on the coordinates of the point and parent shapes:
 
 ```js
 allOrgunits.forEach(ou => turf.geometrify(ou))
@@ -198,14 +219,14 @@ points.forEach(point => {
 
 ## 6. End user autonomy to re-run the recipe at will
 
-Some recipes needs to be re-run multiple times, ideally without a developer help, some possible use cases :
+Some recipes needs to be re-run multiple times, ideally without the help of a developer, some possible use cases:
   - a quarterly export with the data in xlsx in a specific format
   - fixing dhis2 data/config, and re-run each time you fixed some of them, to review the remaining one.
   - import some data from last quarter in a known format (but not the one dhis2 expect by default)
 
 ## 7. Standard recipes reusable accross dhis2
 
-Some recipes are quiet common to all dhis2 and it should be easy to install the app (without asking a developer to do it)
+Some recipes are quite common to all dhis2-es and it should be easy to install the app (without asking a developer to do it)
 
    - user audit
    - coordinates/geometry audit
@@ -228,7 +249,8 @@ Before running you'll get a small screen to enter them
 
 ![](./user-manual-recipe-parameters.jpg)
 
-The parameters are defined currenly as json like this
+The parameters are defined currenly as json like this:
+
 ```json
 [
     {
@@ -287,7 +309,7 @@ The parameters are defined currenly as json like this
 ]
 ```
 
-These parameters are then available in the recipe code
+These parameters are then available in the recipe code, through the `parameters` variable:
 
 ```js
 const programId = parameters.program.id;
@@ -332,11 +354,12 @@ The recipe has a report in markdown referencing these datasets, adding some cont
 
 ## 10. Accessing multiple dhis2 instances
 
-Some recipes can access 2 dhis2 instances to "compare" and "align" their metadata.
+Some recipes can access multiple dhis2 instances to "compare" and "align" their metadata.
 This is also possible but requires credentials on both dhis2, and correct CORS settings.
 
 ```js
 const apiDestination = await dhis2.api();
+// TODO: What is apiIhp here?
 const apiSource = _.cloneDeep(apiIhp);
 
 apiSource.setBaseUrl("https://source.dshi2.org/api");
@@ -351,14 +374,14 @@ apiSource.setDefaultHeaders({
 
 # Getting started
 
-## Install the app
+## Installing the app
 
 The prefered installation mode is via the application management app and the [dhis2 app store](https://github.com/BLSQ/dhis2-taskr#install-from-the-app-store-recommanded)
 
 ## Standard recipes
 
 ### Users - Super user, inactive user, never logged in audit
-   - List users and do some audit
+   - List users and do some audit on them
       - Users with Superuser role
       - Users created but never logged in
       - Last login more than 6 months
@@ -366,14 +389,14 @@ The prefered installation mode is via the application management app and the [dh
 
 ### Users : Create users based on a csv
 
-Take a csv like
+Takes a csv like
 
 ```js
 firstName,surname,email,username,password,userRole,organisationUnits,dataViewOrganisationUnits
 John,Doe,johndoe@mail.com,johndoe123,Your-password-123,Data entry clerk,DHIS2OUID,DHIS2OUID
 ```
 
-and create corresponding users.
+and creates corresponding users.
 You can run the recipe in dryMode first to see the end result.
 Once ok select the create mode.
 
@@ -381,7 +404,7 @@ Once ok select the create mode.
 
 **Coordinates - Coordinates coverage**
 
-Produce chloropleth or map with number of fosa with coordinate, list orgunit not in their "parent" shape.
+Produces a chloropleth or map with number of fosa with coordinate, lists orgunit not in their "parent" shape.
 
 A chloropleth with the ratio of number of orgunits without coordinates and the total number of orgunits.
 ![](./user-manual-chloropleth.jpg)
@@ -392,13 +415,13 @@ Here the red points are not in their parent's shape, green one are ok.
 
 **Coordinates - coordinates stats per level**
 
-Verify per organisation unit level the number of orgunits of that level that do have coordinates/shapes.
+Verifies per organisation unit level the number of orgunits of that level that do have coordinates/shapes.
 
 ![](./user-manual-user-stats-by-level.jpg)
 
 ### XLSForm - Generate a basic xlsform for a program
 
-The recipe produce a skelleton of odk xlsform containing questions and choices.
+Produces a skeleton of [odk xlsform](https://docs.getodk.org/xlsform/) containing questions and choices.
 
 For the best results, assign codes to your data elements.
 
@@ -410,7 +433,7 @@ After that you will need to add/modify
   - appearance
   - handle special types like AGE, ORGANISATION_UNIT
 
-Sample result on the child programme on play
+Sample result on the child program on play
 
 ![child-programm](./user-manual-child_programme-odk.png)
 
@@ -422,22 +445,20 @@ Results are less impressive then for programs but it's still a good basis to wor
 
 ### XLSForm - Diff two xlsform
 
-Want to review the differences between two xlsform ?
+Want to review the differences between two xlsform?
 
 With this recipe you can review
 - added/removed questions
 - modified formulas
 - ...
 
-
 ### Dataviz - update custom attributes of program indicator
 
-The ui on program indicator seem broken to set custom attributes
-on program indicator
+The UI for setting custom attributes on a program indicator seems broken, but Taskr is here to help.
 
-### Your recipe ?
+### Your recipe?
 
-Want to promote your recipe in the standard one, open a [pull request](https://github.com/BLSQ/dhis2-taskr) against the recipes.js !
+Want to promote your recipe in the standard one? Open a [pull request](https://github.com/BLSQ/dhis2-taskr) against the recipes.js!
 
 ## Specific recipes
 
@@ -463,7 +484,7 @@ const ou = await api.get("organisationUnits", {
 return _.flattenObjects(ou.organisationUnits, ["geometry"]);
 ```
 
-The code is in javascript, if you are not familiar with the language, you can follow numerous [tutorials](https://www.w3schools.com/js/) on the web.
+The code is in javascript, if you are not familiar with the language, you can follow numerous [tutorials](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide) on the web.
 
 Going further, note :
  - the 2 `await` to wait for the request to complete before processing the next line in the program.
@@ -473,7 +494,7 @@ Going further, note :
 
 ### v0.1 get all orgunits for a certain level as parameter
 
-In the "parameters" editor, you can paste
+In the "parameters" editor, you can paste the following:
 
 ```json
 
@@ -506,7 +527,7 @@ const ou = await api.get("organisationUnits", {
 return _.flattenObjects(ou.organisationUnits, ["geometry"]);
 ```
 
-Click run, you will only get the fosa in that province !
+Click run, and you will only get the fosa in that province!
 
 
 ## Generate a csv to create users based on the level 3
@@ -527,10 +548,11 @@ return ou.organisationUnits
 
 ```
 
-This returns all the orgunits filtered on level 3
+This returns all the orgunits filtered on level 3 (eq => equal, more on filtering can be found [here](https://docs.dhis2.org/master/en/developer/html/dhis2_developer_manual_full.html#webapi_metadata_object_filter))
 
-Now let's add some code to map them as user
-replace the end of the script `return ou.organisationUnits` with some mapping code
+Now let's add some code to map them as users.
+
+Replace the end of the script `return ou.organisationUnits` with some mapping code
 
 ```js
 // utility functions
@@ -568,7 +590,7 @@ return users;
 
 ## Synchronous api calls in a loop
 
-Don't use `collection.forEach` or `collection.map`, the remote calls will get executed in parallel and non synchronously, this might hurt your dhis2.
+Don't use `collection.forEach` or `collection.map`, the remote calls will get executed in parallel and not synchronously, this might hurt your dhis2.
 
 Use the `for(... of ...)` notation, you will get the synchronous handling for free.
 
@@ -631,7 +653,7 @@ return results;
 
 ## Let's update things
 
-Be careful !
+Be careful!
 
 ### First a readonly version
 
@@ -639,9 +661,9 @@ Let's say we created users with the wrong roles and they are all super user and 
 
 Let's assume in our case they all have emails like `@tracker.com`
 
-If you plan to use the api.update function, make sure to load ALL the fields and not only the one you need to make your selection.
+If you plan to use the `api.update` function, make sure to load ALL the fields and not only the ones needed to make your selection.
 
-Let's load the users and identify the subset of users that needs to be fixed with a recipe like this
+Let's load the users and identify the subset of users that needs to be fixed with a recipe like this:
 
 ```js
 const api = await dhis2.api();
@@ -663,9 +685,9 @@ const usersToFix = ou.users.filter(
 return usersToFix
 ```
 Note :
- - avoid spreading dhis2 ids all over the code. See how I reference them using roles.encoder
+ - avoid spreading dhis2-ids all over the code. See how this recipe references them using `roles.encoder`
 
-### Then introduce a "dryRun" mode
+### Introduce a "dryRun" mode
 
 
 ```js
@@ -684,7 +706,7 @@ return usersToFix
 
 ```
 
-### Then test on the first record
+### Test on the first record
 
 ```js
 
@@ -703,11 +725,11 @@ return usersToFix
 
 - launch in dry run,
 - expect a single user,
-- change the dryRun to false and
+- change the `dryRun` to `false` and
 - click run
-- assert the good results in the dhis2 UI
+- assert the results are what you expected in the dhis2 UI
 
-### Then run on all users
+### Run on all users
 
 ```js
 
@@ -726,13 +748,11 @@ return usersToFix
 
 ### If the recipe is here to stay
 
-Turn the dryRun into UI parameters.
+Turn the `dryRun` into UI parameters.
 
-Make sure if defaults to true ;)
-
-
+Make sure it defaults to true ;)
 
 
-## We want more
+## Want more?
 
 see the [recipes.js](https://github.com/BLSQ/dhis2-taskr/blob/master/src/recipes.js) for inspirations
