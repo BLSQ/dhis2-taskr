@@ -28,7 +28,6 @@ import prettier from "prettier/standalone";
 import parser from "prettier/parser-babylon";
 
 import Params from "./Params";
-import { TextareaAutosize } from "@material-ui/core";
 
 import IdyllReport from "./IdyllReport";
 import InputLabel from "@material-ui/core/InputLabel";

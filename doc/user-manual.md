@@ -2,16 +2,17 @@
 # Table of content
 
 - [Table of content](#table-of-content)
+- [What is TaskR](#what-is-taskr)
 - [Disclaimer](#disclaimer)
 - [Small tour](#small-tour)
   - [Open the app](#open-the-app)
   - [Recipes list](#recipes-list)
   - [Recipe page](#recipe-page)
 - [Historical pains & motivations](#historical-pains--motivations)
-  - [1. Turning an api call results to csv or a map was not easy](#1-turning-an-api-call-results-to-csv-or-a-map-was-not-easy)
-  - [2. Coding a dhis2 app is sometimes too much work for just a one shot specific task](#2-coding-a-dhis2-app-is-sometimes-too-much-work-for-just-a-one-shot-specific-task)
-  - [3. Combining multiple api calls is hard for exemple in postman.](#3-combining-multiple-api-calls-is-hard-for-exemple-in-postman)
-  - [4. Data can come in/out in various format](#4-data-can-come-inout-in-various-format)
+  - [1. Turning api call results into csv or a map was not easy](#1-turning-api-call-results-into-csv-or-a-map-was-not-easy)
+  - [2. Coding a dhis2 app is sometimes too much work for just a specific one-shot task](#2-coding-a-dhis2-app-is-sometimes-too-much-work-for-just-a-specific-one-shot-task)
+  - [3. Combining multiple api calls is hard (for example in postman)](#3-combining-multiple-api-calls-is-hard-for-example-in-postman)
+  - [4. Data can come in and out in various formats](#4-data-can-come-in-and-out-in-various-formats)
   - [5. Sometimes we need JS or GIS super power](#5-sometimes-we-need-js-or-gis-super-power)
   - [6. End user autonomy to re-run the recipe at will](#6-end-user-autonomy-to-re-run-the-recipe-at-will)
   - [7. Standard recipes reusable accross dhis2](#7-standard-recipes-reusable-accross-dhis2)
@@ -19,16 +20,16 @@
   - [9. Recipe can return more than a table](#9-recipe-can-return-more-than-a-table)
   - [10. Accessing multiple dhis2 instances](#10-accessing-multiple-dhis2-instances)
 - [Getting started](#getting-started)
-  - [Install the app](#install-the-app)
+  - [Installing the app](#installing-the-app)
   - [Standard recipes](#standard-recipes)
     - [Users - Super user, inactive user, never logged in audit](#users---super-user-inactive-user-never-logged-in-audit)
-    - [Users : Create users based on a csv](#users--create-users-based-on-a-csv)
-    - [Coordinates](#coordinates)
+    - [Users - Create users based on a csv](#users---create-users-based-on-a-csv)
+    - [Organisation Units - Coordinates](#organisation-units---coordinates)
     - [XLSForm - Generate a basic xlsform for a program](#xlsform---generate-a-basic-xlsform-for-a-program)
     - [XLSForm - generate a xlsform from a DataSet](#xlsform---generate-a-xlsform-from-a-dataset)
     - [XLSForm - Diff two xlsform](#xlsform---diff-two-xlsform)
     - [Dataviz - update custom attributes of program indicator](#dataviz---update-custom-attributes-of-program-indicator)
-    - [Your recipe ?](#your-recipe-)
+    - [Your recipe?](#your-recipe)
   - [Specific recipes](#specific-recipes)
 - [Coding tutorial](#coding-tutorial)
   - [Turn an api call in to a csv](#turn-an-api-call-in-to-a-csv)
@@ -46,6 +47,12 @@
     - [If the recipe is here to stay](#if-the-recipe-is-here-to-stay)
   - [Want more?](#want-more)
 
+
+# What is TaskR
+
+TaskR is a way to create and run scripts called "recipes" that can interacts with the DHIS2 api and generate table, maps or various type of output.
+
+Think "Small Jupyther Notebooks" for dhis2.
 
 # Disclaimer
 
@@ -79,7 +86,7 @@ The recipes list screen is accessible via the top left hamburger menu icon. A li
    - grey out recipes are "built-in".
    - blank recipees are the ones created and saved in your dhis2
 
-Clicking on the run button, you arrive fill on the recipe page.
+Clicking on the Show button, you arrive fill on the recipe page.
 
 ## Recipe page
 
@@ -142,14 +149,26 @@ Since the api call is done via javascript, we can easily combine, merge and filt
 
 ```js
 const api = await dhis2.api();
-const elements = await api.get("dataElements", {
+
+const de = await api.get("dataElements", {
+  fields: "id,name,href,domainType",
+  filter: "domainType:eq:TRACKER",
+  paging: false
 });
 
-const programs = await api.get("programs", {
+const programResp = await api.get("programs", {
+  fields: "programStages[programStageDataElements[dataElement[id]]]",
+  paging: false
 });
 
-// TODO: Write out example here
-return _.flattenObjects(ou.organisationUnits, ["geometry"]);
+const usedByPrograms = new Set(
+  programResp.programs
+    .flatMap(program => program.programStages)
+    .flatMap(ps => ps.programStageDataElements.map(psde => psde.dataElement.id))
+);
+
+return de.dataElements.filter(de => !usedByPrograms.has(de.id));
+
 ```
 
 ## 4. Data can come in and out in various formats
@@ -357,10 +376,16 @@ The recipe has a report in markdown referencing these datasets, adding some cont
 Some recipes can access multiple dhis2 instances to "compare" and "align" their metadata.
 This is also possible but requires credentials on both dhis2, and correct CORS settings.
 
+Make sure the password is passed as a param or prompting it to avoid storing in "clear" in the dhis2 datastore.
+
 ```js
+
+const user = prompt("Please enter the username of the source dhis2", "admin");
+const password = prompt("Please enter the password of the source dhis2");
+
 const apiDestination = await dhis2.api();
-// TODO: What is apiIhp here?
-const apiSource = _.cloneDeep(apiIhp);
+
+const apiSource = _.cloneDeep(apiDestination);
 
 apiSource.setBaseUrl("https://source.dshi2.org/api");
 
@@ -387,7 +412,7 @@ The prefered installation mode is via the application management app and the [dh
       - Last login more than 6 months
       - All enabled users
 
-### Users : Create users based on a csv
+### Users - Create users based on a csv
 
 Takes a csv like
 
@@ -400,7 +425,7 @@ and creates corresponding users.
 You can run the recipe in dryMode first to see the end result.
 Once ok select the create mode.
 
-### Coordinates
+### Organisation Units - Coordinates
 
 **Coordinates - Coordinates coverage**
 
@@ -755,4 +780,4 @@ Make sure it defaults to true ;)
 
 ## Want more?
 
-see the [recipes.js](https://github.com/BLSQ/dhis2-taskr/blob/master/src/recipes.js) for inspirations
+See the [recipes.js](https://github.com/BLSQ/dhis2-taskr/blob/master/src/recipes.js) for inspirations
