@@ -6,8 +6,8 @@ import MarkDownItHighlight from "markdown-it-highlightjs";
 import "./DocPage.css";
 
 const docPath =
-  "https://raw.githubusercontent.com/BLSQ/dhis2-taskr/user-manual/doc/";
-const readmePath = docPath + "/user-manual.md";
+  "https://raw.githubusercontent.com/BLSQ/dhis2-taskr/master/doc/";
+const readmePath = docPath + "user-manual.md";
 
 const slugify = s =>
   encodeURIComponent(
