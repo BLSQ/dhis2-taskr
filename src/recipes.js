@@ -68,7 +68,7 @@ return resources.resources.map( r => {
   },
   {
     id: "RWYYgYTGumd",
-    name: "Basic - Super user audit",
+    name: "Users - Super user, inactive user, never logged in audit",
     editable: true,
     code: `
     const api = await dhis2.api();
@@ -143,7 +143,7 @@ You might want to audit the roles and orgunits of existing users
   },
   {
     id: "bifaoG4Ky23",
-    name: "Investigate GEOJSON data quality",
+    name: "Coordinates - Investigate GEOJSON data quality",
     editable: false,
     code: `
       const api = await dhis2.api();
@@ -172,7 +172,7 @@ You might want to audit the roles and orgunits of existing users
   },
   {
     id: "d4pmpo12iMp",
-    name: "Audit coordinates",
+    name: "Coordinates - coordinates stats per level",
     editable: true,
     code: `
     const stats = [];
@@ -508,7 +508,52 @@ return ccc.categoryCombos;
     var line = turf.lineString([[0, 10], [20, 20]]);
     var tin = turf.tin(turf.featureCollection(points), "z");
     return points.concat([line]).concat(tin["features"]);
-
+`
+  },
+  {
+    id: "turfds123az",
+    name: "Turf - demo - geocoding, geojson",
+    editable: true,
+    code: `
+    const data = [
+      { address: "4000 Glain, belgique" },
+      { address: "Chaussée de Tirlemont 45 5030 Gembloux" },
+      { address: "avenue de la Station 101-103 5030 Gembloux" },
+      { address: "Route de Hannut 181 5021 Boninne, belgique" },
+      { address: "Rue Lamarck, 57 4000 Liège" },
+      { address: "rue du Marché au beurre 25 6700 Arlon" }
+    ];
+    ​
+    const provinces = await fetch(
+      "https://mestachs.github.io/belgium/provinces.geo.json"
+    ).then(r => r.json());
+    ​
+    const communes = await fetch(
+      "https://mestachs.github.io/belgium/communes-be-2019.geojson"
+    ).then(r => r.json());
+    ​
+    for (record of data) {
+      const localisation = await fetch(
+        "https://nominatim.openstreetmap.org/search?q=" +
+          record.address +
+          "&format=json&polygon=1&addressdetails=1"
+      ).then(resp => resp.json());
+      if (localisation.length > 0) {
+        record.localisation = localisation[0];
+        record.coordinates = JSON.stringify([
+          parseFloat(localisation[0].lon),
+          parseFloat(localisation[0].lat)
+        ]);
+        turf.geometrify(record);
+      }
+    }
+    const matched_communes = communes.features.filter(commune =>
+      data.some(ou => ou.geometry && turf.inside(ou.geometry, commune))
+    );
+    const matched_provinces = provinces.features.filter(commune =>
+      data.some(ou => ou.geometry && turf.inside(ou.geometry, commune))
+    );
+    return data.concat(matched_provinces).concat(matched_communes);
 `
   },
   {
@@ -646,7 +691,7 @@ line,name
   },
   {
     id: "UMHyEfFHCcr",
-    name: "Create event based on csv",
+    name: "Simple event - Create event based on csv (not tracker)",
     editable: true,
     params: [
       {
@@ -808,11 +853,11 @@ John,Doe,johndoe@mail.com,johndoe123,Your-password-123,Data entry clerk,DHIS2OUI
 const api = await dhis2.api();
 const dryRun = parameters.mode == "dryRun";
 
-const users = parameters.file.data;
-
-const ur = await api.get("userRoles");
+const ur = await api.get("userRoles", { fields: "id,name", paging: false });
 const userRoles = {};
 ur.userRoles.forEach(u => (userRoles[u.name] = u.id));
+
+const users = parameters.file.data.filter(user => user.username);
 
 const ids = (await api.get("system/id?limit=" + 2 * users.length))["codes"];
 
@@ -843,8 +888,16 @@ dhis2_users = users.map(user => {
         return { id };
       })
   };
-  dhis2user.userRoles = [user.userRole].map(u => {
-    return { id: userRoles[u.userRole] };
+  dhis2user.userRoles = user.userRole.split(",").map(role => {
+    if (userRoles[role] == undefined) {
+      throw new Error(
+        "userRole not found : '" +
+          role +
+          "' known roles : " +
+          Object.keys(userRoles).join(" ,")
+      );
+    }
+    return { id: userRoles[role] };
   });
 
   dhis2user.userCredentials.userRoles = dhis2user.userRoles;
@@ -856,6 +909,7 @@ if (dryRun) {
   const resp = await api.post("metadata", { users: dhis2_users });
   return resp;
 }
+
 
     `
   },
@@ -961,7 +1015,7 @@ if (dryRun) {
   },
   {
     id: "dHC94p8sbdE",
-    name: "update custom attributes of program indicator",
+    name: "Dataviz - update custom attributes of program indicator",
     params: [
       {
         id: "programIndicator",
@@ -1054,131 +1108,345 @@ return pi.attributeValues;
       }
     ],
     code: `
-    // press crtl-r to run
+    const api = await dhis2.api();
+    const pg = await api.get("programs/" + parameters.program.id + ".json", {
+      fields:
+        "id,name,trackedEntityType,programTrackedEntityAttributes[trackedEntityAttribute[id,generated,name,code,valueType,optionSet[id,name,code,options[id,code,name]]]],programStages[id,code,name,programStageSections[:all,id,name,code],programStageDataElements[compulsory,code,dataElement[id,name,formName,shortName,code,valueType,optionSet[id,code,name,options[code,name]]]]]",
+      paging: false
+    });
 
-const api = await dhis2.api();
-const pg = await api.get("programs/" + parameters.program.id, {
-  fields:
-    "id,name,programStages[programStageDataElements[compulsory,code,dataElement[id,name,formName,shortName,code,valueType,optionSet[id,code,name,options[code,name]]]]]",
-  paging: false
-});
+    const iaso_mappings = {};
 
-function slugify(string) {
-  const a = 'àáâäæãåāăąçćčđďèéêëēėęěğǵḧîïíīįìłḿñńǹňôöòóœøōõőṕŕřßśšşșťțûüùúūǘůűųẃẍÿýžźż·/_,:;'
-  const b = 'aaaaaaaaaacccddeeeeeeeegghiiiiiilmnnnnoooooooooprrsssssttuuuuuuuuuwxyyzzz______'
-  const p = new RegExp(a.split('').join('|'), 'g')
+    function toQuestion(valueType, optionSet, compulsory) {
+      let type = "";
+      let constraint = undefined;
+      let constraint_message = undefined;
+      let required = undefined;
+      let appearance = undefined;
 
-  return string.toString().toLowerCase()
-  .replace(/\\\s+/g, '_') // Replace spaces with -
-  .replace(p, c => b.charAt(a.indexOf(c))) // Replace special characters
-  .replace(/&/g, '_and_') // Replace & with 'and'
-  .replace(/[^[a-zA-Z0-9أ-ي]-]+/g, "") // Arabic support
-  .replace(/__+/g, '_') // Replace multiple - with single -
-  .replace(/^-+/, '') // Trim - from start of text
-  .replace(/_+$/, '') // Trim - from end of text
-  }
+      if (compulsory == true) {
+        required = "true";
+      }
 
-const workbook = await XlsxPopulate.fromBlankAsync();
-const sheet = workbook.sheet(0);
-const questions = [
-  [
-    "type",
-    "name",
-    "label",
-    "required",
-    "choice_filter",
-    "constraint",
-    "constraint_message",
-    "relevant",
-    "hint",
-    "appearance",
-    "calculation"
-  ]
-];
-
-
-pg.programStages.forEach(programStage => {
-  programStage.programStageDataElements.forEach(de => {
-    let type = "";
-    let constraint = undefined;
-    let constraint_message = undefined
-    let required = undefined
-    if (de.compulsory == true){
-      required = "true"
+      if (optionSet) {
+        type =
+          "select_one " +
+          (optionSet.code ||
+            slugify(optionSet.name) ||
+            slugify(optionSet.displayName));
+        appearance = "minimal";
+      } else if (valueType == "BOOLEAN" || valueType == "TRUE_ONLY") {
+        type = "select_one yesno";
+      } else if (valueType == "DATE") {
+        type = "date";
+      } else if (valueType == "TEXT" || valueType == "LONG_TEXT") {
+        type = "text";
+      } else if (valueType == "PERCENTAGE") {
+        type = "integer";
+      } else if (valueType == "INTEGER") {
+        type = "integer";
+      } else if (valueType == "INTEGER_POSITIVE") {
+        type = "integer";
+        constraint = ". > 0";
+        constraint_message = "must be non-zero positive number";
+      } else if (valueType == "INTEGER_ZERO_OR_POSITIVE") {
+        type = "integer";
+        constraint = ". >= 0";
+        constraint_message = "must be a positive number";
+      } else if (valueType == "INTEGER_ZERO_OR_NEGATIVE") {
+        type = "integer";
+        constraint = ". <= 0";
+        constraint_message = "must be a negative number";
+      } else if (valueType == "INTEGER_NEGATIVE") {
+        type = "integer";
+        constraint = ". < 0";
+        constraint_message = "must be non-zero negative number";
+      } else if (valueType == "NUMBER") {
+        type = "decimal";
+      } else if (valueType == "COORDINATE") {
+        type = "geopoint";
+      } else if (valueType == "EMAIL") {
+        type = "text";
+        constraint = "regex(., '[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+[.][A-Za-z]{2,10}')";
+        constraint_message = "should be a email";
+      } else if (valueType == "PHONE_NUMBER") {
+        type = "text";
+        constraint = "regex(., '[0-9._%+-]+[.]')";
+        constraint_message = "should be a phone number";
+      } else if (valueType == "ORGANISATION_UNIT") {
+        type = "select_one orgunit";
+      } else if (valueType == "FILE_RESOURCE") {
+        type = "file";
+      } else if (valueType == "TIME") {
+        type = "time";
+      } else if (valueType == "AGE") {
+        type = "date";
+      } else {
+        throw Error("valueType not supported " + valueType);
+      }
+      return {
+        type: type,
+        constraint: constraint,
+        constraint_message: constraint_message,
+        required: required,
+        appearance: appearance
+      };
     }
-    if (de.dataElement.optionSet) {
-      type = "select_one " + slugify(de.dataElement.optionSet.code || de.dataElement.optionSet.name);
-    } else if (de.dataElement.valueType == "BOOLEAN" || de.dataElement.valueType == "TRUE_ONLY") {
-      type = "select_one yesno";
-    } else if (de.dataElement.valueType == "DATE") {
-      type = "date";
-    } else if (de.dataElement.valueType == "TEXT") {
-      type = "text";
-    } else if (de.dataElement.valueType == "PERCENTAGE") {
-      type = "integer";
-    } else if (de.dataElement.valueType == "INTEGER") {
-      type = "integer";
-    } else if (de.dataElement.valueType == "INTEGER_POSITIVE"){
-      type = "integer";
-      constraint = ". > 0";
-      constraint_message = "must be non-zero positive number"
-    } else if (de.dataElement.valueType == "INTEGER_ZERO_OR_POSITIVE"){
-      type = "integer";
-      constraint = ". >= 0";
-      constraint_message = "must be a positive number"
-    } else if (de.dataElement.valueType == "INTEGER_ZERO_OR_NEGATIVE"){
-      type = "integer";
-      constraint = ". <= 0";
-      constraint_message = "must be a negative number"
-    } else if (de.dataElement.valueType == "INTEGER_NEGATIVE"){
-      type = "integer";
-      constraint = ". < 0";
-      constraint_message = "must be non-zero negative number"
-    } else if (de.dataElement.valueType == "NUMBER") {
-      type = "decimal";
-    } else if ( de.dataElement.valueType == "COORDINATE") {
-      type = "geopoint"
+
+    function slugify(string) {
+      if (string == undefined) {
+        return undefined;
+      }
+      string = string.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+
+      return string
+        .toString()
+        .toLowerCase()
+        .replace("(", "_")
+        .replace(")", "_")
+        .replace(/[‘’]/g, "_")
+        .replace(/[“”]/g, "_")
+        .replace(/\\s+/g, "_") // Replace spaces with -
+        .replace(/&/g, "_and_") // Replace & with 'and'
+        .replace(/[^[a-zA-Z0-9?-?]-]+/g, "") // Arabic support
+        .replace(/__+/g, "_") // Replace multiple - with single -
+        .replace(/^-+/, "") // Trim - from start of text
+        .replace(/_+$/, ""); // Trim - from end of text
     }
-    questions.push([type, de.dataElement.code, de.dataElement.formName || de.dataElement.name, required, undefined, constraint, constraint_message]);
-  });
-})
-questions.push(["image", "imgUrl", "Photo de la structure"]);
-questions.push(["geopoint", "gps", "Coordonnées GPS"]);
 
-sheet.name("survey");
-sheet.cell("A1").value(questions);
+    const workbook = await XlsxPopulate.fromBlankAsync();
+    const sheet = workbook.sheet(0);
+    const questions = [
+      [
+        "type",
+        "name",
+        "label",
+        "required",
+        "choice_filter",
+        "constraint",
+        "constraint_message",
+        "relevant",
+        "hint",
+        "appearance",
+        "calculation"
+      ]
+    ];
 
-const sheetChoices = workbook.addSheet("choices");
-const dataElementsWithOptionSets = pg.programStages[0].programStageDataElements.filter(
-  de => de.dataElement.optionSet
-);
-const optionChoices = [
-  ["list_name", "name", "label"],
-  ["yesno", "yes", "1"],
-  ["yesno", "no", "0"]
-];
-dataElementsWithOptionSets.forEach(de => {
-  de.dataElement.optionSet.options.forEach(option => {
-    optionChoices.push([
-      slugify(de.dataElement.optionSet.code || de.dataElement.optionSet.name),
-      option.code,
-      option.name
-    ]);
-  });
-});
+    function append_to_mappings(question_name, mapping) {
+      if (iaso_mappings[question_name] == undefined) {
+        iaso_mappings[question_name] = [];
+      }
+      iaso_mappings[question_name].push(mapping);
+    }
 
-const sheetSettings = workbook.addSheet("settings");
-const settings = [
-  ["form_title","form_id"],
-  [pg.name,pg.code]
-];
-sheetSettings.cell("A1").value(settings);
+    pg.programTrackedEntityAttributes.forEach(de => {
+      const question = toQuestion(
+        de.trackedEntityAttribute.valueType,
+        de.trackedEntityAttribute.optionSet,
+        de.compulsory
+      );
+      const question_name =
+        de.trackedEntityAttribute.code || slugify(de.trackedEntityAttribute.name);
 
-sheetChoices.cell("A1").value(optionChoices);
+      append_to_mappings(question_name, de);
 
-XlsxPopulate.openAsBlob(workbook, "orgunits.xslx");
+      questions.push([
+        question.type,
+        question_name,
+        de.trackedEntityAttribute.formName || de.trackedEntityAttribute.name,
+        question.required,
+        undefined,
+        question.constraint,
+        question.constraint_message,
+        undefined,
+        undefined,
+        question.appearance
+      ]);
+    });
 
-return pg;
+    let stageIndex = 1;
+
+    pg.programStages.forEach(programStage => {
+      questions.push([
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined
+      ]);
+      questions.push([
+        "begin group",
+        slugify(programStage.name),
+        programStage.name,
+        undefined,
+        undefined,
+        undefined,
+        undefined
+      ]);
+      let sectionIndex = 1;
+      if (programStage.programStageSections.length == 0) {
+        programStage.programStageSections.push({
+          dataElements: programStage.programStageDataElements.map(
+            psde => psde.dataElement
+          )
+        });
+      }
+
+      programStage.programStageSections.forEach(programStageSection => {
+        questions.push([
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined
+        ]);
+        questions.push([
+          "begin group",
+          "section_" +
+            stageIndex +
+            "_" +
+            sectionIndex +
+            "_" +
+            slugify(programStageSection.name),
+          programStageSection.name,
+          undefined,
+          undefined,
+          undefined,
+          undefined
+        ]);
+        programStageSection.dataElements.forEach(programStageSectionDe => {
+          const de = programStage.programStageDataElements.find(
+            psde => programStageSectionDe.id == psde.dataElement.id
+          );
+          const question_name = de.dataElement.code || slugify(de.dataElement.name);
+          append_to_mappings(question_name, {
+            program: pg.id,
+            programStage: programStage.id,
+            ...de
+          });
+
+          const valueType = de.dataElement.valueType;
+          const optionSet = de.dataElement.optionSet;
+          const question = toQuestion(valueType, optionSet, de.compulsory);
+          "type",
+            "name",
+            "label",
+            "required",
+            "choice_filter",
+            "constraint",
+            "constraint_message",
+            "relevant",
+            "hint",
+            "appearance",
+            "calculation";
+          questions.push([
+            question.type,
+            question_name,
+            de.dataElement.formName || de.dataElement.name,
+            question.required,
+            undefined,
+            question.constraint,
+            question.constraint_message,
+            undefined,
+            undefined,
+            question.appearance
+          ]);
+        });
+        questions.push([
+          "end group",
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined
+        ]);
+        sectionIndex = sectionIndex + 1;
+      });
+      questions.push([
+        "end group",
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined
+      ]);
+      stageIndex = stageIndex + 1;
+    });
+    //questions.push(["image", "imgUrl", "Photo de la structure"]);
+    //questions.push(["geopoint", "gps", "Coordonnées GPS"]);
+
+    sheet.name("survey");
+    sheet.cell("A1").value(questions);
+
+    const sheetChoices = workbook.addSheet("choices");
+    const dataElementsWithOptionSets = pg.programStages
+      .flatMap(ps => ps.programStageDataElements)
+      .filter(de => de.dataElement.optionSet);
+    const optionChoices = [
+      ["list_name", "name", "label"],
+      ["orgunit", "TODO", "TODO"],
+      ["yesno", "1", "Oui"],
+      ["yesno", "0", "Non"]
+    ];
+
+    const alreadyPushedOptionSet = new Set();
+    dataElementsWithOptionSets.forEach(de => {
+      if (!alreadyPushedOptionSet.has(de.dataElement.optionSet.id)) {
+        de.dataElement.optionSet.options.forEach(option => {
+          optionChoices.push([
+            slugify(de.dataElement.optionSet.code) ||
+              slugify(de.dataElement.optionSet.name),
+            option.code,
+            option.name
+          ]);
+        });
+        alreadyPushedOptionSet.add(de.dataElement.optionSet.id);
+      }
+    });
+
+    pg.programTrackedEntityAttributes.forEach(de => {
+      if (de.trackedEntityAttribute.optionSet) {
+        if (!alreadyPushedOptionSet.has(de.trackedEntityAttribute.optionSet.id)) {
+          de.trackedEntityAttribute.optionSet.options.forEach(option => {
+            optionChoices.push([
+              slugify(de.trackedEntityAttribute.optionSet.code) ||
+                slugify(de.trackedEntityAttribute.optionSet.name),
+              option.code,
+              option.name
+            ]);
+          });
+          alreadyPushedOptionSet.add(de.trackedEntityAttribute.optionSet.id);
+        }
+      }
+    });
+
+    const sheetSettings = workbook.addSheet("settings");
+    const settings = [
+      ["form_title", "form_id"],
+      [pg.name, slugify(pg.code) || slugify(pg.name)]
+    ];
+    sheetSettings.cell("A1").value(settings);
+
+    sheetChoices.cell("A1").value(optionChoices);
+
+    XlsxPopulate.openAsBlob(workbook, slugify(pg.name) + ".xlsx");
+    const identifier = pg.programTrackedEntityAttributes.find(
+      e => e.trackedEntityAttribute.generated == true
+    );
+    return {
+      program_id: pg.id,
+      tracked_entity_identifier: identifier.trackedEntityAttribute.id,
+      tracked_entity_type: pg.trackedEntityType.id,
+      question_mappings: iaso_mappings
+    };
+    return pg;
+
 `
   },
   {
@@ -1350,12 +1618,12 @@ return {
     );
 
     function slugify(str) {
-      str = str.replace(/^\s+|\s+$/g, ""); // trim
+      str = str.replace(/^\\s+|\\s+$/g, ""); // trim
       str = str.toLowerCase();
-
+      str = str.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
       // remove accents, swap ñ for n, etc
-      var from = "àáãäâèéëêìíïîòóöôùúüûñç·/_,:;";
-      var to = "aaaaaeeeeiiiioooouuuunc______";
+      var from = "·/_,:;";
+      var to = "______";
 
       for (var i = 0, l = from.length; i < l; i++) {
         str = str.replace(new RegExp(from.charAt(i), "g"), to.charAt(i));
@@ -1363,7 +1631,7 @@ return {
 
       str = str
         .replace(/[^a-z0-9 -]/g, "") // remove invalid chars
-        .replace(/\s+/g, "_") // collapse whitespace and replace by -
+        .replace(/\\s+/g, "_") // collapse whitespace and replace by -
         .replace(/-+/g, "_"); // collapse dashes
 
       return str;
@@ -1476,7 +1744,7 @@ return {
   },
   {
     id: "ZZJcZFTSl50",
-    name: "Coordinates coverage",
+    name: "Coordinates - Coordinates coverage",
     code: `
 let stats = [];
 const api = await dhis2.api();
@@ -1748,7 +2016,7 @@ return "";
   },
   {
     id: "df",
-    name: "Last metadata changes (this months max 1000)",
+    name: "Users - Last metadata changes (this months max 1000)",
     code: `
 date = new Date();
 var newDate = new Date(date.setMonth(date.getMonth() - 1));
@@ -1795,7 +2063,7 @@ return ou.metadataAudits;
   },
   {
     id: "vgSvwOMNAvQ",
-    name: "Data values for a given orgUnit, dataSet and periods",
+    name: "Export - Data values for a given orgUnit, dataSet and periods",
     params: [
       {
         id: "dataSet",
@@ -1813,80 +2081,80 @@ return ou.metadataAudits;
       }
     ],
     code: `
-    // #/recipes/VJSWf8Ktrao?dataSet=aLpVgfXiz0f&orgUnit=U514Dz4v9pv&periods=2018,2019&autorun=true
+    // #/recipes/vgSvwOMNAvQ?dataSet=aLpVgfXiz0f&orgUnit=U514Dz4v9pv&periods=2018,2019&autorun=true
     let params = new URLSearchParams(window.location.href.split("?")[1]);
-const periods = params.get("periods") || parameters.periods;
-const dataSetId = params.get("dataSet") || parameters.dataSet.id;
-const orgUnitId = params.get("orgUnit") || parameters.orgUnit.id;
-const api = await dhis2.api();
+    const periods = params.get("periods") || parameters.periods;
+    const dataSetId = params.get("dataSet") || parameters.dataSet.id;
+    const orgUnitId = params.get("orgUnit") || parameters.orgUnit.id;
+    const api = await dhis2.api();
 
-const dataSet = await api.get("dataSets/" + dataSetId, {
-  fields:
-    "id,dataSetElements[dataElement[id,name,categoryCombo[id,name,categoryOptionCombos[id,name]"
-});
+    const dataSet = await api.get("dataSets/" + dataSetId, {
+      fields:
+        "id,dataSetElements[dataElement[id,name,categoryCombo[id,name,categoryOptionCombos[id,name]"
+    });
 
-const dataElementsById = {};
+    const dataElementsById = {};
 
-const categoryOptionCombosById = {};
+    const categoryOptionCombosById = {};
 
-dataSet.dataSetElements.forEach(dse => {
-  const dataElement = dse.dataElement;
-  dataElementsById[dataElement.id] = {
-    id: dataElement.id,
-    name: dataElement.name
-  };
-  const categoryOptionCombos = dataElement.categoryCombo.categoryOptionCombos;
-  categoryOptionCombos.forEach(coc => (categoryOptionCombosById[coc.id] = coc));
-});
+    dataSet.dataSetElements.forEach(dse => {
+      const dataElement = dse.dataElement;
+      dataElementsById[dataElement.id] = {
+        id: dataElement.id,
+        name: dataElement.name
+      };
+      const categoryOptionCombos = dataElement.categoryCombo.categoryOptionCombos;
+      categoryOptionCombos.forEach(coc => (categoryOptionCombosById[coc.id] = coc));
+    });
 
-const periodsQuery =
-  "period=" +
-  periods
-    .split(",")
-    .map(p => p.trim())
-    .join("&period=");
-const ouQuery = "orgUnit=" + orgUnitId;
+    const periodsQuery =
+      "period=" +
+      periods
+        .split(",")
+        .map(p => p.trim())
+        .join("&period=");
+    const ouQuery = "orgUnit=" + orgUnitId;
 
-const url =
-  "dataValueSets?" + periodsQuery + "&" + ouQuery + "&dataSet=" + dataSetId;
-const vals = await api.get(url);
+    const url =
+      "dataValueSets?" + periodsQuery + "&" + ouQuery + "&dataSet=" + dataSetId;
+    const vals = await api.get(url);
 
-if (!vals.dataValues) {
-  return "no data";
-}
+    if (!vals.dataValues) {
+      return "no data";
+    }
 
-vals.dataValues.forEach(dv => {
-  dv.dataElement = dataElementsById[dv.dataElement];
-  dv.categoryOptionCombo = categoryOptionCombosById[dv.categoryOptionCombo];
-});
+    vals.dataValues.forEach(dv => {
+      dv.dataElement = dataElementsById[dv.dataElement];
+      dv.categoryOptionCombo = categoryOptionCombosById[dv.categoryOptionCombo];
+    });
 
-const values = _.flattenObjects(vals.dataValues);
-const workbook = await XlsxPopulate.fromBlankAsync();
-const columns = Object.keys(values[0]);
+    const values = _.flattenObjects(vals.dataValues);
+    const workbook = await XlsxPopulate.fromBlankAsync();
+    const columns = Object.keys(values[0]);
 
-const sheet = workbook.sheet(0);
-sheet
-  .cell("A1")
-  .value([columns])
-  .style("fontColor", "ff0000");
+    const sheet = workbook.sheet(0);
+    sheet
+      .cell("A1")
+      .value([columns])
+      .style("fontColor", "ff0000");
 
-const r = sheet.cell("A2");
+    const r = sheet.cell("A2");
 
-r.value(values.map(dv => columns.map(col => dv[col])));
-sheet.column("A").width(30);
-sheet.column("B").width(30);
-sheet.column("C").width(30);
-sheet.column("D").width(30);
-sheet.column("E").width(30);
-sheet.column("F").width(30);
-sheet.column("G").width(30);
-sheet.column("H").width(30);
+    r.value(values.map(dv => columns.map(col => dv[col])));
+    sheet.column("A").width(30);
+    sheet.column("B").width(30);
+    sheet.column("C").width(30);
+    sheet.column("D").width(30);
+    sheet.column("E").width(30);
+    sheet.column("F").width(30);
+    sheet.column("G").width(30);
+    sheet.column("H").width(30);
 
-XlsxPopulate.openAsBlob(
-  workbook,
-  "datavalues-" + orgUnitId + "-" + dataSetId + "-" + periods + "" + ".xlsx"
-);
-return vals.dataValues;
+    XlsxPopulate.openAsBlob(
+      workbook,
+      "datavalues-" + orgUnitId + "-" + dataSetId + "-" + periods + "" + ".xlsx"
+    );
+    return vals.dataValues;
 `
   },
 
