@@ -11,7 +11,7 @@
 - [Historical pains & motivations](#historical-pains--motivations)
   - [1. Turning api call results into csv or a map was not easy](#1-turning-api-call-results-into-csv-or-a-map-was-not-easy)
   - [2. Coding a dhis2 app is sometimes too much work for just a specific one-shot task](#2-coding-a-dhis2-app-is-sometimes-too-much-work-for-just-a-specific-one-shot-task)
-  - [3. Combining multiple api calls is hard - for example in postman](#3-combining-multiple-api-calls-is-hard---for-example-in-postman)
+  - [3. Combining multiple api calls is hard](#3-combining-multiple-api-calls-is-hard)
   - [4. Data can come in and out in various formats](#4-data-can-come-in-and-out-in-various-formats)
   - [5. Sometimes we need JS or GIS super power](#5-sometimes-we-need-js-or-gis-super-power)
   - [6. End user autonomy to re-run the recipe at will](#6-end-user-autonomy-to-re-run-the-recipe-at-will)
@@ -137,7 +137,7 @@ Setting up a dhis2 app requires time and developer knowledge. Taskr is a good tr
 
 An additional benefit of a recipe versus a script running on a developer machine is that it can be run again (and not only by a developer) and is deployed with the DHIS2 instance so will not be lost on a single person machine.
 
-## 3. Combining multiple api calls is hard - for example in [postman](https://www.postman.com/downloads/)
+## 3. Combining multiple api calls is hard
 
 Want to find all the tracker data elements not referenced by program stages ?
 
