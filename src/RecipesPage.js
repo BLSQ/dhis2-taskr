@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Card from "@material-ui/core/Card";
 import CardActions from "@material-ui/core/CardActions";
 import CardContent from "@material-ui/core/CardContent";
@@ -96,8 +96,8 @@ function RecipesPage({ match, recipes }) {
                   href={"#/recipes/" + recipe.id + "/run"}
                   color="primary"
                 >
-                  <PlayArrowIcon />
-                  Run
+                <PlayArrowIcon />
+                  Show
                 </Button>
                 <span style={{ width: "300px" }}></span>
                 <Button size="small" href={"#/recipes/" + recipe.id}>
