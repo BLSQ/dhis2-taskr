@@ -2550,6 +2550,7 @@ return "";
     return "";
     `,
 
+
     report: `
     DataSet : **[Display value:\`dataSet.name\` /]** - [Display value:\`dataSet.periodType\` /].
 
@@ -2569,6 +2570,81 @@ return "";
 
     # Options
     [DataTable data:options label:"options" perPage:5/]
+    `
+  },
+  {
+    id:"ay1YOx7IwyH",
+    name:"Dataset similarities",
+    code: `
+
+    const api = await dhis2.api();
+    const dataElements = (
+      await api.get("dataElements", {
+        fields: "id,name,dataSetElements[dataSet[id,name]]",
+        paging: false
+      })
+    ).dataElements;
+
+    const dataSets = (
+      await api.get("dataSets", {
+        fields: "id,name,periodType,dataSetElements[dataElement[id,name]]",
+        paging: false
+      })
+    ).dataSets;
+    const selectedDataSets = dataSets.filter(
+      ds => !ds.name.includes("ORBF -") && ds.dataSetElements.length > 0
+    );
+    const humanResults = [];
+    const results = new Set();
+    selectedDataSets.forEach(dsA => {
+      selectedDataSets.forEach(dsB => {
+        if (dsA.id !== dsB.id) {
+          const setA = new Set(dsA.dataSetElements.map(dse => dse.dataElement.id));
+          const setB = new Set(dsB.dataSetElements.map(dse => dse.dataElement.id));
+          const deInA = dsB.dataSetElements.filter(dse =>
+            setA.has(dse.dataElement.id)
+          );
+          const notInA = dsB.dataSetElements.filter(
+            dse => !setA.has(dse.dataElement.id)
+          );
+          const notInB = dsA.dataSetElements.filter(
+            dse => !setB.has(dse.dataElement.id)
+          );
+          const pendwidth = Math.min(Math.max(1, deInA.length), 20);
+          const dotlineA =
+            dsA.id + " -- " + dsB.id + " [penwidth=" + pendwidth + "]";
+          const dotlineB =
+            dsB.id + " -- " + dsA.id + " [penwidth=" + pendwidth + "]";
+          if (
+            deInA.length > 0 &&
+            !results.has(dotlineA) &&
+            !results.has(dotlineB)
+          ) {
+            results.add(dotlineA);
+            humanResults.push({
+              dsA: dsA.name,
+              dsB: dsB.name,
+              commonElementsSize: deInA.length,
+              ratio:
+                (deInA.length / (deInA.length + notInA.length + notInB.length)) *
+                100,
+              notInASize: notInA.length,
+              notInBSize: notInB.length,
+              commonElements: deInA.map(dse => dse.dataElement.name).join("\\n"),
+              notInA: notInA.map(dse => dse.dataElement.name).join("\\n"),
+              notInB: notInB.map(dse => dse.dataElement.name).join("\\n")
+            });
+            results.add(dsA.id + '[label="' + dsA.name + '"]');
+            results.add(dsB.id + '[label="' + dsB.name + '"]');
+          }
+        }
+      });
+    });
+
+    const finalresults = ["graph G {"].concat(Array.from(results)).concat(["}\\n"]);
+
+    _.copyToClipBoard(finalresults.join("\\n"));
+    return humanResults;
     `
   }
 ];
