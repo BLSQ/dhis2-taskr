@@ -36,7 +36,7 @@ export function AsPrimitive({ value }) {
     return "can't render functions";
   }
   if (isString(value) && value.length > 100) {
-    return value.slice(0, 100) + " ...";
+    return <span title={value}>{value.slice(0, 100)}...</span>;
   }
 
   const rendered = isPrimitive(value)

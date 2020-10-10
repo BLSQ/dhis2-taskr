@@ -105,8 +105,7 @@ const Dhis2Search = props => {
           {...params}
           name={name}
           label={
-            label + " " + inputValue ||
-            "Search for " + resourceName + " " + inputValue
+            label || ("Search for " + resourceName)
           }
           fullWidth
           onChange={handleChange}
