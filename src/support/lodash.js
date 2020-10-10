@@ -45,4 +45,33 @@ _.flattenObjects = (objects, except) => {
   return objects.map(o => _.flattenObject(o, except));
 };
 
+_.copyToClipBoard = (text) => {
+  if (navigator.clipboard != undefined) {
+    //Chrome
+    navigator.clipboard.writeText(text).then(
+      () => {},
+      (err) => {
+        console.error("Async: Could not copy text: ", err);
+      }
+    );
+  } else if (window.clipboardData) {
+    // Internet Explorer
+    window.clipboardData.setData("Text", text);
+  }
+};
+
+_.renameColumns = (data, columnMapping) => {
+  return data.map(obj =>
+    _.mapKeys(obj, (value, key) => columnMapping[key] || key)
+  );
+};
+
+_.reorderColumns = (data, columns) => {
+  return data.map(obj => {
+    const clone = {};
+    columns.forEach(col => (clone[col] = obj[col]));
+    return clone;
+  });
+};
+
 export default _;

@@ -822,27 +822,21 @@ line,name
     editable: true,
     params: [
       {
-          "id": "file",
-          "type": "csv",
-          "label": "Pick csv with event values"
+        id: "file",
+        type: "csv",
+        label: "Pick csv with event values"
       },
       {
-          "id": "mode",
-          "type": "select",
-          "label": "Select run mode",
-          "choices": [
-              [
-                  "dryRun",
-                  "Import from csv - Dry run"
-              ],
-              [
-                  "import",
-                  "Import from csv - create users"
-              ]
-          ],
-          "default": "dryRun"
+        id: "mode",
+        type: "select",
+        label: "Select run mode",
+        choices: [
+          ["dryRun", "Import from csv - Dry run"],
+          ["import", "Import from csv - create users"]
+        ],
+        default: "dryRun"
       }
-  ],
+    ],
     code: `
 
 const rawData = \`
@@ -982,7 +976,12 @@ if (dryRun) {
         label: "GADM level",
         type: "select",
         default: "1",
-        choices: [[0, "0"], [1, "1"], [2, "2"], [3, "3"]]
+        choices: [
+          [0, "0"],
+          [1, "1"],
+          [2, "2"],
+          [3, "3"]
+        ]
       }
     ],
     code: `
@@ -1039,7 +1038,10 @@ if (dryRun) {
         label: "Select run mode",
         type: "select",
         default: "dryRun",
-        choices: [["dryRun", "Dry run"], ["update", "update"]]
+        choices: [
+          ["dryRun", "Dry run"],
+          ["update", "update"]
+        ]
       }
     ],
     code: `
@@ -2159,10 +2161,9 @@ return ou.metadataAudits;
   },
 
   {
-
-      id: "azdflm3HaO2",
-      name: "Play : Audit, select and fix orgunit name demo",
-      report:`
+    id: "azdflm3HaO2",
+    name: "Play : Audit, select and fix orgunit name demo",
+    report: `
 # Hello
 
 * Run once, select a few orgunits
@@ -2178,7 +2179,7 @@ return ou.metadataAudits;
 
 demo
       `,
-    code:`
+    code: `
 
 // press crtl-r to run
 const api = await dhis2.api();
@@ -2212,6 +2213,363 @@ report.register("organisationUnitsOnClick", async selectedRows => {
 
 return "";
 `
+  },
+
+  {
+    id: "belflm3Ha77",
+    name: "Covid Belgium : hospitalisation",
+    report: `
+    [PageOrientation orientation:"landscape" /]
+    # Overview NEW_ING last month
+    [FlexBox]
+    [IdyllVegaLite data:data spec:\`{
+      title: "Belgium",
+      width: 900,
+      height: 300,
+      "encoding": {"x": {"field": "DATE", "type": "temporal"}},
+
+      "layer": [
+        {
+          "encoding": {
+            "color": {"field": "PROVINCE", "type": "nominal"},
+            "y": {"field": "NEW_IN", "type": "quantitative"}
+          },
+          "layer": [
+            {"mark": "line"},
+            {"transform": [{"filter": {"selection": "hover"}}], "mark": "point"},
+
+          ]
+        },
+        {
+          "transform": [{"pivot": "PROVINCE", "value": "NEW_IN", "groupby": ["DATE"]}],
+          "mark": "rule",
+          "encoding": {
+            "opacity": {
+              "condition": {"value": 0.3, "selection": "hover"},
+              "value": 0
+            },
+            "tooltip": [
+              {"field": "Antwerpen", "type": "quantitative"},
+              {"field": "BrabantWallon", "type": "quantitative"},
+              {"field": "Brussels", "type": "quantitative"},
+              {"field": "Hainaut", "type": "quantitative"},
+              {"field": "Limburg", "type": "quantitative"},
+                        {"field": "Liège", "type": "quantitative"},
+                        {"field": "Luxembourg", "type": "quantitative"},
+                        {"field": "Namur", "type": "quantitative"},
+                        {"field": "OostVlaanderen", "type": "quantitative"},
+                         {"field": "WestVlaanderen", "type": "quantitative"},
+                        {"field": "VlaamsBrabant", "type": "quantitative"},
+
+            ]
+          },
+          "selection": {
+            "hover": {
+              "type": "single",
+              "fields": ["DATE"],
+              "nearest": true,
+              "on": "mouseover",
+              "empty": "none",
+              "clear": "mouseout"
+            }
+          }
+        }
+      ]
+    }:\` /]
+    [IdyllVegaLite data:data spec:\`{
+       "width": 800, "height": 250,
+      "resolve": {"scale": {"color": "independent"}},
+
+      "layer": [
+         {"mark": "bar",
+          "encoding": {
+            "x": {"aggregate": "sum", "field": "NEW_IN", "type": "quantitative", "stack": "zero"},
+            "y": {"field": "PROVINCE", "type": "nominal"},
+            "color": {"field": "PROVINCE", "type": "nominal"}},
+
+         },
+         {"mark": {"type": "text", "dx": -15, "dy": 3},
+          "encoding": {
+            "x": {"aggregate": "sum", "field": "NEW_IN", "type": "quantitative", "stack": "zero"},
+            "y": {"field": "PROVINCE", "type": "nominal"},
+            "color": {"field": "PROVINCE", "type": "nominal", "scale": {"range": ["white"]}, "legend": null},
+            "text": {"aggregate": "sum", "field": "NEW_IN", "type": "quantitative", "format": ".0f"}}
+        }
+      ]
+
+    }:\` /]
+    [/FlexBox]
+
+# NEW_IN avg last 7 days
+[FlexBox]
+[OrgunitMap lines:provincesGeojson width:"400px" height:"400px"/]
+[DataTable data:\`provincesGeojson.map(l => l.properties):\` label:"Province NEW_IN avg data" perPage:20/]
+
+[/FlexBox]
+# NEW_IN in last month
+[FlexBox]
+
+[IdyllVegaLite data:\`graphByProvince["Antwerpen"].data\` spec:\`graphByProvince["Antwerpen"].spec\` /]
+[IdyllVegaLite data:\`graphByProvince["OostVlaanderen"].data\` spec:\`graphByProvince["OostVlaanderen"].spec\` /]
+[IdyllVegaLite data:\`graphByProvince["WestVlaanderen"].data\` spec:\`graphByProvince["WestVlaanderen"].spec\` /]
+[IdyllVegaLite data:\`graphByProvince["VlaamsBrabant"].data\` spec:\`graphByProvince["VlaamsBrabant"].spec\` /]
+[IdyllVegaLite data:\`graphByProvince["Limburg"].data\` spec:\`graphByProvince["Limburg"].spec\` /]
+[IdyllVegaLite data:\`graphByProvince["Brussels"].data\` spec:\`graphByProvince["Brussels"].spec\` /]
+[IdyllVegaLite data:\`graphByProvince["Liège"].data\` spec:\`graphByProvince["Liège"].spec\` /]
+[IdyllVegaLite data:\`graphByProvince["Namur"].data\` spec:\`graphByProvince["Namur"].spec\` /]
+[IdyllVegaLite data:\`graphByProvince["BrabantWallon"].data\` spec:\`graphByProvince["BrabantWallon"].spec\` /]
+[IdyllVegaLite data:\`graphByProvince["Hainaut"].data\` spec:\`graphByProvince["Hainaut"].spec\` /]
+[IdyllVegaLite data:\`graphByProvince["Luxembourg"].data\` spec:\`graphByProvince["Luxembourg"].spec\` /]
+[/FlexBox]
+    `,
+    code: `
+
+  const data = (
+    await fetch("https://epistat.sciensano.be/Data/COVID19BE_HOSP.json").then(r =>
+      r.json()
+    )
+  ).filter(d => d.DATE > "2020-09-01");
+
+  report.register("data", data);
+
+  const provincesGeojson = await fetch(
+    "https://mestachs.github.io/belgium/provinces.geo.json"
+  ).then(r => r.json());
+
+  report.register("provincesGeojson", provincesGeojson.features);
+
+  function toColor(perc) {
+    var r,
+      g,
+      b = 0;
+    if (perc < 50) {
+      r = 255;
+      g = Math.round(5.1 * perc);
+    } else {
+      g = 255;
+      r = Math.round(510 - 5.1 * perc);
+    }
+    var h = r * 0x10000 + g * 0x100 + b * 0x1;
+    return "#" + ("000000" + h.toString(16)).slice(-6);
+  }
+
+  const provinces = new Set();
+
+  data.forEach(d => provinces.add(d.PROVINCE));
+  const provinceMapping = {
+    "East Flanders": "OostVlaanderen",
+    Antwerp: "Antwerpen",
+    Brussels: "Brussels",
+    Hainaut: "Hainaut",
+    Limburg: "Limburg",
+    Liege: "Liège",
+    Luxembourg: "Luxembourg",
+    Namur: "Namur",
+    "Flemish Brabant": "VlaamsBrabant",
+    "Walloon Brabant": "BrabantWallon",
+    "West Flanders": "WestVlaanderen"
+  };
+  provincesGeojson.features.forEach(province => {
+    const provinceName = provinceMapping[province.properties.NAME_1];
+    const provinceData = data.filter(d => d.PROVINCE == provinceName);
+    if (provinceData.length == 0) {
+      throw new Error(
+        "no data for " + province.properties.NAME_1 + " vs " + provinceName
+      );
+    }
+    const provinceDataLast7days = provinceData.slice(
+      provinceData.length - 7,
+      provinceData.length
+    );
+    const provinceDataLast14days = provinceData.slice(
+      provinceData.length - 14,
+      provinceData.length
+    );
+
+    const last7AvgRounded = _.meanBy(
+      provinceDataLast7days,
+      p => p.NEW_IN
+    ).toFixed(2);
+    const last14AvgRounded = _.meanBy(
+      provinceDataLast14days,
+      p => p.NEW_IN
+    ).toFixed(2);
+    let percentage = 0;
+    if (last7AvgRounded >= 30) {
+      percentage = 0;
+    }
+    if (last7AvgRounded >= 20) {
+      percentage = 5;
+    }
+    if (last7AvgRounded >= 8) {
+      percentage = 10;
+    } else if (last7AvgRounded >= 6) {
+      percentage = 25;
+    } else if (last7AvgRounded >= 4) {
+      percentage = 35;
+    } else if (last7AvgRounded >= 2) {
+      percentage = 50;
+    } else if (last7AvgRounded > 0) {
+      percentage = 75;
+    } else {
+      percentage = 100;
+    }
+    province.properties = {
+      province: provinceName,
+      Last7days: last7AvgRounded,
+      Last14days: last14AvgRounded
+      //percentage: percentage
+    };
+    province.fillColor = toColor(percentage);
+    province.opacity = 0.6
+  });
+
+  const graphByProvince = {};
+  provinces.forEach(province => {
+    const graph = {
+      data: data.filter(d => d.PROVINCE == province),
+      spec: {
+        width: 300,
+        height: 100,
+        mark: "bar",
+        title: province,
+        encoding: {
+          tooltip: [
+            { field: "NEW_IN", type: "quantitative" },
+            { field: "DATE", type: "temporal" }
+          ],
+          x: {
+            field: "DATE",
+            type: "temporal",
+            axis: { title: "time", format: "%Y%m%d" }
+          },
+
+          y: {
+            field: "NEW_IN",
+            type: "quantitative",
+            axis: {
+              title: "new in",
+              tickCount: 5
+            },
+            scale: { domain: [0, 35] }
+          }
+        }
+      }
+    };
+    graphByProvince[province] = graph;
+  });
+
+  report.register("graphByProvince", graphByProvince);
+
+  return "";
+  `
+  },
+  {
+    id: "zti4UfUGliw",
+    name:"BLSQ - Export dataset",
+    params: [
+      {
+          "id": "dataset",
+          "label": "Search for dataset",
+          "type": "dhis2",
+          "resourceName": "dataSets"
+      }
+  ],
+    code:`
+
+    let api = await dhis2.api();
+
+    const datasets = await api.get("dataSets", {
+      fields:
+        "id,name,href,periodType,:all,dataSetElements[dataElement[id,code,name,shortName,domainType,valueType,aggregationType,description,categoryCombo[id,name,categoryOptionCombos[id,name,code,categoryCombo[id,name]]],formName,zeroIsSignificant,optionSet[id,name,options[id,code,name,optionSet[id]]]]]",
+      filter: "name:eq:" + parameters.dataset.name
+    });
+
+    const ds = datasets.dataSets[0];
+
+    const dataElements = ds.dataSetElements.flatMap(dse => dse.dataElement);
+    const optionSets = _.uniqBy(
+      dataElements.filter(de=> de.optionSet).map(de => de.optionSet),
+      cc => cc.id
+    );
+
+    const options = _.uniqBy(
+      dataElements.filter(de=> de.optionSet).flatMap(de => de.optionSet.options),
+      cc => cc.id
+    );
+    const categoryCombos = _.uniqBy(
+      dataElements.map(de => de.categoryCombo),
+      cc => cc.id
+    );
+
+    const categoryOptionCombos = _.uniqBy(
+      dataElements.flatMap(de => de.categoryCombo.categoryOptionCombos),
+      cc => cc.id
+    );
+
+    report.register("dataSet", ds);
+    report.register(
+      "dataElements",
+      _.reorderColumns(
+        _.renameColumns(_.flattenObjects(dataElements), {
+          "categoryCombo-id": "categoryCombo"
+        }),
+        [
+          "id",
+          "name",
+          "shortName",
+          "code",
+          "aggregationType",
+          "domainType",
+          "valueType",
+          "zeroIsSignificant",
+          "categoryCombo-name",
+          "categoryCombo",
+          "optionSet-id",
+          "optionSet-name",
+        ]
+      )
+    );
+
+    report.register(
+      "categoryCombos",
+      _.reorderColumns(categoryCombos, ["id", "name"])
+    );
+    report.register(
+      "categoryOptionCombos",
+      _.reorderColumns(_.flattenObjects(categoryOptionCombos), ["id", "code","name","categoryCombo-id","categoryCombo-name"])
+    );
+    report.register(
+      "optionSets",
+      _.reorderColumns(optionSets,["id","name"])
+    )
+    report.register(
+      "options",
+      _.flattenObjects(options)
+    )
+    return "";
+    `,
+
+    report: `
+    DataSet : **[Display value:\`dataSet.name\` /]** - [Display value:\`dataSet.periodType\` /].
+
+    from [Display value:\`dataSet.href\` /]
+
+    # Data elements
+    [DataTable data:dataElements label:"Data Elements" perPage:5/]
+
+    # Category Combos
+    [DataTable data:categoryCombos label:"categoryCombos" perPage:5/]
+
+    # Category Option Combos
+    [DataTable data:categoryOptionCombos label:"categoryOptionCombos" perPage:5/]
+
+    # Option Sets
+    [DataTable data:optionSets label:"optionSets" perPage:5/]
+
+    # Options
+    [DataTable data:options label:"options" perPage:5/]
+    `
   }
 ];
 export default recipes;
