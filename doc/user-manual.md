@@ -500,11 +500,20 @@ See the Following chapter
 Let's try to fetch all orgunits and their coordinates/geometry.
 
 ```js
+// first get some dhis2 api access
 const api = await dhis2.api();
+
+// fetch orgunits with their id, name,geometry and their ancestors ids and names and disable the paging (we want all of them)
+// and wait this request completes
+
 const ou = await api.get("organisationUnits", {
   fields: "id,name,ancestors[id,name],geometry",
   paging: false
 });
+
+// now it's time to return something to display to the table
+// we flatten the objecs in ou.organisationUnits but not the geometry field
+// we do that to be able to export the ancestors array in the csv
 
 return _.flattenObjects(ou.organisationUnits, ["geometry"]);
 ```
@@ -527,7 +536,7 @@ In the "parameters" editor, you can paste the following:
     {
         "id": "province",
         "type": "dhis2",
-        "label": "Search for Provice",
+        "label": "Search for Province",
         "filter": "level:eq:2",
         "resourceName": "organisationUnits"
     }
@@ -535,12 +544,15 @@ In the "parameters" editor, you can paste the following:
 
 ```
 
+Under the editor, an orgunit picklist should have appeared.
 Fill in the paremeter `province` via the UI based on autocomplete.
 
-Adapt the code to now filter on the province
+Adapt the code to now filter on the provided province
 
 ```js
 const api = await dhis2.api();
+
+// parameters coming from the ui are named based on the "id" field and are a {id:"..." name: "..."} object
 const provinceId = parameters.province
 
 const ou = await api.get("organisationUnits", {
