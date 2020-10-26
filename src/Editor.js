@@ -1,7 +1,7 @@
 import { Results } from "./Results";
 import React, { useState, useEffect } from "react";
 import "./App.css";
-
+import JSONApi from "./support/JSONApi"
 import _ from "./support/lodash";
 import XlsxPopulate from "./support/XlsxPopulateOpenAsBlob";
 import * as turf from "@turf/turf";
@@ -171,6 +171,7 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
         "DatePeriods",
         "parameters",
         "report",
+        "JSONApi",
         body
       )(
         dhis2,
@@ -182,7 +183,8 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
         XlsxPopulate,
         DatePeriods,
         parameters,
-        dataSets
+        dataSets,
+        JSONApi
       );
 
       setResults(results);
