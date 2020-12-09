@@ -265,7 +265,7 @@ function App() {
                 )}
               />
 
-              <Redirect to={"/recipes/D5a1DVMw7FV"} />
+              <Redirect to={"/recipes"} />
             </Switch>
           </Paper>
         </div>
