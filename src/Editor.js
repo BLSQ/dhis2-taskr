@@ -13,11 +13,13 @@ import { asyncForEach } from "./support/asyncForEach";
 import Button from "@material-ui/core/Button";
 import TextField from "@material-ui/core/TextField";
 import AceEditor from "react-ace";
-import "brace/ext/language_tools";
-import "brace/mode/javascript";
-import "brace/theme/monokai";
-import "brace/ext/searchbox";
-import "brace/snippets/javascript";
+
+import "ace-builds/src-noconflict/ext-searchbox";
+import "ace-builds/src-noconflict/ext-language_tools";
+import "ace-builds/src-noconflict/mode-javascript";
+import 'ace-builds/src-noconflict/theme-monokai'
+import 'ace-builds/src-noconflict/snippets/javascript'
+import { Ace } from "ace-builds";
 
 import Help from "./Help";
 import DatePeriods from "./support/DatePeriods";
@@ -35,6 +37,11 @@ import FormControl from "@material-ui/core/FormControl";
 
 import MenuItem from "@material-ui/core/MenuItem";
 import Select from "@material-ui/core/Select";
+
+
+
+
+
 const position = [-12.9487, 9.0131];
 const AsyncFunction = Object.getPrototypeOf(async function() {}).constructor;
 
@@ -123,6 +130,8 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
   if (showEditor && editable == false) {
     setShowEditor(false);
   }
+  const [height, setHeight] = useState(400);
+  const [width, setWidth] = useState("80%");
   const [autorunStarted, setAutorunStarted] = useState(false);
   const [propertyEdited, setPropertyEdited] = useState("code");
   const [name, setName] = useState(recipe.name);
@@ -279,8 +288,8 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
               readOnly={recipe && recipe.editable === false}
               name="script"
               fontSize={18}
-              width={"80%"}
-              height={400}
+              width={width}
+              height={height}
               mode="javascript"
               theme="monokai"
               value={editableContent}
@@ -302,6 +311,25 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
                   bindKey: { win: "Ctrl-r", mac: "Command-r" },
                   exec: editor => {
                     onRun(editor.getValue());
+                  }
+                },
+                {
+                  name: "Toggle Fullscreen",
+                  bindKey: "F11",
+                  exec: (editor) => {
+                      const fullScreen = document.body.classList.contains("fullScreen")
+                      document.body.classList.toggle("fullScreen");
+                      editor.container.classList.toggle("fullScreen");
+                      editor.setAutoScrollEditorIntoView(!fullScreen)
+                      if (!fullScreen) {
+                        setHeight("100vh")
+                        setWidth("100%")
+                      } else {
+                        setHeight(400)
+                        setWidth("80%")
+                      }
+                      editor.resize()
+                      debugger;
                   }
                 }
               ]}
