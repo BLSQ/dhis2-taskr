@@ -12,7 +12,7 @@ return "Hello, World!";
 
 ```
 
-## Variables and assignement
+## Variables and assignment
 
 
 ```js
@@ -114,11 +114,12 @@ You can then tweak the boolean condition to check if the length :
  
  ### decision : if ... then ... else
  
- Not we can use the booleans to make decision in our code. 
+ Note we can use the booleans to make decision in our code. 
  Let's check if a password is too short.
  
  ```js
  const password = "tooweak"
+ 
  if (password.length < 9) {
  
     return "Password is too short.";
