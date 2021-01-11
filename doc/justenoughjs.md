@@ -91,6 +91,8 @@ So my first contains 7 characters
 => 7
 `
 
+### boolean expressions
+
 now we might want to know if the length is really equal to 7, note the usage of `==` (and not `=` which is the assignement operator) 
 
 ```js
@@ -110,14 +112,70 @@ You can then tweak the boolean condition to check if the length :
  
  check the outputs corresponds to what you initially thought.
  
+ ### decision : if ... then ... else
+ 
  Not we can use the booleans to make decision in our code. 
  Let's check if a password is too short.
  
  ```js
  const password = "tooweak"
  if (password.length < 9) {
+ 
     return "Password is too short.";
+    
  } else {
+ 
     return "Password is long enough";
+    
  }
+ ```
+### Combining booleans
+
+
+ ```js
+ 
+const password = "tooisnotweak456";
+
+const isLongEnough = password.length > 9;
+const hasNumbers = /\d/.test(password); // this strange notation is called a regexp, we will see that later
+const hasLetters = /[A-Za-z]/.test(password);
+
+if (isLongEnough && hasNumbers && hasLetters) {
+  return "Password is good";
+} else {
+  return "Password is weak";
+}
+ 
+ ```
+ 
+ The `&&` operator is the logical AND operator, both booleans need to be true to return a true
+ 
+ ```
+ return true && true 
+ => true
+ 
+ return false && true 
+ => false
+
+ return true && false
+ => false
+ 
+ return false && false
+ => false
+ ```
+
+Another operator you might want to use is the OR operator `||`, if one of the boolean is true then it's true
+
+ ```
+ return true && true 
+ => true
+ 
+ return false && true 
+ => true
+
+ return true && false
+ => true
+ 
+ return false && false
+ => false
  ```
