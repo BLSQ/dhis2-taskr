@@ -7,7 +7,7 @@ You can paste these samples in your taskr recipe, click run and check the output
 ## Hello world
 
 ```
-// this is 
+// this is a comment, this line is not executed by the interpreter
 return "Hello, World!";
 
 ```
