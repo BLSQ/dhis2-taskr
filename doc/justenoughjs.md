@@ -361,3 +361,33 @@ NOT
 TO
 BE
 ```
+
+#### mapping
+
+The previous example can be simplified by using the map method.
+The method receives a function where the first parameter is the item of the array.
+
+```js
+const words = "to be or not to be".split(" ");
+
+const results = words.map( word => word.toUpperCase())
+
+return results;
+```
+#### filtering
+
+Let's say we want to find all the words that contains the letter e
+We can call the filter method and pass the function that returns true if the condition is filled
+
+```js
+const words = "to be or not to be".split(" ");
+
+const results = words.filter( word => word.includes("e"))
+
+return results;
+```
+
+```
+be
+be
+```
