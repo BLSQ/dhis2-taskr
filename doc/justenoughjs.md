@@ -167,15 +167,15 @@ if (isLongEnough && hasNumbers && hasLetters) {
 Another operator you might want to use is the OR operator `||`, if one of the boolean is true then it's true
 
  ```
- return true && true 
+ return true || true 
  => true
  
- return false && true 
+ return false || true 
  => true
 
- return true && false
+ return true || false
  => true
  
- return false && false
+ return false || false
  => false
  ```
