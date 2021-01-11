@@ -85,7 +85,7 @@ const lengthOfTheWord = "stéphan".length; // Accessing the "length" property of
 return lengthOfTheWord;
 
 ```
-So my first contains 7 characters 
+So my first name contains 7 characters 
 
 `
 => 7
@@ -151,32 +151,213 @@ if (isLongEnough && hasNumbers && hasLetters) {
  
  The `&&` operator is the logical AND operator, both booleans need to be true to return a true
  
- ```
+ ```js
  return true && true 
+ ```
+ ```
  => true
- 
+ ```
+ ```js
  return false && true 
+ ```
+ ```
  => false
-
+ ```
+```js
  return true && false
+ ```
+ ```
  => false
+ ```
  
+ ```js
  return false && false
+ ```
+ ```
  => false
  ```
 
 Another operator you might want to use is the OR operator `||`, if one of the boolean is true then it's true
 
- ```
+ ```js
  return true || true 
+ ```
+```
  => true
+```
  
+ ```js
  return false || true 
  => true
 
+ ```js
  return true || false
+```
+```
  => true
+```
  
+ ```js
  return false || false
- => false
  ```
+```
+=> false
+ ```
+
+Negation of a condition with the not ! operator
+
+```js
+ return !true
+```
+```
+=> false
+```
+
+```js
+return !false
+```
+```
+=> true
+```
+
+We can turn the previous example in "less" comprehensive form by using `!` and `||`
+
+ ```js
+ 
+const password = "tooisnotweak456";
+
+const isLongEnough = password.length > 9;
+const hasNumbers = /\d/.test(password); // this strange notation is called a regexp, we will see that later
+const hasLetters = /[A-Za-z]/.test(password);
+
+if (!isLongEnough || !hasNumbers || !hasLetters) {
+  return "Password is weak";
+} else {
+  return "Password is good";
+}
+ 
+```
+As you would write in english, avoid complex negations ;)
+
+
+### Methods
+
+On string some properties are functions, and we invoke it with the parentheses
+
+ ```js
+return "Stéphan Mestach".toLowerCase();
+ ```
+ ```
+ => stéphan mestach
+ ```
+ 
+ Let's say want to put everything to upper case ? How would you do it ?
+ 
+ ```js
+ return "Stéphan Mestach".toUpperCase();
+ ```
+ ```
+ => STÉPHAN MESTACH
+ ```
+ 
+ Does a sentence contains another sentence ?
+ 
+ ```js
+ const orgUnitName = "chc MontLégia"
+ return orgUnitName.toUpperCase().includes("CHC");
+ ```
+ ```
+ => true
+ ```
+ 
+### Arrays
+
+#### split & access
+
+You can split a string based on a seperator (in our case a blank) 
+By calling the method `split` with the separator
+You can then access the various words via `[]`, indices starts at 0
+```js
+const words = "chc MontLégia".split(" ");
+// return the firs word
+return words[0]
+```
+```
+=> chc
+```
+
+
+```js
+const words = "chc MontLégia".split(" ");
+// return the firs word
+return words[1]
+ ```
+```
+=> MontLégia
+```
+
+```js
+const words = "chc MontLégia".split(" ");
+// return an array with all the words
+return words;
+```
+here taskr behaves a bit differently, it will show you a table
+with columns being numbers from 0 to 8 holding each letter of the words
+
+#### joining
+```js
+const words = "chc MontLégia".split(" ");
+// return an array with all the words
+return words.join("\t");
+```
+the words with a tab between them
+```
+chc MontLégia
+```
+
+#### slicing
+
+```js
+const words = "to be or not to be".split(" ");
+// return an array with all the words
+return words.slice(4)
+```
+return an array starting after the 4 word 
+```
+to
+be
+```
+indices can be negative here
+```js
+const words = "to be or not to be".split(" ");
+// return an array with all the words
+return words.slice(-3);
+```
+the last 3 words 
+```
+not
+to
+be
+```
+
+#### iterating / pushing
+
+```js
+const words = "to be or not to be".split(" ");
+
+const results = [];
+for (let word of words) { // iterate on all the words
+  const upcasedWord = word.toUpperCase()
+  results.push(upcasedWord);
+}
+return results;
+```
+
+```
+TO
+BE
+OR
+NOT
+TO
+BE
+```
