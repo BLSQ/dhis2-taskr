@@ -391,3 +391,101 @@ return results;
 be
 be
 ```
+
+## Objects
+
+Objects are everywhere in the world and in dhis2.
+
+As an exemple, an organisationUnit can be represented as an object with multiple properties like a name, an id, an array of organisationUnitGroups
+
+```js
+const myCountry = {
+  id: "ImspTQPwCqd",
+  name: "Belgium",
+  level: 1,
+  organisatisationUnitGroups: [{ id: "xE7jOejl9FI" }]
+};
+
+return myCountry;
+```
+Note that taskr return the object but in the json format.
+
+Objects can have more "behaviour" with methods as we saw for strings (split, join,...)
+
+You can access property in different ways 
+
+```js
+const myCountry = {
+  id: "ImspTQPwCqd",
+  name: "Belgium",
+  level: 1,
+  organisatisationUnitGroups: [{ id: "xE7jOejl9FI" }]
+};
+
+return myCountry.name;
+```
+
+If you have a variable with the property name (as string)
+
+```js
+const myCountry = {
+  id: "ImspTQPwCqd",
+  name: "Belgium",
+  level: 1,
+  organisatisationUnitGroups: [{ id: "xE7jOejl9FI" }]
+};
+
+const field = "name"
+
+return myCountry[field];
+```
+
+Generally these objects are mutable, can change their property/field values 
+
+```js
+const myCountry = {
+  id: "ImspTQPwCqd",
+  name: "Belgium",
+  level: 1,
+  organisatisationUnitGroups: [{ id: "xE7jOejl9FI" }]
+};
+
+myCountry.name = "Belgique"  // modify the name
+myCountry["id"] = "OsPTWNqq26W" // modify the id
+
+return myCountry;
+```
+
+```json
+{
+  "id": "OsPTWNqq26W",
+  "name": "Belgique",
+  "level": 1,
+  "organisatisationUnitGroups": [
+    {
+      "id": "xE7jOejl9FI"
+    }
+  ]
+}
+```
+
+You can also add field to the object. Either using the `.property=` or by field name `.["fieldname"]=` :
+
+```js
+const myCountry = {
+  id: "ImspTQPwCqd",
+  name: "Belgium",
+  level: 1,
+  organisatisationUnitGroups: [{ id: "xE7jOejl9FI" }]
+};
+
+myCountry.coordinates = "[4.4699, 50.5039]"; // add a coordinates field
+
+myCountry["color"] = "blue"; // add a color field
+
+return [myCountry];
+```
+
+Now we return an array containing an orgunit with 2 extra fields.
+You will notice that taskr display the result as a Table and since the objects in the array has a coordinates it shows also a Map.
+
