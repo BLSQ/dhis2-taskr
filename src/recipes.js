@@ -10,7 +10,7 @@ const recipes = [
     });
 
     return _.flattenObjects(ou.organisationUnits, ["geometry"]);
-      `
+      `,
   },
   {
     id: "lD3mlYe0S0X",
@@ -22,7 +22,7 @@ const recipes = [
     paging: false
   });
   return ou.organisationUnits
-      `
+      `,
   },
   {
     id: "u2Rzyn9ZvfD",
@@ -48,7 +48,7 @@ const recipes = [
       };
   });
   return organisationUnits
-  `
+  `,
   },
   {
     id: "noCPOHibwHt",
@@ -64,7 +64,7 @@ return resources.resources.map( r => {
     }
 })
 
-    `
+    `,
   },
   {
     id: "RWYYgYTGumd",
@@ -139,7 +139,7 @@ You might want to audit the roles and orgunits of existing users
 [DataTable data:users label:"All users" perPage:20/]
 
 
-`
+`,
   },
   {
     id: "bifaoG4Ky23",
@@ -168,7 +168,7 @@ You might want to audit the roles and orgunits of existing users
         ou.featureTypeMatches = ou.guessedFeatureType === ou.featureType;
       });
       return ou.organisationUnits.filter(ou => ou.featureTypeMatches == false);
-    `
+    `,
   },
   {
     id: "d4pmpo12iMp",
@@ -262,7 +262,7 @@ You might want to audit the roles and orgunits of existing users
 [AsJSON data:statsByLevel4 /]
 [/FlexBox]
 [/FlexBox]
-   `
+   `,
   },
   {
     id: "D5a1DVMw7FV",
@@ -285,7 +285,7 @@ You might want to audit the roles and orgunits of existing users
     const usedByPrograms = new Set(programResp.programStages.flatMap(ps=> ps.programStageDataElements.map(psde => psde.dataElement.id)))
 
     return de.dataElements.filter( de => !usedByPrograms.has(de.id))
-`
+`,
   },
 
   {
@@ -305,7 +305,7 @@ const ou = await api.get("organisationUnits", {
   paging: false
 });
 return ou.organisationUnits;
-`
+`,
   },
   {
     id: "a0d79dd5c59",
@@ -321,7 +321,7 @@ return ou.organisationUnits;
 
       return ev.events;
 
-        `
+        `,
   },
   {
     id: "af2fd38f351",
@@ -347,7 +347,7 @@ periods.forEach(period => {
 
 return results;
 
-    `
+    `,
   },
   {
     id: "af2fd38f350",
@@ -380,7 +380,7 @@ return results;
       return events;
 
 
-        `
+        `,
   },
   {
     id: "dy1a1mseGR7",
@@ -402,7 +402,7 @@ return results;
       paging: false
     });
     return _.uniqBy(ind.indicators.concat(ind2.indicators), i => i.id);
-    `
+    `,
   },
   {
     id: "ToQVD4irW3Q",
@@ -426,7 +426,7 @@ return _.uniqBy(
   i => i.id
 );
 
-`
+`,
   },
   {
     id: "r6JQgt6y8Dn",
@@ -458,7 +458,7 @@ return _.uniqBy(
       dv.color = dv.value == 9 ? "blue" : "red";
     });
     return dv.dataValues;
-    `
+    `,
   },
   {
     id: "gbvX3pogf7p",
@@ -481,7 +481,7 @@ ccc.categoryCombos.forEach(cc => {
   delete cc.categories;
 });
 return ccc.categoryCombos;
-`
+`,
   },
   {
     id: "turfds456az",
@@ -508,7 +508,7 @@ return ccc.categoryCombos;
     var line = turf.lineString([[0, 10], [20, 20]]);
     var tin = turf.tin(turf.featureCollection(points), "z");
     return points.concat([line]).concat(tin["features"]);
-`
+`,
   },
   {
     id: "turfds123az",
@@ -554,7 +554,7 @@ return ccc.categoryCombos;
       data.some(ou => ou.geometry && turf.inside(ou.geometry, commune))
     );
     return data.concat(matched_provinces).concat(matched_communes);
-`
+`,
   },
   {
     id: "Yf6UHoPkdS6",
@@ -583,7 +583,7 @@ return ccc.categoryCombos;
     });
     return legendSet;
 
-`
+`,
   },
   {
     id: "aze123PkdS6",
@@ -606,7 +606,7 @@ return ou.organisationUnits.map(ou => {
     groups: ou.organisationUnitGroups.map(g => g.name).join(", ")
   };
 });
-`
+`,
   },
   {
     id: "YlvBkdBjjVO",
@@ -643,7 +643,7 @@ results.push({
   events: results.map(m => m.events).reduce((a, b) => a + b)
 });
 return results;
-`
+`,
   },
   {
     id: "YlvBkdBjaz5",
@@ -687,7 +687,7 @@ line,name
       return _.flattenObjects(ouToMaps.data);
 
 
-    `
+    `,
   },
   {
     id: "UMHyEfFHCcr",
@@ -699,7 +699,7 @@ line,name
         label: "Search",
         type: "dhis2",
         resourceName: "programs",
-        default: "lxAQ7Zs9VYR"
+        default: "lxAQ7Zs9VYR",
       },
       {
         id: "mode",
@@ -709,16 +709,16 @@ line,name
         choices: [
           ["generateEmptyCsv", "Generate an empty csv"],
           ["dryRun", "Import from csv - Dry run"],
-          ["import", "Import from csv - import events"]
-        ]
+          ["import", "Import from csv - import events"],
+        ],
       },
       {
         id: "file",
         label: "Pick csv with event values",
         type: "csv",
         helperText:
-          "you can use 'Generate an empty csv' run mode to generate a template"
-      }
+          "you can use 'Generate an empty csv' run mode to generate a template",
+      },
     ],
     code: `
 
@@ -788,7 +788,7 @@ line,name
       }
     }
 
-    `
+    `,
   },
   {
     id: "UMHyEfFHXLS",
@@ -814,7 +814,7 @@ line,name
     sheet.column("B").width(30);
     XlsxPopulate.openAsBlob(workbook, "orgunits.xslx");
     return "a workbook will open shortly";
-    `
+    `,
   },
   {
     id: "hV9ISZaPz2w",
@@ -824,7 +824,7 @@ line,name
       {
         id: "file",
         type: "csv",
-        label: "Pick csv with event values"
+        label: "Pick csv with event values",
       },
       {
         id: "mode",
@@ -832,10 +832,10 @@ line,name
         label: "Select run mode",
         choices: [
           ["dryRun", "Import from csv - Dry run"],
-          ["import", "Import from csv - create users"]
+          ["import", "Import from csv - create users"],
         ],
-        default: "dryRun"
-      }
+        default: "dryRun",
+      },
     ],
     code: `
 
@@ -905,7 +905,7 @@ if (dryRun) {
 }
 
 
-    `
+    `,
   },
   {
     id: "akBR3UIfpLB",
@@ -917,21 +917,21 @@ if (dryRun) {
         label: "Search for program",
         type: "dhis2",
         resourceName: "programs",
-        default: "sample"
+        default: "sample",
       },
       {
         id: "datalementTracker",
         label: "Search for tracker data element",
         type: "dhis2",
         resourceName: "dataElements",
-        filter: "domainType:eq:TRACKER"
+        filter: "domainType:eq:TRACKER",
       },
       {
         id: "datalementAggregate",
         label: "Search for aggregate data element",
         type: "dhis2",
         resourceName: "dataElements",
-        filter: "domainType:eq:AGGREGATE"
+        filter: "domainType:eq:AGGREGATE",
       },
       {
         id: "mode",
@@ -941,20 +941,20 @@ if (dryRun) {
         choices: [
           ["generateEmptyCsv", "Generate an empty csv"],
           ["dryRun", "Import from csv - Dry run"],
-          ["import", "Import from csv - import events"]
-        ]
+          ["import", "Import from csv - import events"],
+        ],
       },
       {
         id: "file",
         label: "Pick csv with event values",
         type: "csv",
         helperText:
-          "you can use 'Generate an empty csv' run mode to generate a template"
-      }
+          "you can use 'Generate an empty csv' run mode to generate a template",
+      },
     ],
     code: `
        return parameters
-    `
+    `,
   },
   {
     id: "q1bKZe58btE",
@@ -967,9 +967,9 @@ if (dryRun) {
         filter: "level:in:[1,2,3]",
         default: {
           name: "Badjia",
-          id: "YuQRtpLP10I"
+          id: "YuQRtpLP10I",
         },
-        resourceName: "organisationUnits"
+        resourceName: "organisationUnits",
       },
       {
         id: "gadm_level",
@@ -980,9 +980,9 @@ if (dryRun) {
           [0, "0"],
           [1, "1"],
           [2, "2"],
-          [3, "3"]
-        ]
-      }
+          [3, "3"],
+        ],
+      },
     ],
     code: `
     // press crtl-r to run
@@ -1010,7 +1010,7 @@ if (dryRun) {
     results.push(ou);
     return results;
 
- `
+ `,
   },
   {
     id: "dHC94p8sbdE",
@@ -1019,19 +1019,19 @@ if (dryRun) {
       {
         id: "programIndicator",
         type: "dhis2",
-        resourceName: "programIndicators"
+        resourceName: "programIndicators",
       },
       {
         id: "alternateName-fr",
-        type: "text"
+        type: "text",
       },
       {
         id: "position",
-        type: "text"
+        type: "text",
       },
       {
         id: "iconName",
-        type: "text"
+        type: "text",
       },
       {
         id: "mode",
@@ -1040,9 +1040,9 @@ if (dryRun) {
         default: "dryRun",
         choices: [
           ["dryRun", "Dry run"],
-          ["update", "update"]
-        ]
-      }
+          ["update", "update"],
+        ],
+      },
     ],
     code: `
 
@@ -1097,7 +1097,7 @@ if (dryRun) {
 return pi.attributeValues;
 
 
-`
+`,
   },
   {
     id: "YKPWywkbphl",
@@ -1106,8 +1106,8 @@ return pi.attributeValues;
       {
         id: "program",
         type: "dhis2",
-        resourceName: "programs"
-      }
+        resourceName: "programs",
+      },
     ],
     code: `
     const api = await dhis2.api();
@@ -1449,7 +1449,7 @@ return pi.attributeValues;
     };
     return pg;
 
-`
+`,
   },
   {
     id: "vPHBZOSHMfS",
@@ -1457,12 +1457,12 @@ return pi.attributeValues;
     params: [
       {
         id: "v1",
-        type: "xlsx"
+        type: "xlsx",
       },
       {
         id: "v2",
-        type: "xlsx"
-      }
+        type: "xlsx",
+      },
     ],
     code: `
 const surveyV1 = parameters.v1.sheet("survey");
@@ -1590,7 +1590,7 @@ return {
   diffs: diffs
 };
 
-`
+`,
   },
   {
     id: "WJBsaMBdioj",
@@ -1599,8 +1599,8 @@ return {
       {
         id: "dataSet",
         type: "dhis2",
-        resourceName: "dataSets"
-      }
+        resourceName: "dataSets",
+      },
     ],
     code: `const api = await dhis2.api();
 
@@ -1742,7 +1742,7 @@ return {
 
 
     return questions;
-    `
+    `,
   },
   {
     id: "ZZJcZFTSl50",
@@ -1887,7 +1887,7 @@ return "";
 [FlexBox]
 [OrgunitMap lines:\`stats4.map(l => _.omit(l, ['color','fillColor']))\` width:"700px" height:"700px"/]
 [/FlexBox]
-`
+`,
   },
   {
     id: "FP8cYl1lSF6",
@@ -1900,9 +1900,9 @@ return "";
         resourceName: "dashboards",
         default: {
           name: "PLAY Delivery",
-          id: "iMnYyBfSxmM"
-        }
-      }
+          id: "iMnYyBfSxmM",
+        },
+      },
     ],
     code: `
     let params = new URLSearchParams(window.location.href.split("?")[1]);
@@ -1926,7 +1926,7 @@ return "";
 [MyLoop value:charts]
  [Dhis2Item /]
  [PageBreak /]
-[/MyLoop]`
+[/MyLoop]`,
   },
   {
     id: "azwst23HaO2",
@@ -1939,9 +1939,9 @@ return "";
         resourceName: "dashboards",
         default: {
           name: "PLAY Delivery",
-          id: "iMnYyBfSxmM"
-        }
-      }
+          id: "iMnYyBfSxmM",
+        },
+      },
     ],
     code: `
     let params = new URLSearchParams(window.location.href.split("?")[1]);
@@ -2014,7 +2014,7 @@ return "";
 [MyLoop value:charts]
  [Dhis2Content /]
  [PageBreak /]
-[/MyLoop]`
+[/MyLoop]`,
   },
   {
     id: "df",
@@ -2061,7 +2061,7 @@ ou.metadataAudits.forEach(met => {
   }
 });
 return ou.metadataAudits;
-`
+`,
   },
   {
     id: "vgSvwOMNAvQ",
@@ -2070,17 +2070,17 @@ return ou.metadataAudits;
       {
         id: "dataSet",
         type: "dhis2",
-        resourceName: "dataSets"
+        resourceName: "dataSets",
       },
       {
         id: "orgUnit",
         type: "dhis2",
-        resourceName: "organisationUnits"
+        resourceName: "organisationUnits",
       },
       {
         id: "periods",
-        type: "text"
-      }
+        type: "text",
+      },
     ],
     code: `
     // #/recipes/vgSvwOMNAvQ?dataSet=aLpVgfXiz0f&orgUnit=U514Dz4v9pv&periods=2018,2019&autorun=true
@@ -2157,7 +2157,7 @@ return ou.metadataAudits;
       "datavalues-" + orgUnitId + "-" + dataSetId + "-" + periods + "" + ".xlsx"
     );
     return vals.dataValues;
-`
+`,
   },
 
   {
@@ -2212,7 +2212,7 @@ report.register("organisationUnitsOnClick", async selectedRows => {
 });
 
 return "";
-`
+`,
   },
 
   {
@@ -2462,20 +2462,20 @@ return "";
   report.register("graphByProvince", graphByProvince);
 
   return "";
-  `
+  `,
   },
   {
     id: "zti4UfUGliw",
-    name:"BLSQ - Export dataset",
+    name: "BLSQ - Export dataset",
     params: [
       {
-          "id": "dataset",
-          "label": "Search for dataset",
-          "type": "dhis2",
-          "resourceName": "dataSets"
-      }
-  ],
-    code:`
+        id: "dataset",
+        label: "Search for dataset",
+        type: "dhis2",
+        resourceName: "dataSets",
+      },
+    ],
+    code: `
 
     let api = await dhis2.api();
 
@@ -2550,7 +2550,6 @@ return "";
     return "";
     `,
 
-
     report: `
     DataSet : **[Display value:\`dataSet.name\` /]** - [Display value:\`dataSet.periodType\` /].
 
@@ -2570,11 +2569,11 @@ return "";
 
     # Options
     [DataTable data:options label:"options" perPage:5/]
-    `
+    `,
   },
   {
-    id:"ay1YOx7IwyH",
-    name:"Dataset similarities",
+    id: "ay1YOx7IwyH",
+    name: "Dataset similarities",
     code: `
 
     const api = await dhis2.api();
@@ -2645,7 +2644,241 @@ return "";
 
     _.copyToClipBoard(finalresults.join("\\n"));
     return humanResults;
-    `
+    `,
+  },
+  {
+    id: "R1vONil9UYA",
+    name: "Export program definition as xlsx",
+    params: [
+      {
+        id: "program",
+        type: "dhis2",
+        label: "Search",       
+        resourceName: "programs",
+      },
+      {
+        id: "csv_to_map",
+        type: "csv",
+      },
+    ],
+
+    code: `
+
+const programId = parameters.program.id;
+
+const api = await dhis2.api();
+const program = await api.get("programs/" + programId, {
+  fields:
+    "id,name,categoryCombo[id,name,categoryOptionCombos[id,name]]" +
+    ",trackedEntityType[id,name,code,trackedEntityTypeAttributes[id,name,trackedEntityAttribute[id,name,code,valueType,optionSet[name,options[id,name,code]]]]]" +
+    ",programStages[id,name,programStageDataElements[compulsory,dataElement[id,name,code,valueType,optionSet[name,options[id,name,code]]]]"
+});
+
+const codify = name => {
+  if (name == undefined) {
+    return undefined;
   }
+  return name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\\u0300-\\u036f]/g, "")
+    .replace(/[\\(\\):]/g, "")
+    .split(",")
+    .join("_")
+    .split("'")
+    .join("_")
+    .split("-")
+    .join("_")
+    .split(" ")
+    .join("_")
+    .split(String.fromCharCode(8217))
+    .join("_")
+    .split("?")
+    .join("_")
+    .replace(/__/, "_")
+    .replace(/_+/g, "_");
+};
+
+const targetOptionSetsRaw = [];
+
+const targetColumns = [
+  {
+    code: "organisation_unit_uid",
+    id: "organisation_unit_uid",
+    value_type: "UID",
+    name: "organisation_unit_uid",
+    required: true,
+    option_set: "",
+    kind: "program.orgunitid"
+  }
+];
+
+if (program.categoryCombo.name !== "default") {
+  targetColumns.push({
+    code: "attribute_category_option",
+    id: "attributeCategoryOption",
+    value_type: "UID",
+    name: program["categoryCombo"]["name"],
+    required: true,
+    option_set: codify(program.categoryCombo.name),
+    kind: "program.aoc"
+  });
+
+  for (let option of program["categoryCombo"]["categoryOptionCombos"]) {
+    targetOptionSetsRaw.push({
+      option_set: codify(program.categoryCombo.name),
+      value: option.id,
+      name: option.name
+    });
+  }
+}
+
+if (program.trackedEntityType) {
+  targetColumns.push({
+    code: "enrollment_date",
+    id: "enrollment_date",
+    value_type: "DATE",
+    name: "enrollment date",
+    required: true,
+    option_set: "",
+    kind: "enrollmentDate"
+  });
+
+  for (let tei_attribute of program.trackedEntityType
+    .trackedEntityTypeAttributes) {
+    code = codify(tei_attribute["name"]);
+    targetColumns.push({
+      code: "tei." + code,
+      id: tei_attribute["trackedEntityAttribute"]["id"],
+      name: tei_attribute["name"],
+      required: true,
+      value_type: tei_attribute.trackedEntityAttribute.valueType,
+      option_set: tei_attribute.trackedEntityAttribute.optionSet
+        ? codify(tei_attribute.trackedEntityAttribute.optionSet.name)
+        : undefined,
+      kind: "tei.attributes"
+    });
+
+    if (tei_attribute.trackedEntityAttribute.optionSet) {
+      for (let option of tei_attribute.trackedEntityAttribute.optionSet
+        .options) {
+        targetOptionSetsRaw.push({
+          option_set: codify(
+            tei_attribute.trackedEntityAttribute.optionSet.name
+          ),
+          value: option.code,
+          name: option.name
+        });
+      }
+    }
+  }
+}
+
+for (let programStage of program.programStages) {
+  const stage_code = codify(programStage.name);
+  targetColumns.push({
+    code: stage_code + ".event_date",
+    id: programStage.id + ".event_date",
+    name: programStage.name + " - Event date",
+    value_type: "DATE",
+    required: true,
+    kind: "program_stage.event_date"
+  });
+
+  targetColumns.push({
+    code: stage_code + ".completed",
+    id: programStage.id + ".completed",
+    name: programStage.name + " - Completed",
+    value_type: "BOOLEAN",
+    required: true,
+    kind: "program_stage.completed"
+  });
+  for (let programStageDataElement of programStage.programStageDataElements) {
+    const dataElement = programStageDataElement.dataElement;
+    targetColumns.push({
+      code: stage_code + "." + codify(dataElement.name),
+      id: programStage.id + "." + dataElement.id,
+      name: programStage.name + " - " + dataElement.name,
+      value_type: dataElement.valueType,
+      option_set: dataElement.optionSet
+        ? codify(dataElement.optionSet.name)
+        : undefined,
+      kind: "program_stage.de"
+    });
+    if (dataElement.optionSet) {
+      for (let option of dataElement.optionSet.options) {
+        targetOptionSetsRaw.push({
+          option_set: codify(dataElement.optionSet.name),
+          value: option.code,
+          name: option.name
+        });
+      }
+    }
+  }
+}
+
+const targetOptionSets = _.uniqWith(targetOptionSetsRaw, _.isEqual);
+
+const workbook = await XlsxPopulate.fromBlankAsync();
+if (parameters.csv_to_map) {
+  const sourceColumnsSheet = workbook.addSheet("source-columns");
+  sourceColumnsSheet.cell("A1").value([["code", "name"]]);
+  sourceColumnsSheet
+    .cell("A2")
+    .value(parameters.csv_to_map.meta.fields.map(s => [codify(s), s]));
+}
+const targetColumnsSheet = workbook.addSheet("target-columns");
+const targetColumnsCols = Object.keys(targetColumns[0]);
+targetColumnsSheet.name("target-columns");
+targetColumnsSheet.cell("A1").value([targetColumnsCols]);
+
+const targetColumnsValues = targetColumns.map(option =>
+  targetColumnsCols.map(c => option[c])
+);
+
+if (targetOptionSets.length == 0) {
+  targetOptionSets.push({ option_set: "", value: "", name: "" });
+}
+
+targetColumnsSheet.cell("A2").value(targetColumnsValues);
+
+const targetOptionsSheet = workbook.addSheet("target-optionsets");
+
+const targetOptionsSetCols = Object.keys(targetOptionSets[0]);
+targetColumnsSheet.cell("A1").value([targetColumnsCols]);
+
+targetColumnsSheet.cell("H1").value([["accepted_values", "labels"]]);
+
+targetColumns.map((col, index) => {
+  const rowIndex = index + 2;
+  targetColumnsSheet
+    .cell("H" + rowIndex)
+    .formula(
+      "ArrayFormula(TEXTJOIN(\\", \\",TRUE,IF('target-optionsets'!$A$2:$B$5000=F" +
+        rowIndex +
+        ",'target-optionsets'!$B$2:$B$5000,\\"\\")))"
+    );
+  targetColumnsSheet
+    .cell("I" + rowIndex)
+    .formula(
+      "ArrayFormula(TEXTJOIN(\\", \\",TRUE,IF('target-optionsets'!$A$2:$B$5000=F" +
+        rowIndex +
+        ",'target-optionsets'!$C$2:$C$5000,\\"\\")))"
+    );
+});
+
+const targetOptionsSetValues = targetOptionSets.map(option =>
+  targetOptionsSetCols.map(c => option[c])
+);
+
+targetOptionsSheet.cell("A1").value([targetOptionsSetCols]);
+targetOptionsSheet.cell("A2").value(targetOptionsSetValues);
+
+XlsxPopulate.openAsBlob(workbook, "mappings-" + programId + ".xlsx");
+
+return "the xls works in google sheet but NOT in open office";
+
+`,
+  },
 ];
 export default recipes;
