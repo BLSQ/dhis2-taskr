@@ -14,7 +14,6 @@ function isFunction(r) {
   return typeof r == "function";
 }
 
-
 const getCircularReplacer = () => {
   const seen = new WeakSet();
   return (key, value) => {
@@ -35,6 +34,17 @@ export function AsPrimitive({ value }) {
   if (isFunction(value)) {
     return "can't render functions";
   }
+  if (
+    isString(value) &&
+    (value.startsWith("http://") || value.startsWith("https://"))
+  ) {
+    return (
+      <a href={value} target="_blank" rel="noopener noreferrer">
+        {value.slice(0, 100)}...
+      </a>
+    );
+  }
+
   if (isString(value) && value.length > 100) {
     return <span title={value}>{value.slice(0, 100)}...</span>;
   }
@@ -43,6 +53,6 @@ export function AsPrimitive({ value }) {
     ? isBoolean(value)
       ? value.toString()
       : value
-    : JSON.stringify(value, getCircularReplacer(),2 );
+    : JSON.stringify(value, getCircularReplacer(), 2);
   return <ErrorBoundary>{rendered}</ErrorBoundary>;
 }
