@@ -18,6 +18,11 @@ can display results
 - As a map, If coordinate, coordinates or geometry field
 - As json
 
+can also produce files
+
+- xlsx
+- json
+- csv
 
 # Development
 ## Prerequisite
