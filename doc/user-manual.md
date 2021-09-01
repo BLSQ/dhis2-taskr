@@ -52,7 +52,7 @@
 
 TaskR is a way to create and run scripts called "recipes" that can interacts with the DHIS2 api and generate table, maps or various type of output.
 
-Think "Small Jupyther Notebooks" for dhis2.
+Think "Small Jupyter Notebooks" in javascript for dhis2.
 
 # Disclaimer
 
