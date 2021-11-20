@@ -1,21 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { makeStyles } from "@material-ui/core/styles";
 
 import TextField from "@material-ui/core/TextField";
-
 import MenuItem from "@material-ui/core/MenuItem";
 import Select from "@material-ui/core/Select";
 import XlsxPopulate from "./support/XlsxPopulateOpenAsBlob";
 import PapaParse from "papaparse";
 import InputLabel from "@material-ui/core/InputLabel";
 import Typography from "@material-ui/core/Typography";
-import FormHelperText from "@material-ui/core/FormHelperText";
 import FormControl from "@material-ui/core/FormControl";
-
 import Autocomplete from "@material-ui/lab/Autocomplete";
-import LocationOnIcon from "@material-ui/icons/LocationOn";
-import Grid from "@material-ui/core/Grid";
-import parse from "autosuggest-highlight/parse";
 import throttle from "lodash/throttle";
 
 const Dhis2Search = props => {
