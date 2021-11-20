@@ -11,8 +11,10 @@ import IconButton from "@material-ui/core/IconButton";
 import Paper from "@material-ui/core/Paper";
 import SearchIcon from "@material-ui/icons/Search";
 import PlayArrowIcon from "@material-ui/icons/PlayArrow";
+import AddIcon from "@material-ui/icons/Add";
+import { Fab } from "@material-ui/core";
 
-const useStyles = makeStyles({
+const useStyles = makeStyles(theme => ({
   search: {
     width: 280,
     margin: 10,
@@ -35,10 +37,18 @@ const useStyles = makeStyles({
   },
   pos: {
     marginBottom: 12
+  },
+  fab: {
+    position: "fixed",
+    zIndex: 10,
+    bottom: theme.spacing(4),
+    right: theme.spacing(4),
+    backgroundColor: "red",
+    color: "white"
   }
-});
+}));
 
-function RecipesPage({ match, recipes }) {
+function RecipesPage({ match, recipes, onNewRecipe, history }) {
   const classes = useStyles();
   const [filter, setFilter] = useState("");
   const handleInputChange = e => {
@@ -63,12 +73,15 @@ function RecipesPage({ match, recipes }) {
           value={filter}
         />
       </Paper>
+        <Fab className={classes.fab + " no-print"} onClick={() => onNewRecipe(history)}>
+          <AddIcon />
+        </Fab>
       <Box
         display="flex"
         width="100%"
-        justifyContent="flex-start"
+        justifyContent="space-between"
         flexWrap="wrap"
-        alignItems="flex-start"
+        alignItems="flex-center"
         alignContent="space-around"
       >
         {recipes
@@ -82,7 +95,7 @@ function RecipesPage({ match, recipes }) {
                 flex: "10 10 20%",
                 alignSelf: "stretch",
                 alignContent: "stretch",
-                backgroundColor: recipe.local ? "white" : "lightgrey"
+                backgroundColor: recipe.local ? "white" : "rgb(227 231 239)"
               }}
             >
               <CardContent>

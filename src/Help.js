@@ -7,6 +7,7 @@ function Help() {
         float: "right"
       }}
     >
+      <br/>
       Help :{" "}
       <ul>
         <li>

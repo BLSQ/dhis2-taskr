@@ -8,11 +8,7 @@ import Paper from "@material-ui/core/Paper";
 import Toolbar from "@material-ui/core/Toolbar";
 import IconButton from "@material-ui/core/IconButton";
 import MenuIcon from "@material-ui/icons/Menu";
-import MenuItem from "@material-ui/core/MenuItem";
-import Select from "@material-ui/core/Select";
-import Fab from "@material-ui/core/Fab";
 import Grid from "@material-ui/core/Grid";
-import AddIcon from "@material-ui/icons/Add";
 
 import Editor from "./Editor";
 import DocPage from "./DocPage";
@@ -20,7 +16,6 @@ import {
   HashRouter as Router,
   Switch,
   Route,
-  Link,
   Redirect,
   useLocation
 } from "react-router-dom";
@@ -41,11 +36,6 @@ const useStyles = makeStyles(theme => ({
     paddingBottom: "100%",
     paddingLeft: "20px",
     backgroundColor: "#eeeeee"
-  },
-  fab: {
-    position: "absolute",
-    bottom: theme.spacing(2),
-    right: theme.spacing(2)
   }
 }));
 
@@ -71,12 +61,6 @@ function RecipePage({
     recipe = recipes[0];
   }
   setRecipe(recipe);
-  function newRecipe() {
-    const newR = freshRecipe();
-    setRecipes(recipes.concat([newR]));
-    setRecipe(newR);
-    history.push(`/recipes/` + newR.id);
-  }
   return (
     <>
       <Editor
@@ -87,11 +71,6 @@ function RecipePage({
         editable={editable}
         autorun={autorun}
       />
-      {editable && (
-        <Fab className={classes.fab + " no-print"} onClick={newRecipe}>
-          <AddIcon />
-        </Fab>
-      )}
     </>
   );
 }
@@ -177,6 +156,13 @@ function App() {
 
   const [recipe, setRecipe] = useState(undefined);
 
+  function onNewRecipe(history) {
+    const newR = freshRecipe();
+    setRecipes(recipes.concat([newR]));
+    setRecipe(newR);
+    history.push(`/recipes/` + newR.id);
+  }
+
   return (
     <Router>
       {recipes === undefined && <span>Loading...</span>}
@@ -184,7 +170,7 @@ function App() {
         <div className={classes.root + " reportPage"}>
           <AppBar position="static" color="primary" className="no-print">
             <Toolbar>
-              <Grid container spacing={10} justify="space-between" alignItems="center" alignContent="center">
+              <Grid container justify="space-between" alignItems="center" alignContent="center">
                 <Grid item>
                   <IconButton
                     edge="start"
@@ -227,6 +213,8 @@ function App() {
                   <RecipesPage
                     classes={classes}
                     recipes={recipes}
+                    history={props.history}
+                    onNewRecipe={onNewRecipe}
                     match={props.match}
                   />
                 )}

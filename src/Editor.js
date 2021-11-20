@@ -402,7 +402,7 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
       </div>
       <br />
       <br />
-      <Results results={results} label={name || ""} position={position} />
+      <Results key={name || ""}results={results} label={name || ""} position={position} />
       <IdyllReport
         key={dataSets.registeredCount}
         markup={report}
