@@ -90,6 +90,7 @@ function RecipesPage({ match, recipes, onNewRecipe, history }) {
           )
           .map(recipe => (
             <Card
+              key={recipe.id}
               className={classes.card}
               style={{
                 flex: "10 10 20%",
