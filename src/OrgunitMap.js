@@ -97,7 +97,7 @@ function OrgunitMap({
   }
 
   if (!showableMap) {
-    return <p>Map will show if the lines contains a 'coordinates' field</p>;
+    return <p>Map will show if the lines contains a 'coordinates' or 'geometry' field</p>;
   }
 
   function onFeature(feature, event) {

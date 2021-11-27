@@ -5,6 +5,7 @@ import Tab from "@material-ui/core/Tab";
 import OrgunitMap from "./OrgunitMap";
 import { AsPrimitive } from "./AsPrimitive";
 import ErrorBoundary from "./ErrorBoundary";
+import Stats from "./Stats";
 
 export function Results({ results, label, position }) {
   const [selectedTab, setSelectedTab] = useState(1);
@@ -55,7 +56,11 @@ export function Results({ results, label, position }) {
       >
         <Tab label="Table" value={1} />
         <Tab label="Map" value={2} />
+        <Tab label="Stats" value={3} />
       </Tabs>
+      {selectedTab == 3 && (
+        <Stats columns={memoizedKeys} data={results} />
+      )}
       {selectedTab == 2 && (
         <OrgunitMap
           lines={results}
