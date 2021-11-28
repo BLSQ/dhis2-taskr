@@ -1,5 +1,5 @@
 {
-  "version": "0.0.1b",
+  "version": "0.0.29",
   "name": "Dhis2 Taskr",
   "appType": "APP",
   "description": "Dhis2 Taskr, allows to run small js script and display them in a explorative way",
