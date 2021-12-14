@@ -1,7 +1,7 @@
 import { Results } from "./Results";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import "./App.css";
-import JSONApi from "./support/JSONApi"
+import JSONApi from "./support/JSONApi";
 import _ from "./support/lodash";
 import XlsxPopulate from "./support/XlsxPopulateOpenAsBlob";
 import * as turf from "@turf/turf";
@@ -17,8 +17,8 @@ import AceEditor from "react-ace";
 import "ace-builds/src-noconflict/ext-searchbox";
 import "ace-builds/src-noconflict/ext-language_tools";
 import "ace-builds/src-noconflict/mode-javascript";
-import 'ace-builds/src-noconflict/theme-monokai'
-import 'ace-builds/src-noconflict/snippets/javascript'
+import "ace-builds/src-noconflict/theme-monokai";
+import "ace-builds/src-noconflict/snippets/javascript";
 import { Ace } from "ace-builds";
 
 import Help from "./Help";
@@ -31,16 +31,13 @@ import parser from "prettier/parser-babylon";
 
 import Params from "./Params";
 
-import IdyllReport from "./IdyllReport";
 import InputLabel from "@material-ui/core/InputLabel";
 import FormControl from "@material-ui/core/FormControl";
 
 import MenuItem from "@material-ui/core/MenuItem";
 import Select from "@material-ui/core/Select";
 
-
-
-
+const IdyllReport = React.lazy(() => import("./IdyllReport"));
 
 const position = [-12.9487, 9.0131];
 const AsyncFunction = Object.getPrototypeOf(async function() {}).constructor;
@@ -61,7 +58,7 @@ const interceptor = FetchInterceptor.register({
     if (setOutRequest) {
       setOutRequest([request.url, request.method, "failed", response.status]);
     }
-  }
+  },
 });
 
 const markup = ``;
@@ -94,9 +91,7 @@ class DataSets {
   }
 }
 
-
-
-turf.geometrify = line => {
+turf.geometrify = (line) => {
   let geometry = line.geometry;
   try {
     const latlong =
@@ -149,7 +144,7 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
 
   setOutRequest = setRequests;
   const [error, setError] = useState("");
-  const parametersDefinitionsChange = value => {
+  const parametersDefinitionsChange = (value) => {
     setParameterDefinitionsJson(value);
     try {
       setParameterDefinitions(JSON.parse(value));
@@ -163,7 +158,7 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
     try {
       const prettyCode = prettier.format(code, {
         parser: "babel",
-        plugins: [parser]
+        plugins: [parser],
       });
       setCode(prettyCode);
       const body = prettyCode.includes("return ")
@@ -213,7 +208,7 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
   };
   const clear = () => {
     setResults("");
-    setDataSets(new DataSets())
+    setDataSets(new DataSets());
   };
 
   useEffect(() => {
@@ -232,13 +227,13 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
       code: code,
       editable: true,
       params: parameterDefinitions,
-      report: report
+      report: report,
     };
     onSave(modifiedRecipe);
   }
   const dirty = recipe.code !== code || name !== recipe.name;
   const style = {
-    marginLeft: "20px"
+    marginLeft: "20px",
   };
   let editableContent = code;
   if (propertyEdited == "code") {
@@ -261,7 +256,7 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
             label="Name"
             value={name}
             style={{ width: "400px" }}
-            onChange={event => {
+            onChange={(event) => {
               setName(event.target.value);
             }}
             margin="normal"
@@ -279,7 +274,7 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
                 onChange={editablePropertySelected}
                 value={propertyEdited}
               >
-                {["code", "parameters", "report"].map(m => (
+                {["code", "parameters", "report"].map((m) => (
                   <MenuItem value={m}>{m}</MenuItem>
                 ))}
               </Select>
@@ -296,7 +291,7 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
               debounceChangePeriod={3}
               enableBasicAutocompletion={true}
               enableSnippets={true}
-              onChange={val => {
+              onChange={(val) => {
                 if (propertyEdited == "code") {
                   setCode(val);
                 } else if (propertyEdited == "parameters") {
@@ -309,29 +304,31 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
                 {
                   name: "Run",
                   bindKey: { win: "Ctrl-r", mac: "Command-r" },
-                  exec: editor => {
+                  exec: (editor) => {
                     onRun(editor.getValue());
-                  }
+                  },
                 },
                 {
                   name: "Toggle Fullscreen",
                   bindKey: "F11",
                   exec: (editor) => {
-                      const fullScreen = document.body.classList.contains("fullScreen")
-                      document.body.classList.toggle("fullScreen");
-                      editor.container.classList.toggle("fullScreen");
-                      editor.setAutoScrollEditorIntoView(!fullScreen)
-                      if (!fullScreen) {
-                        setHeight("100vh")
-                        setWidth("100%")
-                      } else {
-                        setHeight(400)
-                        setWidth("80%")
-                      }
-                      editor.resize()
-                      debugger;
-                  }
-                }
+                    const fullScreen = document.body.classList.contains(
+                      "fullScreen"
+                    );
+                    document.body.classList.toggle("fullScreen");
+                    editor.container.classList.toggle("fullScreen");
+                    editor.setAutoScrollEditorIntoView(!fullScreen);
+                    if (!fullScreen) {
+                      setHeight("100vh");
+                      setWidth("100%");
+                    } else {
+                      setHeight(400);
+                      setWidth("80%");
+                    }
+                    editor.resize();
+                    debugger;
+                  },
+                },
               ]}
             />
           </>
@@ -350,7 +347,7 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
             </>
           )}
         <Button
-          onClick={click => {
+          onClick={(click) => {
             onRun(code);
           }}
           title="ctrl-r to run from the editor"
@@ -366,8 +363,8 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
           <>
             <Button
               style={style}
-              onClick={click => {
-                clear()
+              onClick={(click) => {
+                clear();
               }}
             >
               Clear
@@ -402,12 +399,22 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
       </div>
       <br />
       <br />
-      <Results key={name || ""}results={results} label={name || ""} position={position} />
-      <IdyllReport
-        key={dataSets.registeredCount}
-        markup={report}
-        dataSets={dataSets}
-      ></IdyllReport>
+      <Results
+        key={name || ""}
+        results={results}
+        label={name || ""}
+        position={position}
+      />
+
+      {report != undefined && report.trim() !== "" && (
+        <Suspense fallback={<div>Loading...</div>}>        
+        <IdyllReport
+          key={dataSets.registeredCount}
+          markup={report}
+          dataSets={dataSets}
+        ></IdyllReport>
+        </Suspense>
+      )}
     </div>
   );
 }

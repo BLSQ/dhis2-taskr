@@ -14,8 +14,12 @@ export function Results({ results, label, position }) {
     if (!Array.isArray(results)) {
       return [];
     }
+    let resultsSubSet = results
+    if (results.length > 30000) {
+      resultsSubSet= results.slice(0, 10000)
+    }
     const keySet = new Set();
-    results.forEach(r => {
+    resultsSubSet.forEach(r => {
       if (r !== null && r !== undefined) {
         Object.keys(r).forEach(k => keySet.add(k));
       }
@@ -47,8 +51,9 @@ export function Results({ results, label, position }) {
     );
   }
 
+  
   return (
-    <div style={{ width: "80%", maxWidth: "80%" }}>
+    <div style={{ width: "80%", maxWidth: "80%" }}>     
       <Tabs
         value={selectedTab}
         onChange={handleChange}
@@ -77,13 +82,12 @@ export function Results({ results, label, position }) {
             return {
               name: k,
               options: {
-                filter: true,
+                filter: k== 'geometry' || k== 'coordinates' ? false : results.length < 30000 ,
                 customBodyRender: value => <AsPrimitive value={value} />
               }
             };
           })}
           options={{
-            filterType: "dropdown",
             print: false,
             responsive: "scrollFullHeight",
             selectableRows: "none",

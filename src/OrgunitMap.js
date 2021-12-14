@@ -1,4 +1,6 @@
 import * as turf from "@turf/turf";
+import PixiOverlay from "react-leaflet-pixi-overlay";
+import { renderToString } from "react-dom/server";
 import React, { useState, useRef, useEffect } from "react";
 import { AsPrimitive } from "./AsPrimitive";
 import {
@@ -53,6 +55,27 @@ const maps = [
   },
 ];
 
+const bboxForPoints = (points) => {
+  const result = [Infinity, Infinity, -Infinity, -Infinity];
+  for (let point of points) {
+    let coord = point.position;
+    if (result[0] > coord[0]) {
+      result[0] = coord[0];
+    }
+    if (result[1] > coord[1]) {
+      result[1] = coord[1];
+    }
+    if (result[2] < coord[0]) {
+      result[2] = coord[0];
+    }
+    if (result[3] < coord[1]) {
+      result[3] = coord[1];
+    }
+  }
+  debugger;
+  return result;
+};
+
 function isString(r) {
   return typeof r == "string";
 }
@@ -73,22 +96,28 @@ function OrgunitMap({
   height,
   showLayers,
 }) {
+  const [status, setStatus] = useState("");
   const [clicked, setClicked] = useState("");
   const [selectedLayer, setSelectedLayer] = useState(maps[0]);
   const [rawPoints, setRawPoints] = React.useState(undefined);
-
+  const [pointMarkers, setPointMarkers] = React.useState(undefined);
   const [rawGeojsons, setRawGeojsons] = React.useState(undefined);
   const mapRef = useRef(null);
   const handleClick = () => {
     if (mapRef && mapRef.current) {
+      let bound = undefined;
       const map = mapRef.current.leafletElement;
-      const bounds = Object.values(map._targets)
-        .filter((l, index) => (l.getBounds || l.getLatLng) && index > 0)
-        .map((l) => (l.getBounds ? l.getBounds() : l.getLatLng().toBounds(10)));
-      const bound = bounds[0];
-      bounds.forEach((b) => bound.extend(b));
-      if (bound) {
-        map.fitBounds(bound);
+      if (pointMarkers && pointMarkers.length > 0) {
+        const bbox = bboxForPoints(pointMarkers);
+        bound = bbox;
+      }
+      debugger;
+      if (bound && bound[0] !== Infinity) {
+        const southWest = L.latLng(bound[0], bound[1]);
+        const northEast = L.latLng(bound[2], bound[3]);
+        const bounds = L.latLngBounds(southWest, northEast);
+
+        map.fitBounds(bounds);
       }
     }
   };
@@ -96,7 +125,7 @@ function OrgunitMap({
     setTimeout(() => {
       handleClick();
     }, 1000);
-  }, [mapRef]);
+  }, [mapRef, pointMarkers ]);
 
   useEffect(() => {
     const newRawPoints = lines.filter((l) => {
@@ -134,8 +163,40 @@ function OrgunitMap({
           l.geometry.type &&
           shapesFeatureType.includes(l.geometry.type))
     );
+
+    const markers = newRawPoints.map((line, index) => {
+      const latlong =
+        line.coordinate && line.coordinate.latitude && line.coordinate.longitude
+          ? [line.coordinate.latitude, line.coordinate.longitude]
+          : line.coordinates
+          ? JSON.parse(line.coordinates).reverse()
+          : line.geometry && line.geometry.coordinates.slice(0).reverse();
+      return {
+        id: "points" + index,
+        iconColor: "red",
+        position: latlong,
+        tooltip: () => {
+          return renderToString(
+            <div>
+              {Object.keys(line).map((k) => {
+                return (
+                  <div>
+                    <b>{k}</b> <AsPrimitive value={line[k]} />
+                  </div>
+                );
+              })}
+            </div>
+          );
+        },
+
+        customIcon:
+          '<svg xmlns="http://www.w3.org/2000/svg" fill="red" width="2" height="2" viewBox="0 0 2 2"><circle cx="0" cy="0" r="1" stroke="red" stroke-width="3" fill="red" /></svg>',
+      };
+    });
     setRawGeojsons(newGeojsons);
     setRawPoints(newRawPoints);
+    setPointMarkers(markers);
+    handleClick()
   }, [lines]);
   if (lines == undefined || lines == null) {
     return <></>;
@@ -235,50 +296,13 @@ function OrgunitMap({
           );
         });
 
-  const radius = rawPoints && rawPoints.length < 1000 ? 2 : 1;
-  const displayPopup = rawPoints && rawPoints.length < 10000 ? true : false;
-
-  const points =
-    rawPoints == undefined
-      ? []
-      : rawPoints.map((line, index) => {
-          const latlong =
-            line.coordinate &&
-            line.coordinate.latitude &&
-            line.coordinate.longitude
-              ? [line.coordinate.latitude, line.coordinate.longitude]
-              : line.coordinates
-              ? JSON.parse(line.coordinates).reverse()
-              : line.geometry && line.geometry.coordinates.slice(0).reverse();
-          return (
-            <CircleMarker
-              key={index}
-              radius={radius}
-              center={latlong}
-              color={line.color || "red"}
-              title={index}
-            >
-              {displayPopup && (
-                <Popup>
-                  {Object.keys(line).map((k) => {
-                    return (
-                      <div>
-                        <b>{k}</b> <AsPrimitive value={line[k]} />
-                      </div>
-                    );
-                  })}
-                </Popup>
-              )}
-            </CircleMarker>
-          );
-        });
   const mapSelected = (event, val) => {
     setSelectedLayer(val.props.value);
   };
 
   return (
     <div className="avoid-page-break">
-      <p>{displayPopup ? "popup enabled" : "popup disabled"}</p>
+      <p>{status}</p>
       {showLayers && (
         <div
           style={{
@@ -297,8 +321,8 @@ function OrgunitMap({
         </div>
       )}
       <div>
-        {lines.length} records. {points.length} points displayed.{" "}
-        {geojsons.length} zones displayed.{" "}
+        {lines.length} records. {rawPoints ? rawPoints.length : "?"} points
+        displayed. {geojsons.length} zones displayed.{" "}
         {clicked &&
           Object.keys(clicked)
             .filter((k) => !["geometry", "coordinates"].includes(k))
@@ -327,7 +351,7 @@ function OrgunitMap({
         <CoordinatesControl position="top" coordinates="decimal" />
 
         {geojsons}
-        {points}
+        {pointMarkers && <PixiOverlay markers={pointMarkers} />}
       </Map>
     </div>
   );

@@ -12,6 +12,26 @@ const recipes = [
     return _.flattenObjects(ou.organisationUnits, ["geometry"]);
       `,
   },
+  {      
+    id: "loadtest456",
+    name: "Load test map and results",
+    editable: true,
+    code: `
+    const points = [];
+    for (var i = 0; i < 100000; i++) {
+      points.push({
+        name: "demo " + i,
+        geometry: {
+          type: "Point",
+          coordinates: [
+            5 + 5 * (Math.random() + Math.sin(i)),
+            10 + 5 * (Math.random() + Math.cos(i))          ]
+        }
+      });
+    }    
+    return points;    
+      `,
+  },  
   {
     id: "lD3mlYe0S0X",
     name: "Basic - Access api",
