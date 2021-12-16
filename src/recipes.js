@@ -17,19 +17,28 @@ const recipes = [
     name: "Load test map and results",
     editable: true,
     code: `
-    const points = [];
-    for (var i = 0; i < 100000; i++) {
+    const api = await dhis2.api();
+    const ou = await api.get("organisationUnits", {
+      fields: "id,name,ancestors[id,name],geometry",
+      paging: false
+    });
+    
+    const points = _.flattenObjects(ou.organisationUnits, ["geometry"]);
+    for (var i = 0; i < 10000; i++) {
       points.push({
         name: "demo " + i,
         geometry: {
           type: "Point",
           coordinates: [
-            5 + 5 * (Math.random() + Math.sin(i)),
-            10 + 5 * (Math.random() + Math.cos(i))          ]
+            -12 + 1 * Math.random() * Math.sin(i),
+            8.5 + 1 * Math.cos(i)
+          ]
         }
       });
-    }    
-    return points;    
+    }
+    
+    return points;
+       
       `,
   },  
   {

@@ -49,6 +49,17 @@ const maps = [
       "https://{s}.tile.thunderforest.com/outdoors/{z}/{x}/{y}{r}.png?apikey=7c352c8ff1244dd8b732e349e0b0fe8d",
   },
   {
+    name: "Stamen Design - Toner",
+    attribution: `Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://www.openstreetmap.org/copyright">ODbL</a>.`,
+    url: "https://stamen-tiles-{s}.a.ssl.fastly.net/toner/{z}/{x}/{y}.png",
+  },
+  {
+    name: "Stamen Design - Water color",
+    url: "https://stamen-tiles-{s}.a.ssl.fastly.net/watercolor/{z}/{x}/{y}.png",
+    attribution:
+      'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  },
+  {
     name: "Google maps - Satelite",
     url: "http://mt3.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
     attribution: "Google",
@@ -72,7 +83,7 @@ const bboxForPoints = (points) => {
       result[3] = coord[1];
     }
   }
-  debugger;
+
   return result;
 };
 
@@ -111,7 +122,7 @@ function OrgunitMap({
         const bbox = bboxForPoints(pointMarkers);
         bound = bbox;
       }
-      debugger;
+
       if (bound && bound[0] !== Infinity) {
         const southWest = L.latLng(bound[0], bound[1]);
         const northEast = L.latLng(bound[2], bound[3]);
@@ -125,8 +136,59 @@ function OrgunitMap({
     setTimeout(() => {
       handleClick();
     }, 1000);
-  }, [mapRef, pointMarkers ]);
+  }, [mapRef, pointMarkers]);
 
+  useEffect(() => {
+    if (mapRef) {
+      const map = mapRef.current.leafletElement;
+      map.on(
+        "click",
+        function(event) {
+          let nextTarget = document.getElementsByClassName(
+            "leaflet-pixi-overlay"
+          )[0];
+          nextTarget.style.zIndex = -1;
+        }
+      );
+      map.on(
+        "mousemove",
+        L.Util.throttle(function(event) {
+          if (event.originalEvent) {
+            // get the target pane
+            var currentTarget = event.originalEvent.target;
+            var stopped;
+            var removed;
+            // attempt to grab the next layer below
+            let nextTarget = document.getElementsByClassName(
+              "leaflet-pixi-overlay"
+            )[0];
+
+            /*let nextTarget = document.elementFromPoint(
+                event.originalEvent.clientX,
+                event.originalEvent.clientY
+              );*/
+
+            // we keep drilling down until we get stopped,
+            // or we reach the map container itself           
+            if (
+              nextTarget &&
+              nextTarget.nodeName.toLowerCase() !== "body" &&
+              nextTarget.classList.value.indexOf("leaflet-container") === -1 &&
+              currentTarget !== nextTarget
+            ) {
+              var ev = new MouseEvent(event.type, event.originalEvent);          
+              nextTarget.style.zIndex = 1000;
+
+              stopped = !nextTarget.dispatchEvent(ev);
+              if (stopped || ev._stopped) {
+                L.DomEvent.stop(event);
+              }
+            }
+          }
+        }, 32)
+      );
+    }
+  }, [mapRef]);
   useEffect(() => {
     const newRawPoints = lines.filter((l) => {
       if (
@@ -190,13 +252,13 @@ function OrgunitMap({
         },
 
         customIcon:
-          '<svg xmlns="http://www.w3.org/2000/svg" fill="red" width="2" height="2" viewBox="0 0 2 2"><circle cx="0" cy="0" r="1" stroke="red" stroke-width="3" fill="red" /></svg>',
+          '<svg xmlns="http://www.w3.org/2000/svg" fill="red" width="5" height="5" viewBox="0 0 5 5"><circle cx="0" cy="0" r="5" stroke="red" stroke-width="5" fill="red" /></svg>',
       };
     });
     setRawGeojsons(newGeojsons);
     setRawPoints(newRawPoints);
     setPointMarkers(markers);
-    handleClick()
+    handleClick();
   }, [lines]);
   if (lines == undefined || lines == null) {
     return <></>;
@@ -235,6 +297,7 @@ function OrgunitMap({
 
     // we keep drilling down until we get stopped,
     // or we reach the map container itself
+    //nextTarget = mapRef.current.container.children[0].children[2].children[1].children[0]
     if (
       nextTarget &&
       nextTarget.nodeName.toLowerCase() !== "body" &&
@@ -350,8 +413,10 @@ function OrgunitMap({
         <TileLayer {...selectedLayer}></TileLayer>
         <CoordinatesControl position="top" coordinates="decimal" />
 
+        {pointMarkers && (
+          <PixiOverlay markers={pointMarkers} interactive={true} />
+        )}
         {geojsons}
-        {pointMarkers && <PixiOverlay markers={pointMarkers} />}
       </Map>
     </div>
   );
