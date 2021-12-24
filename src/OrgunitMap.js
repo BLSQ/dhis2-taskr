@@ -139,7 +139,7 @@ function OrgunitMap({
   }, [mapRef, pointMarkers]);
 
   useEffect(() => {
-    if (mapRef) {
+    if (mapRef && mapRef.current && mapRef.current.leafletElement) {
       const map = mapRef.current.leafletElement;
       map.on(
         "click",
@@ -233,10 +233,11 @@ function OrgunitMap({
           : line.coordinates
           ? JSON.parse(line.coordinates).reverse()
           : line.geometry && line.geometry.coordinates.slice(0).reverse();
+        const color = (line.color || "red")
       return {
         id: "points" + index,
-        iconColor: "red",
-        position: latlong,
+        iconColor: color,
+        position:  latlong,
         tooltip: () => {
           return renderToString(
             <div>
@@ -252,7 +253,7 @@ function OrgunitMap({
         },
 
         customIcon:
-          '<svg xmlns="http://www.w3.org/2000/svg" fill="red" width="5" height="5" viewBox="0 0 5 5"><circle cx="0" cy="0" r="5" stroke="red" stroke-width="5" fill="red" /></svg>',
+          '<svg xmlns="http://www.w3.org/2000/svg" fill="'+color+'" width="5" height="5" viewBox="0 0 5 5"><circle cx="0" cy="0" r="5" stroke="'+ color+'" stroke-width="5" fill="'+color+'" /></svg>',
       };
     });
     setRawGeojsons(newGeojsons);
