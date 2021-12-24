@@ -1,4 +1,6 @@
 import * as turf from "@turf/turf";
+import PixiOverlay from "react-leaflet-pixi-overlay";
+import { renderToString } from "react-dom/server";
 import React, { useState, useRef, useEffect } from "react";
 import { AsPrimitive } from "./AsPrimitive";
 import {
@@ -7,7 +9,7 @@ import {
   Popup,
   TileLayer,
   GeoJSON,
-  FeatureGroup
+  FeatureGroup,
 } from "react-leaflet";
 import * as L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -31,25 +33,59 @@ const getCircularReplacer = () => {
   };
 };
 
+const shapesFeatureType = ["LineString", "Polygon", "MultiPolygon"];
+
 const maps = [
   {
     name: "Thunderforest - Landscapes",
     attribution: "Thunderforest and OpenStreetMap contributors.",
     url:
-      "https://{s}.tile.thunderforest.com/landscape/{z}/{x}/{y}{r}.png?apikey=7c352c8ff1244dd8b732e349e0b0fe8d"
+      "https://{s}.tile.thunderforest.com/landscape/{z}/{x}/{y}{r}.png?apikey=7c352c8ff1244dd8b732e349e0b0fe8d",
   },
   {
     name: "Thunderforest - Outdoors",
     attribution: "Thunderforest and OpenStreetMap contributors.",
     url:
-      "https://{s}.tile.thunderforest.com/outdoors/{z}/{x}/{y}{r}.png?apikey=7c352c8ff1244dd8b732e349e0b0fe8d"
+      "https://{s}.tile.thunderforest.com/outdoors/{z}/{x}/{y}{r}.png?apikey=7c352c8ff1244dd8b732e349e0b0fe8d",
+  },
+  {
+    name: "Stamen Design - Toner",
+    attribution: `Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://www.openstreetmap.org/copyright">ODbL</a>.`,
+    url: "https://stamen-tiles-{s}.a.ssl.fastly.net/toner/{z}/{x}/{y}.png",
+  },
+  {
+    name: "Stamen Design - Water color",
+    url: "https://stamen-tiles-{s}.a.ssl.fastly.net/watercolor/{z}/{x}/{y}.png",
+    attribution:
+      'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
   },
   {
     name: "Google maps - Satelite",
     url: "http://mt3.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
-    attribution: "Google"
-  }
+    attribution: "Google",
+  },
 ];
+
+const bboxForPoints = (points) => {
+  const result = [Infinity, Infinity, -Infinity, -Infinity];
+  for (let point of points) {
+    let coord = point.position;
+    if (result[0] > coord[0]) {
+      result[0] = coord[0];
+    }
+    if (result[1] > coord[1]) {
+      result[1] = coord[1];
+    }
+    if (result[2] < coord[0]) {
+      result[2] = coord[0];
+    }
+    if (result[3] < coord[1]) {
+      result[3] = coord[1];
+    }
+  }
+
+  return result;
+};
 
 function isString(r) {
   return typeof r == "string";
@@ -69,21 +105,30 @@ function OrgunitMap({
   showableMap,
   width,
   height,
-  showLayers
+  showLayers,
 }) {
+  const [status, setStatus] = useState("");
   const [clicked, setClicked] = useState("");
   const [selectedLayer, setSelectedLayer] = useState(maps[0]);
+  const [rawPoints, setRawPoints] = React.useState(undefined);
+  const [pointMarkers, setPointMarkers] = React.useState(undefined);
+  const [rawGeojsons, setRawGeojsons] = React.useState(undefined);
   const mapRef = useRef(null);
   const handleClick = () => {
     if (mapRef && mapRef.current) {
+      let bound = undefined;
       const map = mapRef.current.leafletElement;
-      const bounds = Object.values(map._targets)
-        .filter((l, index) => (l.getBounds || l.getLatLng) && index > 0)
-        .map(l => (l.getBounds ? l.getBounds() : l.getLatLng().toBounds(10)));
-      const bound = bounds[0];
-      bounds.forEach(b => bound.extend(b));
-      if (bound) {
-        map.fitBounds(bound);
+      if (pointMarkers && pointMarkers.length > 0) {
+        const bbox = bboxForPoints(pointMarkers);
+        bound = bbox;
+      }
+
+      if (bound && bound[0] !== Infinity) {
+        const southWest = L.latLng(bound[0], bound[1]);
+        const northEast = L.latLng(bound[2], bound[3]);
+        const bounds = L.latLngBounds(southWest, northEast);
+
+        map.fitBounds(bounds);
       }
     }
   };
@@ -91,110 +136,61 @@ function OrgunitMap({
     setTimeout(() => {
       handleClick();
     }, 1000);
-  }, [mapRef]);
-  if (lines == undefined || lines == null) {
-    return <></>;
-  }
+  }, [mapRef, pointMarkers]);
 
-  if (!showableMap) {
-    return <p>Map will show if the lines contains a 'coordinates' or 'geometry' field</p>;
-  }
-
-  function onFeature(feature, event) {
-    if (event.originalEvent._stopped) {
-      return;
-    }
-
-    // get the target pane
-    var currentTarget = event.originalEvent.target;
-    var stopped;
-    var removed;
-
-    // hide the target node
-    removed = {
-      node: currentTarget,
-      pointerEvents: currentTarget.style.pointerEvents
-    };
-    currentTarget.style.pointerEvents = "none";
-
-    // attempt to grab the next layer below
-    let nextTarget = document.elementFromPoint(
-      event.originalEvent.clientX,
-      event.originalEvent.clientY
-    );
-
-    // we keep drilling down until we get stopped,
-    // or we reach the map container itself
-    if (
-      nextTarget &&
-      nextTarget.nodeName.toLowerCase() !== "body" &&
-      nextTarget.classList.value.indexOf("leaflet-container") === -1
-    ) {
-      var ev = new MouseEvent(event.originalEvent.type, event.originalEvent);
-      stopped = !nextTarget.dispatchEvent(ev);
-      if (stopped || ev._stopped) {
-        L.DomEvent.stop(event);
-      }
-    }
-
-    // restore pointerEvents
-    removed.node.style.pointerEvents = removed.pointerEvents;
-    setClicked(feature);
-  }
-
-  const geojsons = lines
-    .filter(
-      l =>
-        (l.coordinates &&
-          isString(l.coordinates) &&
-          l.coordinates.startsWith("[[")) ||
-        (l.geometry &&
-          l.geometry.type &&
-          ["LineString", "Polygon", "MultiPolygon"].includes(l.geometry.type))
-    )
-    .map((line, index) => {
-      let geometry = line.geometry;
-      try {
-        geometry = turf.polygon(JSON.parse(line.coordinates));
-      } catch (ignored) {
-        try {
-          geometry = turf.multiPolygon(JSON.parse(line.coordinates));
-        } catch (ignored) {}
-      }
-      if (geometry) {
-        if (geometry.properties) {
-          geometry.properties.line = line;
+  useEffect(() => {
+    if (mapRef && mapRef.current && mapRef.current.leafletElement) {
+      const map = mapRef.current.leafletElement;
+      map.on(
+        "click",
+        function(event) {
+          let nextTarget = document.getElementsByClassName(
+            "leaflet-pixi-overlay"
+          )[0];
+          nextTarget.style.zIndex = -1;
         }
-      }
-      const opacity = geometry.type == "LineString" ? 1 : 0.3;
-      line.fillColor = line.fillColor || getRandomColor();
-      const style = {
-        fillColor: line.fillColor,
-        color: line.color || getRandomColor(),
-        weight: line.opacity || opacity,
-        opacity: line.opacity || opacity,
-        fillOpacity: line.opacity || opacity
-      };
-      if (clicked == line) {
-        style.weight = 3;
-        style.opacity = 0.8;
-        style.dashArray = "5,5";
-      }
-      return (
-        <GeoJSON
-          data={geometry}
-          key={"parent-" + index + (clicked == line ? "clicked" : "none")}
-          style={style}
-          title={JSON.stringify(line, getCircularReplacer())}
-          onClick={event => {
-            onFeature(line, event);
-          }}
-        />
       );
-    });
+      map.on(
+        "mousemove",
+        L.Util.throttle(function(event) {
+          if (event.originalEvent) {
+            // get the target pane
+            var currentTarget = event.originalEvent.target;
+            var stopped;
+            var removed;
+            // attempt to grab the next layer below
+            let nextTarget = document.getElementsByClassName(
+              "leaflet-pixi-overlay"
+            )[0];
 
-  const points = lines
-    .filter(l => {
+            /*let nextTarget = document.elementFromPoint(
+                event.originalEvent.clientX,
+                event.originalEvent.clientY
+              );*/
+
+            // we keep drilling down until we get stopped,
+            // or we reach the map container itself           
+            if (
+              nextTarget &&
+              nextTarget.nodeName.toLowerCase() !== "body" &&
+              nextTarget.classList.value.indexOf("leaflet-container") === -1 &&
+              currentTarget !== nextTarget
+            ) {
+              var ev = new MouseEvent(event.type, event.originalEvent);          
+              nextTarget.style.zIndex = 1000;
+
+              stopped = !nextTarget.dispatchEvent(ev);
+              if (stopped || ev._stopped) {
+                L.DomEvent.stop(event);
+              }
+            }
+          }
+        }, 32)
+      );
+    }
+  }, [mapRef]);
+  useEffect(() => {
+    const newRawPoints = lines.filter((l) => {
       if (
         l.coordinates === undefined &&
         l.coordinate === undefined &&
@@ -218,50 +214,169 @@ function OrgunitMap({
         !l.coordinates.startsWith("[[") &&
         l.coordinates != ""
       );
-    })
-    .map((line, index) => {
+    });
+
+    const newGeojsons = lines.filter(
+      (l) =>
+        (l.coordinates &&
+          isString(l.coordinates) &&
+          l.coordinates.startsWith("[[")) ||
+        (l.geometry &&
+          l.geometry.type &&
+          shapesFeatureType.includes(l.geometry.type))
+    );
+
+    const markers = newRawPoints.map((line, index) => {
       const latlong =
         line.coordinate && line.coordinate.latitude && line.coordinate.longitude
           ? [line.coordinate.latitude, line.coordinate.longitude]
           : line.coordinates
           ? JSON.parse(line.coordinates).reverse()
           : line.geometry && line.geometry.coordinates.slice(0).reverse();
-      return (
-        <CircleMarker
-          key={index}
-          radius={2}
-          center={latlong}
-          color={line.color || "red"}
-          title={index}
-        >
-          <Popup>
-            {Object.keys(line).map(k => {
-              return (
-                <div>
-                  <b>{k}</b> <AsPrimitive value={line[k]} />
-                </div>
-              );
-            })}
-          </Popup>
-        </CircleMarker>
-      );
+        const color = (line.color || "red")
+      return {
+        id: "points" + index,
+        iconColor: color,
+        position:  latlong,
+        tooltip: () => {
+          return renderToString(
+            <div>
+              {Object.keys(line).map((k) => {
+                return (
+                  <div>
+                    <b>{k}</b> <AsPrimitive value={line[k]} />
+                  </div>
+                );
+              })}
+            </div>
+          );
+        },
+
+        customIcon:
+          '<svg xmlns="http://www.w3.org/2000/svg" fill="'+color+'" width="5" height="5" viewBox="0 0 5 5"><circle cx="0" cy="0" r="5" stroke="'+ color+'" stroke-width="5" fill="'+color+'" /></svg>',
+      };
     });
+    setRawGeojsons(newGeojsons);
+    setRawPoints(newRawPoints);
+    setPointMarkers(markers);
+    handleClick();
+  }, [lines]);
+  if (lines == undefined || lines == null) {
+    return <></>;
+  }
+
+  if (!showableMap) {
+    return (
+      <p>
+        Map will show if the lines contains a 'coordinates' or 'geometry' field
+      </p>
+    );
+  }
+
+  function onFeature(feature, event) {
+    if (event.originalEvent._stopped) {
+      return;
+    }
+
+    // get the target pane
+    var currentTarget = event.originalEvent.target;
+    var stopped;
+    var removed;
+
+    // hide the target node
+    removed = {
+      node: currentTarget,
+      pointerEvents: currentTarget.style.pointerEvents,
+    };
+    currentTarget.style.pointerEvents = "none";
+
+    // attempt to grab the next layer below
+    let nextTarget = document.elementFromPoint(
+      event.originalEvent.clientX,
+      event.originalEvent.clientY
+    );
+
+    // we keep drilling down until we get stopped,
+    // or we reach the map container itself
+    //nextTarget = mapRef.current.container.children[0].children[2].children[1].children[0]
+    if (
+      nextTarget &&
+      nextTarget.nodeName.toLowerCase() !== "body" &&
+      nextTarget.classList.value.indexOf("leaflet-container") === -1
+    ) {
+      var ev = new MouseEvent(event.originalEvent.type, event.originalEvent);
+      stopped = !nextTarget.dispatchEvent(ev);
+      if (stopped || ev._stopped) {
+        L.DomEvent.stop(event);
+      }
+    }
+
+    // restore pointerEvents
+    removed.node.style.pointerEvents = removed.pointerEvents;
+    setClicked(feature);
+  }
+
+  const geojsons =
+    rawGeojsons == undefined
+      ? []
+      : rawGeojsons.map((line, index) => {
+          let geometry = line.geometry;
+          try {
+            geometry = turf.polygon(JSON.parse(line.coordinates));
+          } catch (ignored) {
+            try {
+              geometry = turf.multiPolygon(JSON.parse(line.coordinates));
+            } catch (ignored) {}
+          }
+          if (geometry) {
+            if (geometry.properties) {
+              geometry.properties.line = line;
+            }
+          }
+          const opacity = geometry.type == "LineString" ? 1 : 0.3;
+          line.fillColor = line.fillColor || getRandomColor();
+          const style = {
+            fillColor: line.fillColor,
+            color: line.color || getRandomColor(),
+            weight: line.opacity || opacity,
+            opacity: line.opacity || opacity,
+            fillOpacity: line.opacity || opacity,
+          };
+          if (clicked == line) {
+            style.weight = 3;
+            style.opacity = 0.8;
+            style.dashArray = "5,5";
+          }
+          return (
+            <GeoJSON
+              data={geometry}
+              key={"parent-" + index + (clicked == line ? "clicked" : "none")}
+              style={style}
+              title={JSON.stringify(line, getCircularReplacer())}
+              onClick={(event) => {
+                onFeature(line, event);
+              }}
+            />
+          );
+        });
+
   const mapSelected = (event, val) => {
     setSelectedLayer(val.props.value);
   };
 
   return (
     <div className="avoid-page-break">
+      <p>{status}</p>
       {showLayers && (
         <div
           style={{
-            display: "flex"
+            display: "flex",
           }}
         >
           <FormControl>
             <InputLabel>Layer</InputLabel>
             <Select onChange={mapSelected} value={selectedLayer}>
-              {maps.map(m => (
+              {maps.map((m) => (
                 <MenuItem value={m}>{m.name}</MenuItem>
               ))}
             </Select>
@@ -270,12 +385,12 @@ function OrgunitMap({
         </div>
       )}
       <div>
-        {lines.length} records. {points.length} points displayed.{" "}
-        {geojsons.length} zones displayed.{" "}
+        {lines.length} records. {rawPoints ? rawPoints.length : "?"} points
+        displayed. {geojsons.length} zones displayed.{" "}
         {clicked &&
           Object.keys(clicked)
-            .filter(k => !["geometry", "coordinates"].includes(k))
-            .map(k => {
+            .filter((k) => !["geometry", "coordinates"].includes(k))
+            .map((k) => {
               return (
                 <div>
                   <b>{k}</b> <AsPrimitive value={clicked[k]} />
@@ -285,6 +400,7 @@ function OrgunitMap({
       </div>
 
       <Map
+        preferCanvas={true}
         doubleClickZoom={false}
         center={position}
         zoom={3}
@@ -292,14 +408,16 @@ function OrgunitMap({
         style={{
           width: width || "80%",
           height: height || "900px",
-          padding: "0px"
+          padding: "0px",
         }}
       >
         <TileLayer {...selectedLayer}></TileLayer>
         <CoordinatesControl position="top" coordinates="decimal" />
 
+        {pointMarkers && (
+          <PixiOverlay markers={pointMarkers} interactive={true} />
+        )}
         {geojsons}
-        {points}
       </Map>
     </div>
   );

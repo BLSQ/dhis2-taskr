@@ -12,6 +12,108 @@ const recipes = [
     return _.flattenObjects(ou.organisationUnits, ["geometry"]);
       `,
   },
+  {      
+    id: "loadtest456",
+    name: "Load test map and results",
+    editable: true,
+    code: `
+    const api = await dhis2.api();
+    const ou = await api.get("organisationUnits", {
+      fields: "id,name,ancestors[id,name],geometry",
+      paging: false
+    });
+    
+    const points = _.flattenObjects(ou.organisationUnits, ["geometry"]);
+    for (var i = 0; i < 10000; i++) {
+      points.push({
+        name: "demo " + i,
+        geometry: {
+          type: "Point",
+          coordinates: [
+            -12 + 1 * Math.random() * Math.sin(i),
+            8.5 + 1 * Math.cos(i)
+          ]
+        }
+      });
+    }
+    
+    return points;
+       
+      `,
+  },  
+  {
+
+    id: "loadtest452",
+    name: "Show everything",
+    editable: true,
+    code: `
+// press crtl-r to run
+const api = await dhis2.api();
+const ou = await api.get("organisationUnits", {
+fields: "id,name,geometry",
+paging: false
+});
+
+/**
+ * @param numOfSteps: Total number steps to get color, means total colors
+ * @param step: The step number, means the order of the color
+ */
+function rainbow(numOfSteps, step) {
+  // This function generates vibrant, "evenly spaced" colours (i.e. no clustering). This is ideal for creating easily distinguishable vibrant markers in Google Maps and other apps.
+  // Adam Cole, 2011-Sept-14
+  // HSV to RBG adapted from: http://mjijackson.com/2008/02/rgb-to-hsl-and-rgb-to-hsv-color-model-conversion-algorithms-in-javascript
+  var r, g, b;
+  var h = step / numOfSteps;
+  var i = ~~(h * 6);
+  var f = h * 6 - i;
+  var q = 1 - f;
+  switch (i % 6) {
+    case 0:
+      r = 1;
+      g = f;
+      b = 0;
+      break;
+    case 1:
+      r = q;
+      g = 1;
+      b = 0;
+      break;
+    case 2:
+      r = 0;
+      g = 1;
+      b = f;
+      break;
+    case 3:
+      r = 0;
+      g = q;
+      b = 1;
+      break;
+    case 4:
+      r = f;
+      g = 0;
+      b = 1;
+      break;
+    case 5:
+      r = 1;
+      g = 0;
+      b = q;
+      break;
+  }
+  var c =
+    "#" +
+    ("00" + (~~(r * 255)).toString(16)).slice(-2) +
+    ("00" + (~~(g * 255)).toString(16)).slice(-2) +
+    ("00" + (~~(b * 255)).toString(16)).slice(-2);
+  return c;
+}
+let index = 1;
+for (o of ou.organisationUnits) {
+  o.color = rainbow(100, index % 100);
+  index = index + 1;
+}
+return ou.organisationUnits
+`
+  },
   {
     id: "lD3mlYe0S0X",
     name: "Basic - Access api",
