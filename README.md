@@ -96,3 +96,17 @@ and you can run your first recipes !
 ```
 ./ship.sh 'https://play.dhis2.org/2.31.6' 'admin' '<password>'
 ```
+
+# Official release - How to
+
+1. Make sure to update the CHANGELOG.md
+2. Adapt `package.json` and `public/manifest.webapp` to have the next version number
+3. Build a zip by launching `./release.sh`
+4. Login in to `https://apps.dhis2.org/`
+   - Dhis2 Taskr => new version, 
+   - upload the zip
+   - pick to the lower dhis2 version and higher dhis2 version (we are probably compatible)
+5. Test the released app on a [play](https://play.dhis2.org/) instance (cfr app management, install)
+6. Version cleanup 
+   - don't delete the 0.0.23 version (it's the last app supporting really old dhis2 versions), 
+   - but you can delete perhaps other intermediate versions (except if major changes happened)
