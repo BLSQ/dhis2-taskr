@@ -129,6 +129,21 @@ function OrgunitMap({
         const bounds = L.latLngBounds(southWest, northEast);
 
         map.fitBounds(bounds);
+      } else if (rawGeojsons && rawGeojsons.length > 0) {
+        const functionPoly = turf.bbox;
+        // only geojson
+        debugger;
+        var bboxPolygon = functionPoly({
+          type: "FeatureCollection",
+          features: rawGeojsons,
+        });
+
+        if (bboxPolygon) {
+          const southWest = L.latLng(bboxPolygon[1], bboxPolygon[0]);
+          const northEast = L.latLng(bboxPolygon[3], bboxPolygon[2]);
+          const bounds = L.latLngBounds(southWest, northEast);
+          map.fitBounds(bounds);
+        }
       }
     }
   };
@@ -141,15 +156,12 @@ function OrgunitMap({
   useEffect(() => {
     if (mapRef && mapRef.current && mapRef.current.leafletElement) {
       const map = mapRef.current.leafletElement;
-      map.on(
-        "click",
-        function(event) {
-          let nextTarget = document.getElementsByClassName(
-            "leaflet-pixi-overlay"
-          )[0];
-          nextTarget.style.zIndex = -1;
-        }
-      );
+      map.on("click", function(event) {
+        let nextTarget = document.getElementsByClassName(
+          "leaflet-pixi-overlay"
+        )[0];
+        nextTarget.style.zIndex = -1;
+      });
       map.on(
         "mousemove",
         L.Util.throttle(function(event) {
@@ -169,14 +181,14 @@ function OrgunitMap({
               );*/
 
             // we keep drilling down until we get stopped,
-            // or we reach the map container itself           
+            // or we reach the map container itself
             if (
               nextTarget &&
               nextTarget.nodeName.toLowerCase() !== "body" &&
               nextTarget.classList.value.indexOf("leaflet-container") === -1 &&
               currentTarget !== nextTarget
             ) {
-              var ev = new MouseEvent(event.type, event.originalEvent);          
+              var ev = new MouseEvent(event.type, event.originalEvent);
               nextTarget.style.zIndex = 1000;
 
               stopped = !nextTarget.dispatchEvent(ev);
@@ -190,7 +202,13 @@ function OrgunitMap({
     }
   }, [mapRef]);
   useEffect(() => {
+    if (lines == undefined) {
+      return;
+    }
     const newRawPoints = lines.filter((l) => {
+      if (l == undefined) {
+        return false;
+      }
       if (
         l.coordinates === undefined &&
         l.coordinate === undefined &&
@@ -216,15 +234,36 @@ function OrgunitMap({
       );
     });
 
-    const newGeojsons = lines.filter(
-      (l) =>
-        (l.coordinates &&
-          isString(l.coordinates) &&
-          l.coordinates.startsWith("[[")) ||
-        (l.geometry &&
-          l.geometry.type &&
-          shapesFeatureType.includes(l.geometry.type))
-    );
+    const newGeojsons = lines
+      .filter(
+        (l) =>
+          (l.coordinates &&
+            isString(l.coordinates) &&
+            l.coordinates.startsWith("[[")) ||
+          (l.geometry &&
+            l.geometry.type &&
+            shapesFeatureType.includes(l.geometry.type))
+      )
+      .map((line) => {
+        let geometry = line.geometry;
+        try {
+          geometry = turf.polygon(JSON.parse(line.coordinates));
+        } catch (ignored) {
+          try {
+            geometry = turf.multiPolygon(JSON.parse(line.coordinates));
+          } catch (ignored) {}
+        }
+        if (geometry) {
+          if (geometry.properties == undefined) {
+            geometry.properties = {};
+          }
+          if (geometry.properties) {
+            geometry.properties.line = line;
+          }
+        }
+        return geometry;
+      })
+      .filter((g) => g);
 
     const markers = newRawPoints.map((line, index) => {
       const latlong =
@@ -233,11 +272,11 @@ function OrgunitMap({
           : line.coordinates
           ? JSON.parse(line.coordinates).reverse()
           : line.geometry && line.geometry.coordinates.slice(0).reverse();
-        const color = (line.color || "red")
+      const color = line.color || "red";
       return {
         id: "points" + index,
         iconColor: color,
-        position:  latlong,
+        position: latlong,
         tooltip: () => {
           return renderToString(
             <div>
@@ -253,7 +292,13 @@ function OrgunitMap({
         },
 
         customIcon:
-          '<svg xmlns="http://www.w3.org/2000/svg" fill="'+color+'" width="5" height="5" viewBox="0 0 5 5"><circle cx="0" cy="0" r="5" stroke="'+ color+'" stroke-width="5" fill="'+color+'" /></svg>',
+          '<svg xmlns="http://www.w3.org/2000/svg" fill="' +
+          color +
+          '" width="5" height="5" viewBox="0 0 5 5"><circle cx="0" cy="0" r="5" stroke="' +
+          color +
+          '" stroke-width="5" fill="' +
+          color +
+          '" /></svg>',
       };
     });
     setRawGeojsons(newGeojsons);
@@ -319,20 +364,8 @@ function OrgunitMap({
   const geojsons =
     rawGeojsons == undefined
       ? []
-      : rawGeojsons.map((line, index) => {
-          let geometry = line.geometry;
-          try {
-            geometry = turf.polygon(JSON.parse(line.coordinates));
-          } catch (ignored) {
-            try {
-              geometry = turf.multiPolygon(JSON.parse(line.coordinates));
-            } catch (ignored) {}
-          }
-          if (geometry) {
-            if (geometry.properties) {
-              geometry.properties.line = line;
-            }
-          }
+      : rawGeojsons.filter(geometry => geometry && geometry.properties && geometry.properties.line).map((geometry, index) => {
+          const line = geometry.properties.line;
           const opacity = geometry.type == "LineString" ? 1 : 0.3;
           line.fillColor = line.fillColor || getRandomColor();
           const style = {
