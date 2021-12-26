@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import "./App.css";
 import { makeStyles } from "@material-ui/core/styles";
 import Typography from "@material-ui/core/Typography";
@@ -11,32 +11,32 @@ import MenuIcon from "@material-ui/icons/Menu";
 import Grid from "@material-ui/core/Grid";
 
 import Editor from "./Editor";
-import DocPage from "./DocPage";
 import {
   HashRouter as Router,
   Switch,
   Route,
   Redirect,
-  useLocation
+  useLocation,
 } from "react-router-dom";
 import { generateUid } from "d2/lib/uid";
 import { asyncForEach } from "./support/asyncForEach";
 import RecipesPage from "./RecipesPage";
 import Dhis2 from "./support/Dhis2";
-
 import builtInRecipes from "./recipes";
 
-const useStyles = makeStyles(theme => ({
+const DocPage = React.lazy(() => import("./DocPage"));
+
+const useStyles = makeStyles((theme) => ({
   root: {
     width: "100%",
     margin: "auto",
-    backgroundColor: "#eeeeee"
+    backgroundColor: "#eeeeee",
   },
   paper: {
     paddingBottom: "100%",
     paddingLeft: "20px",
-    backgroundColor: "#eeeeee"
-  }
+    backgroundColor: "#eeeeee",
+  },
 }));
 
 function useQuery() {
@@ -51,12 +51,12 @@ function RecipePage({
   setRecipes,
   history,
   onSave,
-  editable
+  editable,
 }) {
   const query = useQuery();
   const autorun = query.get("autorun") === "true";
 
-  let recipe = recipes.find(r => r.id === match.params.recipeId);
+  let recipe = recipes.find((r) => r.id === match.params.recipeId);
   if (recipe === undefined) {
     recipe = recipes[0];
   }
@@ -89,7 +89,7 @@ paging: false
 return ou.organisationUnits
 `,
     editable: true,
-    fresh: true
+    fresh: true,
   };
 }
 
@@ -104,11 +104,11 @@ function App() {
       const api = await dhis2.api();
       try {
         const keys = await api.get("dataStore/taskr");
-        await asyncForEach(keys, async key => {
+        await asyncForEach(keys, async (key) => {
           const response = await fetch(
             api.baseUrl + "/dataStore/taskr/" + key,
             {
-              headers: api.defaultHeaders
+              headers: api.defaultHeaders,
             }
           );
           const buffer = await response.arrayBuffer();
@@ -125,7 +125,7 @@ function App() {
         tasks.push(freshRecipe());
       }
 
-      setRecipes(tasks.concat(builtInRecipes.sort((a, b) => (a.name > b.name))));
+      setRecipes(tasks.concat(builtInRecipes.sort((a, b) => a.name > b.name)));
     }
   }
 
@@ -170,7 +170,12 @@ function App() {
         <div className={classes.root + " reportPage"}>
           <AppBar position="static" color="primary" className="no-print">
             <Toolbar>
-              <Grid container justify="space-between" alignItems="center" alignContent="center">
+              <Grid
+                container
+                justify="space-between"
+                alignItems="center"
+                alignContent="center"
+              >
                 <Grid item>
                   <IconButton
                     edge="start"
@@ -200,16 +205,24 @@ function App() {
               <Route
                 path={`/doc`}
                 exact={true}
-                render={props => <DocPage match={props.match} />}
+                render={(props) => (
+                  <Suspense fallback={<div>Loading...</div>}>
+                    <DocPage match={props.match} />
+                  </Suspense>
+                )}
               />
               <Route
                 path={`/doc/:section`}
-                render={props => <DocPage match={props.match} />}
+                render={(props) => (
+                  <Suspense fallback={<div>Loading...</div>}>
+                    <DocPage match={props.match} />
+                  </Suspense>
+                )}
               />
               <Route
                 path={`/recipes`}
                 exact={true}
-                render={props => (
+                render={(props) => (
                   <RecipesPage
                     classes={classes}
                     recipes={recipes}
@@ -222,7 +235,7 @@ function App() {
               <Route
                 path={`/recipes/:recipeId`}
                 exact={true}
-                render={props => {
+                render={(props) => {
                   return (
                     <RecipePage
                       classes={classes}
@@ -239,7 +252,7 @@ function App() {
               />
               <Route
                 path={`/recipes/:recipeId/run`}
-                render={props => (
+                render={(props) => (
                   <RecipePage
                     classes={classes}
                     recipes={recipes}
