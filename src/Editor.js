@@ -2,11 +2,9 @@ import { Results } from "./Results";
 import React, { useState, useEffect, Suspense } from "react";
 import "./App.css";
 import JSONApi from "./support/JSONApi";
-import _ from "./support/lodash";
+
 import XlsxPopulate from "./support/XlsxPopulateOpenAsBlob";
-import * as turf from "@turf/turf";
-import Fuse from "fuse.js";
-import PapaParse from "papaparse";
+
 import FetchInterceptor from "./support/FetchInterceptor";
 
 import { asyncForEach } from "./support/asyncForEach";
@@ -91,34 +89,6 @@ class DataSets {
   }
 }
 
-turf.geometrify = (line) => {
-  let geometry = line.geometry;
-  try {
-    const latlong =
-      line.coordinate && line.coordinate.latitude && line.coordinate.longitude
-        ? [line.coordinate.latitude, line.coordinate.longitude]
-        : line.coordinates
-        ? JSON.parse(line.coordinates)
-        : line.geometry && line.geometry.coordinates;
-    geometry = turf.point(latlong);
-  } catch (ignored) {
-    try {
-      geometry = turf.polygon(JSON.parse(line.coordinates));
-    } catch (ignored) {
-      try {
-        geometry = turf.multiPolygon(JSON.parse(line.coordinates));
-      } catch (ignored) {}
-    }
-  }
-  if (geometry) {
-    if (geometry.properties) {
-      geometry.properties.line = line;
-    }
-  }
-  line.geometry = geometry;
-  return geometry;
-};
-
 function Editor({ recipe, dhis2, onSave, editable, autorun }) {
   const [showEditor, setShowEditor] = useState(recipe.editable);
   const [dataSets, setDataSets] = useState(new DataSets());
@@ -164,32 +134,51 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
       const body = prettyCode.includes("return ")
         ? prettyCode
         : "return " + prettyCode;
+      const libs = [
+        { identifier: "dhis2", entryPoint: async () => dhis2 },
+        { identifier: "asyncForEach", entryPoint: async () => asyncForEach },
+        {
+          identifier: "_",
+          entryPoint: async () => {
+            const lodash = await import("./support/lodash");
+            debugger;
+            return lodash.default;
+          },
+        },
+        {
+          identifier: "turf",
+          entryPoint: async () => {
+            const turf = await import("./support/turf");
+            debugger;
+            return turf.default;
+          },
+        },
+        {
+          identifier: "Fuse",
+          entryPoint: async () => {
+            const Fuse = await import("fuse.js");
+            return Fuse.default;
+          },
+        },
+        {
+          identifier: "PapaParse",
+          entryPoint: async () => import("papaparse"),
+        },
+        { identifier: "XlsxPopulate", entryPoint: async () => XlsxPopulate },
+        { identifier: "DatePeriods", entryPoint: async () => DatePeriods },
+        { identifier: "parameters", entryPoint: async () => parameters },
+        { identifier: "report", entryPoint: async () => dataSets },
+        { identifier: "JSONApi", entryPoint: async () => JSONApi },
+      ];
+      const entryPoints = [];
+      for (let entryPoint of libs.map((l) => l.entryPoint)) {
+        entryPoints.push(await entryPoint());
+      }
+
       const results = await new AsyncFunction(
-        "dhis2",
-        "asyncForEach",
-        "_",
-        "turf",
-        "Fuse",
-        "PapaParse",
-        "XlsxPopulate",
-        "DatePeriods",
-        "parameters",
-        "report",
-        "JSONApi",
+        ...libs.map((l) => l.identifier),
         body
-      )(
-        dhis2,
-        asyncForEach,
-        _,
-        turf,
-        Fuse,
-        PapaParse,
-        XlsxPopulate,
-        DatePeriods,
-        parameters,
-        dataSets,
-        JSONApi
-      );
+      )(...entryPoints);
 
       setResults(results);
     } catch (e) {
@@ -407,12 +396,12 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
       />
 
       {report != undefined && report.trim() !== "" && (
-        <Suspense fallback={<div>Loading...</div>}>        
-        <IdyllReport
-          key={dataSets.registeredCount}
-          markup={report}
-          dataSets={dataSets}
-        ></IdyllReport>
+        <Suspense fallback={<div>Loading...</div>}>
+          <IdyllReport
+            key={dataSets.registeredCount}
+            markup={report}
+            dataSets={dataSets}
+          ></IdyllReport>
         </Suspense>
       )}
     </div>

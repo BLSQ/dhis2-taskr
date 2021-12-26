@@ -34,15 +34,17 @@
     "xlsx-populate": "^1.20.1"
   },
   "devDependencies": {
+    "@craco/craco": "^6.4.3",
+    "craco-swc": "^0.2.0",
     "react-scripts": "4.0.1",
     "source-map-explorer": "^2.5.2"
   },
   "scripts": {
     "analyze": "source-map-explorer 'build/static/js/*.js' --html bundle.html",
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "start": "craco start",
+    "build": "craco build",
+    "test": "craco test",
+    "eject": "craco eject"
   },
   "eslintConfig": {
     "extends": "react-app"

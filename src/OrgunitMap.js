@@ -5,11 +5,8 @@ import React, { useState, useRef, useEffect } from "react";
 import { AsPrimitive } from "./AsPrimitive";
 import {
   Map,
-  CircleMarker,
-  Popup,
   TileLayer,
-  GeoJSON,
-  FeatureGroup,
+  GeoJSON
 } from "react-leaflet";
 import * as L from "leaflet";
 import "leaflet/dist/leaflet.css";
