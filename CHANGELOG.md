@@ -1,3 +1,11 @@
+# 0.0.31
+
+* fix regression in OrgUnitMap when only geojsons were present the auto fit map wasn't working.
+* effort on bundle size
+   * lazy load leaflet when only the map shown
+   * load markown-it-highlight only when the documentation page is displayed
+* migrate to swc for bundling   
+
 # 0.0.30
 
 * Allow to return results with more than 100000 lines in a performant but degraded mode (limited filtering)
