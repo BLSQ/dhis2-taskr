@@ -129,7 +129,6 @@ function OrgunitMap({
       } else if (rawGeojsons && rawGeojsons.length > 0) {
         const functionPoly = turf.bbox;
         // only geojson
-        debugger;
         var bboxPolygon = functionPoly({
           type: "FeatureCollection",
           features: rawGeojsons,
