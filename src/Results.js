@@ -1,11 +1,12 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, Suspense } from "react";
 import MUIDataTable from "mui-datatables";
 import Tabs from "@material-ui/core/Tabs";
 import Tab from "@material-ui/core/Tab";
-import OrgunitMap from "./OrgunitMap";
 import { AsPrimitive } from "./AsPrimitive";
 import ErrorBoundary from "./ErrorBoundary";
 import Stats from "./Stats";
+
+const OrgunitMap = React.lazy(() => import("./OrgunitMap"));
 
 export function Results({ results, label, position }) {
   const [selectedTab, setSelectedTab] = useState(1);
@@ -14,14 +15,14 @@ export function Results({ results, label, position }) {
     if (!Array.isArray(results)) {
       return [];
     }
-    let resultsSubSet = results
+    let resultsSubSet = results;
     if (results.length > 30000) {
-      resultsSubSet= results.slice(0, 10000)
+      resultsSubSet = results.slice(0, 10000);
     }
     const keySet = new Set();
-    resultsSubSet.forEach(r => {
+    resultsSubSet.forEach((r) => {
       if (r !== null && r !== undefined) {
-        Object.keys(r).forEach(k => keySet.add(k));
+        Object.keys(r).forEach((k) => keySet.add(k));
       }
     });
     const keys = Array.from(keySet);
@@ -51,9 +52,8 @@ export function Results({ results, label, position }) {
     );
   }
 
-  
   return (
-    <div style={{ width: "80%", maxWidth: "80%" }}>     
+    <div style={{ width: "80%", maxWidth: "80%" }}>
       <Tabs
         value={selectedTab}
         onChange={handleChange}
@@ -63,28 +63,31 @@ export function Results({ results, label, position }) {
         <Tab label="Map" value={2} />
         <Tab label="Stats" value={3} />
       </Tabs>
-      {selectedTab == 3 && (
-        <Stats columns={memoizedKeys} data={results} />
-      )}
+      {selectedTab == 3 && <Stats columns={memoizedKeys} data={results} />}
       {selectedTab == 2 && (
-        <OrgunitMap
-          lines={results}
-          position={position}
-          showableMap={showableMap}
-          showLayers={true}
-        />
+        <Suspense fallback={<h1>Loading profile...</h1>}>
+          <OrgunitMap
+            lines={results}
+            position={position}
+            showableMap={showableMap}
+            showLayers={true}
+          />
+        </Suspense>
       )}
       {selectedTab == 1 && (
         <MUIDataTable
           title={label || "Result List"}
           data={results}
-          columns={memoizedKeys.map(k => {
+          columns={memoizedKeys.map((k) => {
             return {
               name: k,
               options: {
-                filter: k== 'geometry' || k== 'coordinates' ? false : results.length < 30000 ,
-                customBodyRender: value => <AsPrimitive value={value} />
-              }
+                filter:
+                  k == "geometry" || k == "coordinates"
+                    ? false
+                    : results.length < 30000,
+                customBodyRender: (value) => <AsPrimitive value={value} />,
+              },
             };
           })}
           options={{
@@ -93,9 +96,9 @@ export function Results({ results, label, position }) {
             selectableRows: "none",
             downloadOptions: {
               filename: filename,
-              separator: ","
+              separator: ",",
             },
-            rowsPerPageOptions: [1, 20, 50, 100, 1000]
+            rowsPerPageOptions: [1, 20, 50, 100, 1000],
           }}
         />
       )}

@@ -141,7 +141,6 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
           identifier: "_",
           entryPoint: async () => {
             const lodash = await import("./support/lodash");
-            debugger;
             return lodash.default;
           },
         },
@@ -149,7 +148,6 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
           identifier: "turf",
           entryPoint: async () => {
             const turf = await import("./support/turf");
-            debugger;
             return turf.default;
           },
         },
@@ -315,7 +313,6 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
                       setWidth("80%");
                     }
                     editor.resize();
-                    debugger;
                   },
                 },
               ]}
