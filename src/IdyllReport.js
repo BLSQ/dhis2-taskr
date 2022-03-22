@@ -102,7 +102,7 @@ const DataTableAction = (props) => {
   );
 };
 
-const DataTable = ({ data, label, perPage, selectableRows, children }) => {
+const DataTable = ({ data, label, perPage, selectableRows, children, excludedColumns }) => {
   const [selectedRows, setSelectedRows] = useState([]);
   const results = data || [];
   const keySet = new Set();
@@ -133,6 +133,11 @@ const DataTable = ({ data, label, perPage, selectableRows, children }) => {
       return child;
   });
 
+  const determineDisplayColumn = (column) => {
+   const display = excludedColumns.split(",").includes(column) ? 'excluded' : 'true'
+   return display
+  }
+
   return (
     <MuiThemeProvider theme={getMuiTheme()}>
       <MUIDataTable
@@ -143,6 +148,7 @@ const DataTable = ({ data, label, perPage, selectableRows, children }) => {
             name: k,
             options: {
               filter: true,
+              display: excludedColumns === undefined ? 'true' : determineDisplayColumn(k),
               customBodyRender: value => <AsPrimitive value={value} />
             }
           };
