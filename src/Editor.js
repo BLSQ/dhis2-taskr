@@ -1,6 +1,5 @@
 import { Results } from "./Results";
 import React, { useState, useEffect, Suspense } from "react";
-import { useMutation, useQuery } from "react-query";
 import "./App.css";
 import JSONApi from "./support/JSONApi";
 
@@ -39,6 +38,8 @@ import Select from "@material-ui/core/Select";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
+
+import DeleteButton from "./DeleteButton";
 
 const IdyllReport = React.lazy(() => import("./IdyllReport"));
 
@@ -240,61 +241,8 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
     setPropertyEdited(val.props.value);
   };
 
-  const downloadFile = ({ data, fileName, fileType }) => {
-    // Create a blob with the data we want to download as a file
-    const blob = new Blob([data], { type: fileType })
-    // Create an anchor element and dispatch a click event on it
-    // to trigger a download
-    const a = document.createElement('a')
-    a.download = fileName
-    a.href = window.URL.createObjectURL(blob)
-    const clickEvt = new MouseEvent('click', {
-      view: window,
-      bubbles: true,
-      cancelable: true,
-    })
-    a.dispatchEvent(clickEvt)
-    a.remove()
-  }
-
-  const fetchRecipeQuery = useQuery("fetchRecipe", async () => {
-    const api = await dhis2.api()
-    await api.get("/dataStore/taskr/" + recipe.id)
-  },
-  {
-    retry: false
-  });
-
-  const recipeExists = fetchRecipeQuery?.isSuccess
-
-  const handleDeleteMutation = useMutation(
-    async () => {
-      downloadFile({
-        data: JSON.stringify(recipe),
-        fileName: `recipe-${recipe.id}.json`,
-        fileType: 'text/json',
-      })
-      const api = await dhis2.api();
-      await api.delete(
-        "/dataStore/taskr/" + recipe.id,
-        recipe 
-      )
-    },
-    {
-      onSuccess: (apiResponse) => {
-        window.location.replace("/#/recipes")
-        window.location.reload()
-      },
-      onError: (error) => {
-        alert("There was a problem")
-      }
-    }
-  )
-
   const deleteButtonStyle = {
-    float: "right",
-    marginRight: "21rem",
-    marginTop: "0.5rem",
+    marginLeft: "40rem"
   }
 
   return (
@@ -447,27 +395,13 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
           )}
         </span>
 
-        <Button onClick={() => setConfirmOpen(true)} variant="contained" color="secondary" style={deleteButtonStyle} disabled={!recipeExists}>
-          Delete
-        </Button>
-        <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} aria-labelledby="confirm-dialog">
-          <DialogContent>Are you sure that you want to delete this recipe? A JSON file will be automatically downloaded as a back-up.</DialogContent>
-          <DialogActions>
-            <Button variant="contained" onClick={() => setConfirmOpen(false)} color="primary">
-              Cancel
-            </Button>
-            <Button
-              variant="contained"
-              onClick={() => {
-                setConfirmOpen(false);
-                handleDeleteMutation.mutate();
-              }}
-              color="primary"
-            >
-              Continue
-            </Button>
-          </DialogActions>
-        </Dialog>
+        <DeleteButton
+          dhis2={dhis2}
+          recipe={recipe}
+          children="Delete"
+          message="Are you sure that you want to delete this recipe? A JSON file will be automatically downloaded as a back-up."
+          deleteButtonStyle={deleteButtonStyle}
+        /> 
       </div>
       <br />
       <br />
