@@ -35,10 +35,6 @@ import FormControl from "@material-ui/core/FormControl";
 import MenuItem from "@material-ui/core/MenuItem";
 import Select from "@material-ui/core/Select";
 
-import Dialog from "@material-ui/core/Dialog";
-import DialogActions from "@material-ui/core/DialogActions";
-import DialogContent from "@material-ui/core/DialogContent";
-
 import DeleteButton from "./DeleteButton";
 
 const IdyllReport = React.lazy(() => import("./IdyllReport"));
