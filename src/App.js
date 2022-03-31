@@ -1,5 +1,6 @@
 import React, { useState, useEffect, Suspense } from "react";
 import "./App.css";
+import { QueryClient, QueryClientProvider } from "react-query";
 import { makeStyles } from "@material-ui/core/styles";
 import Typography from "@material-ui/core/Typography";
 import AppBar from "@material-ui/core/AppBar";
@@ -95,6 +96,12 @@ return ou.organisationUnits
 
 const dhis2 = new Dhis2();
 
+const queryClient = new QueryClient({
+  defaultOptions: {
+    retry: false,
+  },
+});
+
 function App() {
   const classes = useStyles();
   const [recipes, setRecipes] = useState(undefined);
@@ -165,6 +172,7 @@ function App() {
 
   return (
     <Router>
+      <QueryClientProvider client={queryClient}>
       {recipes === undefined && <span>Loading...</span>}
       {recipes && (
         <div className={classes.root + " reportPage"}>
@@ -271,6 +279,7 @@ function App() {
           </Paper>
         </div>
       )}
+      </QueryClientProvider>
     </Router>
   );
 }
