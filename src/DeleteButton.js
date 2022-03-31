@@ -5,11 +5,12 @@ import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
 import { downloadFile } from "./support/downloadFile";
+import builtInRecipes from "./recipes";
 
 const DeleteButton = (props) => {
   const [confirmOpen, setConfirmOpen] = useState(false);
   // message = message inside dialog
-  const { dhis2, recipe, children, message, deleteButtonStyle } = props;
+  const { dhis2, recipe, children, message, deleteButtonStyle, isNotBuiltIn } = props;
 
   const fetchRecipeQuery = useQuery("fetchRecipe", async () => {
     const api = await dhis2.api()
@@ -20,6 +21,10 @@ const DeleteButton = (props) => {
   });
 
   const recipeExists = fetchRecipeQuery?.isSuccess
+
+  const isBuiltIn = (recipe) => {
+    return builtInRecipes.some((r) => r.id === recipe.id)
+  };
 
   const handleDeleteMutation = useMutation(
     async () => {
@@ -46,7 +51,7 @@ const DeleteButton = (props) => {
   )
   return (
     <span style={deleteButtonStyle} >
-      <Button onClick={() => setConfirmOpen(true)} variant="contained" color="secondary" disabled={!recipeExists}>
+      <Button onClick={() => setConfirmOpen(true)} variant="contained" color="secondary" disabled={!recipeExists || isBuiltIn(recipe)}>
         {children}
       </Button>
       <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} aria-labelledby="confirm-dialog">
