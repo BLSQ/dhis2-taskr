@@ -386,10 +386,13 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
           )}
         </span>
 
-        <DeleteButton
-          dhis2={dhis2}
-          recipe={recipe}
-        /> 
+        {!autorun || !autorunStarted && (
+          <DeleteButton
+            dhis2={dhis2}
+            recipe={recipe}
+          /> 
+        )}
+
       </div>
       <br />
       <br />
