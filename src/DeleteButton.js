@@ -9,8 +9,11 @@ import builtInRecipes from "./recipes";
 
 const DeleteButton = (props) => {
   const [confirmOpen, setConfirmOpen] = useState(false);
-  // message = message inside dialog
-  const { dhis2, recipe, children, message, deleteButtonStyle, isNotBuiltIn } = props;
+  const { dhis2, recipe } = props;
+
+  const deleteButtonStyle = {
+    marginLeft: "40rem"
+  }
 
   const fetchRecipeQuery = useQuery("fetchRecipe", async () => {
     const api = await dhis2.api()
@@ -21,10 +24,6 @@ const DeleteButton = (props) => {
   });
 
   const recipeExists = fetchRecipeQuery?.isSuccess
-
-  const isBuiltIn = (recipe) => {
-    return builtInRecipes.some((r) => r.id === recipe.id)
-  };
 
   const handleDeleteMutation = useMutation(
     async () => {
@@ -51,11 +50,13 @@ const DeleteButton = (props) => {
   )
   return (
     <span style={deleteButtonStyle} >
-      <Button onClick={() => setConfirmOpen(true)} variant="contained" color="secondary" disabled={!recipeExists || isBuiltIn(recipe)}>
-        {children}
+      <Button onClick={() => setConfirmOpen(true)} variant="contained" color="secondary" disabled={!recipeExists || !recipe.local}>
+        Delete
       </Button>
       <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} aria-labelledby="confirm-dialog">
-        <DialogContent>{message}</DialogContent>
+        <DialogContent>
+          "Are you sure that you want to delete this recipe? A JSON file will be automatically downloaded as a back-up."
+        </DialogContent>
         <DialogActions>
           <Button variant="contained" onClick={() => setConfirmOpen(false)} color="primary">
             Cancel

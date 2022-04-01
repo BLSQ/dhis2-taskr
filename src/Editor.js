@@ -113,7 +113,6 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
   const [parameterDefinitions, setParameterDefinitions] = useState(
     recipe.params
   );
-  const [confirmOpen, setConfirmOpen] = useState(false);
 
   setOutRequest = setRequests;
   const [error, setError] = useState("");
@@ -236,10 +235,6 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
   const editablePropertySelected = (event, val) => {
     setPropertyEdited(val.props.value);
   };
-
-  const deleteButtonStyle = {
-    marginLeft: "40rem"
-  }
 
   return (
     <div>
@@ -394,9 +389,6 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
         <DeleteButton
           dhis2={dhis2}
           recipe={recipe}
-          children="Delete"
-          message="Are you sure that you want to delete this recipe? A JSON file will be automatically downloaded as a back-up."
-          deleteButtonStyle={deleteButtonStyle}
         /> 
       </div>
       <br />

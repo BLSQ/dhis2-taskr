@@ -99,6 +99,7 @@ const dhis2 = new Dhis2();
 const queryClient = new QueryClient({
   defaultOptions: {
     retry: false,
+    refetchOnWindowFocus: false,
   },
 });
 
