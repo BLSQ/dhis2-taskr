@@ -2,6 +2,7 @@ import { Results } from "./Results";
 import React, { useState, useEffect, Suspense } from "react";
 import "./App.css";
 import JSONApi from "./support/JSONApi";
+import _ from "lodash";
 
 import XlsxPopulate from "./support/XlsxPopulateOpenAsBlob";
 
@@ -218,7 +219,8 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
     };
     onSave(modifiedRecipe);
   }
-  const dirty = recipe.code !== code || name !== recipe.name;
+  const dirty = recipe.code !== code || name !== recipe.name || recipe.report !== report || !(_.isEqual(recipe.params, parameterDefinitions));
+
   const style = {
     marginLeft: "20px",
   };
