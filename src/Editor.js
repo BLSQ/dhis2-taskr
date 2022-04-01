@@ -218,7 +218,7 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
     };
     onSave(modifiedRecipe);
   }
-  const dirty = recipe.code !== code || name !== recipe.name;
+  const dirty = recipe.code !== code || name !== recipe.name || recipe.report !== report || recipe.params !== parameterDefinitions;
   const style = {
     marginLeft: "20px",
   };
