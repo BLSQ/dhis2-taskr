@@ -386,7 +386,7 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
           )}
         </span>
 
-        {!autorun || !autorunStarted && (
+        {(!autorun || !autorunStarted) && (
           <DeleteButton
             dhis2={dhis2}
             recipe={recipe}

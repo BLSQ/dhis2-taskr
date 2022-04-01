@@ -4,8 +4,7 @@ import Button from "@material-ui/core/Button";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
-import { downloadFile } from "./support/downloadFile";
-import builtInRecipes from "./recipes";
+import _ from "./support/lodash";
 
 const DeleteButton = (props) => {
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -27,7 +26,7 @@ const DeleteButton = (props) => {
 
   const handleDeleteMutation = useMutation(
     async () => {
-      downloadFile({
+      _.downloadFile({
         data: JSON.stringify(recipe),
         fileName: `recipe-${recipe.id}.json`,
         fileType: 'text/json',
