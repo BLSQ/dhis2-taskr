@@ -112,9 +112,11 @@ function App() {
             }
           );
           const buffer = await response.arrayBuffer();
-          const task = JSON.parse(buffer);
-          buffer.local = true;
-          tasks.push(buffer);
+          let decoder = new TextDecoder();
+          let text = decoder.decode(buffer);
+          const task = JSON.parse(text);
+          task.local = true;
+          tasks.push(task);
         });
       } catch (e) {
         console.log(e);
