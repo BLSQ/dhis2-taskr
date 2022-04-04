@@ -112,11 +112,9 @@ function App() {
             }
           );
           const buffer = await response.arrayBuffer();
-          let decoder = new TextDecoder("iso-8859-1");
-          let text = decoder.decode(buffer);
-          const task = JSON.parse(text);
-          task.local = true;
-          tasks.push(task);
+          const task = JSON.parse(buffer);
+          buffer.local = true;
+          tasks.push(buffer);
         });
       } catch (e) {
         console.log(e);
