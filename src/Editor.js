@@ -36,6 +36,8 @@ import FormControl from "@material-ui/core/FormControl";
 import MenuItem from "@material-ui/core/MenuItem";
 import Select from "@material-ui/core/Select";
 
+import DeleteButton from "./DeleteButton";
+
 const IdyllReport = React.lazy(() => import("./IdyllReport"));
 
 const position = [-12.9487, 9.0131];
@@ -235,6 +237,7 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
   const editablePropertySelected = (event, val) => {
     setPropertyEdited(val.props.value);
   };
+
   return (
     <div>
       <div className="no-print">
@@ -384,6 +387,14 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
             </>
           )}
         </span>
+
+        {editable && (
+          <DeleteButton
+            dhis2={dhis2}
+            recipe={recipe}
+          /> 
+        )}
+
       </div>
       <br />
       <br />
