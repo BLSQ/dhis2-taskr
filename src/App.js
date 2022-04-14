@@ -20,10 +20,8 @@ import {
   useLocation,
 } from "react-router-dom";
 import { generateUid } from "d2/lib/uid";
-import { asyncForEach } from "./support/asyncForEach";
 import RecipesPage from "./RecipesPage";
 import Dhis2 from "./support/Dhis2";
-import builtInRecipes from "./recipes";
 import RecipePage from "./RecipePage";
 
 const DocPage = React.lazy(() => import("./DocPage"));
@@ -40,10 +38,6 @@ const useStyles = makeStyles((theme) => ({
     backgroundColor: "#eeeeee",
   },
 }));
-
-function useQuery() {
-  return new URLSearchParams(useLocation().search);
-}
 
 function freshRecipe(recipeId) {
   return {
