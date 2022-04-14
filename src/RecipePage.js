@@ -9,10 +9,31 @@ function useDefaultQuery() {
 }
 
 const RecipePage = (props) => {
-  const { match, onSave, editable, dhis2, freshRecipe } = props;
+  const { match, editable, dhis2, freshRecipe } = props;
   const query = useDefaultQuery();
   const autorun = query.get("autorun") === "true";
   const recipeId = match.params.recipeId
+
+  async function onSave(modifiedRecipe) {
+    try {
+      const api = await dhis2.api();
+      try {
+        const createResp = await api.post(
+          "/dataStore/taskr/" + modifiedRecipe.id,
+          modifiedRecipe
+        );
+        delete modifiedRecipe.fresh;
+      } catch (error) {}
+
+      const updateResp = await api.update(
+        "/dataStore/taskr/" + modifiedRecipe.id,
+        modifiedRecipe
+      );
+      window.location.reload();
+    } catch (error) {
+      alert("Something went really wrong :" + (error.message || error));
+    }
+  }
 
   const fetchRecipeQuery = useQuery(
     ["fetchRecipe", recipeId],
@@ -28,7 +49,7 @@ const RecipePage = (props) => {
         const defaultRecipe = builtInRecipes.find(
           (recipe) => recipe.id === recipeId
         );
-        return defaultRecipe || freshRecipe();
+        return defaultRecipe || freshRecipe(recipeId);
       }
     }
  );
