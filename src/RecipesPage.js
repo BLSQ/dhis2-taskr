@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useQuery } from "react-query";
+
 import Card from "@material-ui/core/Card";
 import CardActions from "@material-ui/core/CardActions";
 import CardContent from "@material-ui/core/CardContent";
@@ -13,6 +15,9 @@ import SearchIcon from "@material-ui/icons/Search";
 import PlayArrowIcon from "@material-ui/icons/PlayArrow";
 import AddIcon from "@material-ui/icons/Add";
 import { Fab } from "@material-ui/core";
+import builtInRecipes from "./recipes";
+
+import { loadRecipes } from "./support/loadRecipes";
 
 const useStyles = makeStyles(theme => ({
   search: {
@@ -48,79 +53,105 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
-function RecipesPage({ match, recipes, onNewRecipe, history }) {
+const RecipesPage = (props) => {
+  const { dhis2, onNewRecipe, history, freshRecipe } = props;
   const classes = useStyles();
   const [filter, setFilter] = useState("");
   const handleInputChange = e => {
-    const { name, value } = e.target;
+    const { value } = e.target;
     setFilter(value);
   };
+  const [recipes, setRecipes] = useState(undefined);
+
+  const loadRecipesQuery = useQuery("loadRecipes", 
+    async () => {
+      const tasks = await loadRecipes(dhis2, freshRecipe)
+      return tasks;
+    },
+    {
+      onSuccess: (tasks) => {
+        setRecipes(tasks.concat(builtInRecipes.sort((a, b) => a.name > b.name)));
+      },
+      onError: (error) => {
+        console.log(error);
+      }
+    }
+  )
+  
+  const isLoading = loadRecipesQuery.isLoading;
   return (
     <>
-      <Paper className={classes.search}>
-        <IconButton
-          type="submit"
-          className={classes.iconButton}
-          aria-label="search"
-        >
-          <SearchIcon />
-        </IconButton>
-        <InputBase
-          className={classes.input}
-          placeholder="Search"
-          inputProps={{ "aria-label": "search" }}
-          onChange={handleInputChange}
-          value={filter}
-        />
-      </Paper>
+     {isLoading && <span>Loading...</span>}
+     {recipes && (
+       <div>
+        <Paper className={classes.search}>
+          <IconButton
+            type="submit"
+            className={classes.iconButton}
+            aria-label="search"
+          >
+            <SearchIcon />
+          </IconButton>
+          <InputBase
+            className={classes.input}
+            placeholder="Search"
+            inputProps={{ "aria-label": "search" }}
+            onChange={handleInputChange}
+            value={filter}
+          />
+        </Paper>
         <Fab className={classes.fab + " no-print"} onClick={() => onNewRecipe(history)}>
           <AddIcon />
         </Fab>
-      <Box
-        display="flex"
-        width="100%"
-        justifyContent="space-between"
-        flexWrap="wrap"
-        alignItems="flex-center"
-        alignContent="space-around"
-      >
-        {recipes
-          .filter(recipe =>
-            recipe.name.toLowerCase().includes(filter.toLowerCase())
-          )
-          .map(recipe => (
-            <Card
-              key={recipe.id}
-              className={classes.card}
-              style={{
-                flex: "10 10 20%",
-                alignSelf: "stretch",
-                alignContent: "stretch",
-                backgroundColor: recipe.local ? "white" : "rgb(227 231 239)"
-              }}
-            >
-              <CardContent>
-                <Typography className={classes.title} gutterBottom>
-                  {recipe.name}
-                </Typography>
-              </CardContent>
-              <CardActions>
-                <Button
-                  size="small"
-                  href={"#/recipes/" + recipe.id + "/run"}
-                  color="primary"
-                >
-                <PlayArrowIcon />
-                  Show
-                </Button>
-                <span style={{ width: "300px" }}></span>
-                <Button size="small" href={"#/recipes/" + recipe.id}>
-                  Edit
-                </Button>
-              </CardActions>
-            </Card>
-          ))}
-      </Box>
+        <Box
+          display="flex"
+          width="100%"
+          justifyContent="space-between"
+          flexWrap="wrap"
+          alignItems="flex-center"
+          alignContent="space-around"
+        >
+          
+          {recipes
+            .filter(recipe =>
+              recipe.name.toLowerCase().includes(filter.toLowerCase())
+            )
+            .map(recipe => (
+              <Card
+                key={recipe.id}
+                className={classes.card}
+                style={{
+                  flex: "10 10 20%",
+                  alignSelf: "stretch",
+                  alignContent: "stretch",
+                  backgroundColor: recipe.local ? "white" : "rgb(227 231 239)"
+                }}
+              >
+                <CardContent>
+                  <Typography className={classes.title} gutterBottom>
+                    {recipe.name}
+                  </Typography>
+                </CardContent>
+                <CardActions>
+                  <Button
+                    size="small"
+                    href={"#/recipes/" + recipe.id + "/run"}
+                    color="primary"
+                  >
+                  <PlayArrowIcon />
+                    Show
+                  </Button>
+                  <span style={{ width: "300px" }}></span>
+                  <Button size="small" href={"#/recipes/" + recipe.id}>
+                    Edit
+                  </Button>
+                </CardActions>
+              </Card>
+            ))
+          }
+        </Box>
+      </div>
+     )}
     </>
   );
 }

@@ -22,6 +22,7 @@ import {
 import { generateUid } from "d2/lib/uid";
 import { asyncForEach } from "./support/asyncForEach";
 import RecipesPage from "./RecipesPage";
+// import RecipePage from "./RecipePage";
 import Dhis2 from "./support/Dhis2";
 import builtInRecipes from "./recipes";
 
@@ -111,7 +112,7 @@ function App() {
       const tasks = [];
       const api = await dhis2.api();
       try {
-        const keys = await api.get("dataStore/taskr");
+        const keys = await api.get("/dataStore/taskr");
         await asyncForEach(keys, async (key) => {
           const response = await fetch(
             api.baseUrl + "/dataStore/taskr/" + key,
@@ -233,8 +234,9 @@ function App() {
                 exact={true}
                 render={(props) => (
                   <RecipesPage
+                    dhis2={dhis2}
+                    freshRecipe={freshRecipe}
                     classes={classes}
-                    recipes={recipes}
                     history={props.history}
                     onNewRecipe={onNewRecipe}
                     match={props.match}
@@ -263,15 +265,15 @@ function App() {
                 path={`/recipes/:recipeId/run`}
                 render={(props) => (
                   <RecipePage
-                    classes={classes}
-                    recipes={recipes}
-                    match={props.match}
-                    setRecipe={setRecipe}
-                    setRecipes={setRecipes}
-                    history={props.history}
-                    onSave={onSave}
-                    editable={false}
-                  />
+                      classes={classes}
+                      recipes={recipes}
+                      match={props.match}
+                      setRecipe={setRecipe}
+                      setRecipes={setRecipes}
+                      history={props.history}
+                      onSave={onSave}
+                      editable={false}
+                    />
                 )}
               />
 
