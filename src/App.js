@@ -22,9 +22,9 @@ import {
 import { generateUid } from "d2/lib/uid";
 import { asyncForEach } from "./support/asyncForEach";
 import RecipesPage from "./RecipesPage";
-// import RecipePage from "./RecipePage";
 import Dhis2 from "./support/Dhis2";
 import builtInRecipes from "./recipes";
+import RecipePage from "./RecipePage";
 
 const DocPage = React.lazy(() => import("./DocPage"));
 
@@ -43,38 +43,6 @@ const useStyles = makeStyles((theme) => ({
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
-}
-
-function RecipePage({
-  classes,
-  match,
-  recipes,
-  setRecipe,
-  setRecipes,
-  history,
-  onSave,
-  editable,
-}) {
-  const query = useQuery();
-  const autorun = query.get("autorun") === "true";
-
-  let recipe = recipes.find((r) => r.id === match.params.recipeId);
-  if (recipe === undefined) {
-    recipe = recipes[0];
-  }
-  setRecipe(recipe);
-  return (
-    <>
-      <Editor
-        key={recipe.id}
-        recipe={recipe}
-        dhis2={dhis2}
-        onSave={onSave}
-        editable={editable}
-        autorun={autorun}
-      />
-    </>
-  );
 }
 
 function freshRecipe() {
@@ -99,8 +67,10 @@ const dhis2 = new Dhis2();
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    retry: false,
-    refetchOnWindowFocus: false,
+    queries: {
+      retry: false,
+      refetchOnWindowFocus: false,
+    },
   },
 });
 
@@ -175,96 +145,98 @@ function App() {
   return (
     <Router>
       <QueryClientProvider client={queryClient}>
-      {recipes === undefined && <span>Loading...</span>}
-      {recipes && (
-        <div className={classes.root + " reportPage"}>
-          <AppBar position="static" color="primary" className="no-print">
-            <Toolbar>
-              <Grid
-                container
-                justify="space-between"
-                alignItems="center"
-                alignContent="center"
-              >
-                <Grid item>
-                  <IconButton
-                    edge="start"
-                    className={classes.menuButton}
-                    color="inherit"
-                    aria-label="menu"
-                    href={"#/recipes/"}
-                  >
-                    <MenuIcon />
-                  </IconButton>
+        {recipes === undefined && <span>Loading...</span>}
+        {recipes && (
+          <div className={classes.root + " reportPage"}>
+            <AppBar position="static" color="primary" className="no-print">
+              <Toolbar>
+                <Grid
+                  container
+                  justify="space-between"
+                  alignItems="center"
+                  alignContent="center"
+                >
+                  <Grid item>
+                    <IconButton
+                      edge="start"
+                      className={classes.menuButton}
+                      color="inherit"
+                      aria-label="menu"
+                      href={"#/recipes/"}
+                    >
+                      <MenuIcon />
+                    </IconButton>
+                  </Grid>
+                  <Grid item>
+                    <Typography variant="h6" color="inherit">
+                      Taskr : your task runner.
+                    </Typography>
+                  </Grid>
+                  <Grid item>
+                    <Button href={"#/doc/"} color="inherit">
+                      Documentation
+                    </Button>
+                  </Grid>
                 </Grid>
-                <Grid item>
-                  <Typography variant="h6" color="inherit">
-                    Taskr : your task runner.
-                  </Typography>
-                </Grid>
-                <Grid item>
-                  <Button href={"#/doc/"} color="inherit">
-                    Documentation
-                  </Button>
-                </Grid>
-              </Grid>
-            </Toolbar>
-          </AppBar>
-          <Paper className={classes.paper}>
-            <Switch>
-              <Route
-                path={`/doc`}
-                exact={true}
-                render={(props) => (
-                  <Suspense fallback={<div>Loading...</div>}>
-                    <DocPage match={props.match} />
-                  </Suspense>
-                )}
-              />
-              <Route
-                path={`/doc/:section`}
-                render={(props) => (
-                  <Suspense fallback={<div>Loading...</div>}>
-                    <DocPage match={props.match} />
-                  </Suspense>
-                )}
-              />
-              <Route
-                path={`/recipes`}
-                exact={true}
-                render={(props) => (
-                  <RecipesPage
-                    dhis2={dhis2}
-                    freshRecipe={freshRecipe}
-                    classes={classes}
-                    history={props.history}
-                    onNewRecipe={onNewRecipe}
-                    match={props.match}
-                  />
-                )}
-              />
-              <Route
-                path={`/recipes/:recipeId`}
-                exact={true}
-                render={(props) => {
-                  return (
-                    <RecipePage
+              </Toolbar>
+            </AppBar>
+            <Paper className={classes.paper}>
+              <Switch>
+                <Route
+                  path={`/doc`}
+                  exact={true}
+                  render={(props) => (
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <DocPage match={props.match} />
+                    </Suspense>
+                  )}
+                />
+                <Route
+                  path={`/doc/:section`}
+                  render={(props) => (
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <DocPage match={props.match} />
+                    </Suspense>
+                  )}
+                />
+                <Route
+                  path={`/recipes`}
+                  exact={true}
+                  render={(props) => (
+                    <RecipesPage
+                      dhis2={dhis2}
+                      freshRecipe={freshRecipe}
                       classes={classes}
-                      recipes={recipes}
-                      match={props.match}
-                      setRecipe={setRecipe}
-                      setRecipes={setRecipes}
                       history={props.history}
-                      onSave={onSave}
-                      editable={true}
+                      onNewRecipe={onNewRecipe}
+                      match={props.match}
                     />
-                  );
-                }}
-              />
-              <Route
-                path={`/recipes/:recipeId/run`}
-                render={(props) => (
-                  <RecipePage
+                  )}
+                />
+                <Route
+                  path={`/recipes/:recipeId`}
+                  exact={true}
+                  render={(props) => {
+                    return (
+                      <RecipePage
+                        dhis2={dhis2}
+                        classes={classes}
+                        recipes={recipes}
+                        match={props.match}
+                        setRecipe={setRecipe}
+                        setRecipes={setRecipes}
+                        history={props.history}
+                        onSave={onSave}
+                        editable={true}
+                      />
+                    );
+                  }}
+                />
+                <Route
+                  path={`/recipes/:recipeId/run`}
+                  render={(props) => (
+                    <RecipePage
+                      dhis2={dhis2}
                       classes={classes}
                       recipes={recipes}
                       match={props.match}
@@ -274,14 +246,14 @@ function App() {
                       onSave={onSave}
                       editable={false}
                     />
-                )}
-              />
+                  )}
+                />
 
-              <Redirect to={"/recipes"} />
-            </Switch>
-          </Paper>
-        </div>
-      )}
+                <Redirect to={"/recipes"} />
+              </Switch>
+            </Paper>
+          </div>
+        )}
       </QueryClientProvider>
     </Router>
   );
