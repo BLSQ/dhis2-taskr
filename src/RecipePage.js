@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import Editor from "./Editor";
 import { useLocation } from "react-router-dom";
 import { useQueryClient, useQuery } from "react-query";
 import builtInRecipes from "./recipes";
 import { useMutation } from "react-query";
-
+import { Collapse, IconButton } from "@material-ui/core";
+import CloseIcon from "@material-ui/icons/Close";
+import Alert from '@material-ui/lab/Alert';
 
 function useDefaultQuery() {
   return new URLSearchParams(useLocation().search);
@@ -16,6 +18,8 @@ const RecipePage = (props) => {
   const autorun = query.get("autorun") === "true";
   const recipeId = match.params.recipeId
   const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState(null);
 
   const onSaveMutation = useMutation(
     async ({ modifiedRecipe }) => {
@@ -35,14 +39,19 @@ const RecipePage = (props) => {
     },
     {
       onSuccess: () => {
+        setOpen(true)
+        setAlertMessage("Recipe saved successfully")
         queryClient.invalidateQueries("loadRecipes");
-        window.location.replace("/")
       },
       onError: (error) => {
+        setOpen(true)
+        setAlertMessage(error.message)
         console.log(error);
       }
     }
   )
+
+  const alertSeverity = onSaveMutation?.isSuccess ? "success" : "error";
 
   const fetchRecipeQuery = useQuery(
     ["fetchRecipe", recipeId],
@@ -64,7 +73,29 @@ const RecipePage = (props) => {
  );
 
   return (
-    <div>    
+    <div>
+      <br/>
+      <Collapse in={open}>
+        <Alert
+          severity={alertSeverity}
+          action={
+            <IconButton
+              aria-label="close"
+              color="inherit"
+              size="small"
+              onClick={() => {
+                setOpen(false);
+              }}
+            >
+              <CloseIcon fontSize="inherit" />
+            </IconButton>
+          }
+          sx={{ mb: 2 }}
+        >
+          {alertMessage}
+        </Alert>
+      </Collapse>
+
       {fetchRecipeQuery.data && (
         <Editor
           key={fetchRecipeQuery.data.id}
