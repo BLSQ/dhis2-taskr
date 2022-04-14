@@ -45,19 +45,19 @@ function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
 
-function freshRecipe() {
+function freshRecipe(recipeId) {
   return {
-    id: generateUid(),
+    id: recipeId || generateUid(),
     name: "New - ",
     code: `
-// press crtl-r to run
-const api = await dhis2.api();
-const ou = await api.get("organisationUnits", {
-fields: "id,name",
-paging: false
-});
-return ou.organisationUnits
-`,
+    // press crtl-r to run
+    const api = await dhis2.api();
+    const ou = await api.get("organisationUnits", {
+    fields: "id,name",
+    paging: false
+    });
+    return ou.organisationUnits
+    `,
     editable: true,
     fresh: true,
   };
@@ -76,77 +76,15 @@ const queryClient = new QueryClient({
 
 function App() {
   const classes = useStyles();
-  const [recipes, setRecipes] = useState(undefined);
-  async function loadRecipes() {
-    if (recipes === undefined) {
-      const tasks = [];
-      const api = await dhis2.api();
-      try {
-        const keys = await api.get("/dataStore/taskr");
-        await asyncForEach(keys, async (key) => {
-          const response = await fetch(
-            api.baseUrl + "/dataStore/taskr/" + key,
-            {
-              headers: api.defaultHeaders,
-            }
-          );
-          const buffer = await response.arrayBuffer();
-          let decoder = new TextDecoder();
-          let text = decoder.decode(buffer);
-          const task = JSON.parse(text);
-          task.local = true;
-          tasks.push(task);
-        });
-      } catch (e) {
-        console.log(e);
-      }
-      if (tasks.length == 0) {
-        tasks.push(freshRecipe());
-      }
-
-      setRecipes(tasks.concat(builtInRecipes.sort((a, b) => a.name > b.name)));
-    }
-  }
-
-  useEffect(() => {
-    loadRecipes();
-  }, [loadRecipes, recipes, setRecipes]);
-
-  async function onSave(modifiedRecipe) {
-    try {
-      const api = await dhis2.api();
-      try {
-        const createResp = await api.post(
-          "/dataStore/taskr/" + modifiedRecipe.id,
-          modifiedRecipe
-        );
-        delete recipe.fresh;
-      } catch (error) {}
-
-      const updateResp = await api.update(
-        "/dataStore/taskr/" + modifiedRecipe.id,
-        modifiedRecipe
-      );
-      window.location.reload();
-    } catch (error) {
-      alert("Something went really wrong :" + (error.message || error));
-    }
-  }
-
-  const [recipe, setRecipe] = useState(undefined);
 
   function onNewRecipe(history) {
     const newR = freshRecipe();
-    setRecipes(recipes.concat([newR]));
-    setRecipe(newR);
     history.push(`/recipes/` + newR.id);
   }
 
   return (
     <Router>
       <QueryClientProvider client={queryClient}>
-        {recipes === undefined && <span>Loading...</span>}
-        {recipes && (
           <div className={classes.root + " reportPage"}>
             <AppBar position="static" color="primary" className="no-print">
               <Toolbar>
@@ -221,12 +159,9 @@ function App() {
                       <RecipePage
                         dhis2={dhis2}
                         classes={classes}
-                        recipes={recipes}
+                        freshRecipe={freshRecipe}
                         match={props.match}
-                        setRecipe={setRecipe}
-                        setRecipes={setRecipes}
                         history={props.history}
-                        onSave={onSave}
                         editable={true}
                       />
                     );
@@ -238,12 +173,9 @@ function App() {
                     <RecipePage
                       dhis2={dhis2}
                       classes={classes}
-                      recipes={recipes}
+                      freshRecipe={freshRecipe}
                       match={props.match}
-                      setRecipe={setRecipe}
-                      setRecipes={setRecipes}
                       history={props.history}
-                      onSave={onSave}
                       editable={false}
                     />
                   )}
@@ -253,7 +185,6 @@ function App() {
               </Switch>
             </Paper>
           </div>
-        )}
       </QueryClientProvider>
     </Router>
   );
