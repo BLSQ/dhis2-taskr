@@ -14,7 +14,7 @@ const DeleteButton = (props) => {
     marginLeft: "40rem"
   }
 
-  const fetchRecipeQuery = useQuery("fetchRecipe", async () => {
+  const verifyRecipeQuery = useQuery("verifyRecipe", async () => {
     const api = await dhis2.api()
     await api.get("/dataStore/taskr/" + recipe.id)
   },
@@ -22,7 +22,7 @@ const DeleteButton = (props) => {
     retry: false
   });
 
-  const recipeExists = fetchRecipeQuery?.isSuccess
+  const recipeExists = verifyRecipeQuery?.isSuccess
 
   const handleDeleteMutation = useMutation(
     async () => {
@@ -49,7 +49,7 @@ const DeleteButton = (props) => {
   )
   return (
     <span style={deleteButtonStyle} >
-      <Button onClick={() => setConfirmOpen(true)} variant="contained" color="secondary" disabled={!recipeExists || !recipe.local}>
+      <Button onClick={() => setConfirmOpen(true)} variant="contained" color="secondary" disabled={!recipeExists || recipe.local}>
         Delete
       </Button>
       <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} aria-labelledby="confirm-dialog">
