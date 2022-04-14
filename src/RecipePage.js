@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React from "react";
 import Editor from "./Editor";
 import { useLocation } from "react-router-dom";
-import { useQuery } from "react-query";
+import { useQueryClient, useQuery } from "react-query";
 import builtInRecipes from "./recipes";
+import { useMutation } from "react-query";
+
 
 function useDefaultQuery() {
   return new URLSearchParams(useLocation().search);
@@ -13,9 +15,10 @@ const RecipePage = (props) => {
   const query = useDefaultQuery();
   const autorun = query.get("autorun") === "true";
   const recipeId = match.params.recipeId
+  const queryClient = useQueryClient();
 
-  async function onSave(modifiedRecipe) {
-    try {
+  const onSaveMutation = useMutation(
+    async ({ modifiedRecipe }) => {
       const api = await dhis2.api();
       try {
         const createResp = await api.post(
@@ -29,11 +32,17 @@ const RecipePage = (props) => {
         "/dataStore/taskr/" + modifiedRecipe.id,
         modifiedRecipe
       );
-      window.location.reload();
-    } catch (error) {
-      alert("Something went really wrong :" + (error.message || error));
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries("loadRecipes");
+        window.location.replace("/")
+      },
+      onError: (error) => {
+        console.log(error);
+      }
     }
-  }
+  )
 
   const fetchRecipeQuery = useQuery(
     ["fetchRecipe", recipeId],
@@ -61,7 +70,7 @@ const RecipePage = (props) => {
           key={fetchRecipeQuery.data.id}
           recipe={fetchRecipeQuery.data}
           dhis2={dhis2}
-          onSave={onSave}
+          onSave={onSaveMutation}
           editable={editable}
           autorun={autorun}
         />
