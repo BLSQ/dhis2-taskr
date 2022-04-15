@@ -4,9 +4,7 @@ import { useLocation } from "react-router-dom";
 import { useQueryClient, useQuery } from "react-query";
 import builtInRecipes from "./recipes";
 import { useMutation } from "react-query";
-import { Collapse, IconButton } from "@material-ui/core";
-import CloseIcon from "@material-ui/icons/Close";
-import Alert from '@material-ui/lab/Alert';
+import RecipeAlert from "./RecipeAlert";
 
 function useDefaultQuery() {
   return new URLSearchParams(useLocation().search);
@@ -18,9 +16,8 @@ const RecipePage = (props) => {
   const autorun = query.get("autorun") === "true";
   const recipeId = match.params.recipeId
   const queryClient = useQueryClient();
+  const [alertMessage, setAlertMessage] = useState(undefined);
   const [open, setOpen] = useState(false);
-  const [alertMessage, setAlertMessage] = useState(null);
-
   const onSaveMutation = useMutation(
     async ({ modifiedRecipe }) => {
       const api = await dhis2.api();
@@ -39,19 +36,19 @@ const RecipePage = (props) => {
     },
     {
       onSuccess: () => {
-        setOpen(true)
-        setAlertMessage("Recipe saved successfully")
         queryClient.invalidateQueries("loadRecipes");
+        setAlertMessage("Recipe saved successfully");
+        setOpen(true);
       },
       onError: (error) => {
-        setOpen(true)
-        setAlertMessage(error.message)
         console.log(error);
+        setAlertMessage(error.message);
+        setOpen(true);
       }
     }
   )
-
-  const alertSeverity = onSaveMutation?.isSuccess ? "success" : "error";
+  
+  const isError = onSaveMutation?.isError;
 
   const fetchRecipeQuery = useQuery(
     ["fetchRecipe", recipeId],
@@ -75,26 +72,12 @@ const RecipePage = (props) => {
   return (
     <div>
       <br/>
-      <Collapse in={open}>
-        <Alert
-          severity={alertSeverity}
-          action={
-            <IconButton
-              aria-label="close"
-              color="inherit"
-              size="small"
-              onClick={() => {
-                setOpen(false);
-              }}
-            >
-              <CloseIcon fontSize="inherit" />
-            </IconButton>
-          }
-          sx={{ mb: 2 }}
-        >
-          {alertMessage}
-        </Alert>
-      </Collapse>
+      <RecipeAlert 
+        setOpen={setOpen}
+        open={open}
+        message={alertMessage}
+        isError={isError}
+      />
 
       {fetchRecipeQuery.data && (
         <Editor
