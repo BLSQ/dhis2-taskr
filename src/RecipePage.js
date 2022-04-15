@@ -17,7 +17,6 @@ const RecipePage = (props) => {
   const recipeId = match.params.recipeId
   const queryClient = useQueryClient();
   const [alertMessage, setAlertMessage] = useState(undefined);
-  const [open, setOpen] = useState(false);
   const onSaveMutation = useMutation(
     async ({ modifiedRecipe }) => {
       const api = await dhis2.api();
@@ -38,12 +37,10 @@ const RecipePage = (props) => {
       onSuccess: () => {
         queryClient.invalidateQueries("loadRecipes");
         setAlertMessage("Recipe saved successfully");
-        setOpen(true);
       },
       onError: (error) => {
         console.log(error);
         setAlertMessage(error.message);
-        setOpen(true);
       }
     }
   )
@@ -73,8 +70,6 @@ const RecipePage = (props) => {
     <div>
       <br/>
       <RecipeAlert 
-        setOpen={setOpen}
-        open={open}
         message={alertMessage}
         isError={isError}
       />
