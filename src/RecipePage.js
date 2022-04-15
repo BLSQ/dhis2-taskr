@@ -36,6 +36,7 @@ const RecipePage = (props) => {
     {
       onSuccess: () => {
         queryClient.invalidateQueries("loadRecipes");
+        queryClient.invalidateQueries("fetchRecipe");
         setAlertMessage("Recipe saved successfully");
       },
       onError: (error) => {
