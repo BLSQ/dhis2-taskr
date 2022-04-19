@@ -78,7 +78,7 @@ const RecipesPage = (props) => {
     }
   )
   
-  const isLoading = loadRecipesQuery.isLoading;
+  const isLoading = loadRecipesQuery.isLoading || loadRecipesQuery.isFetching || loadRecipesQuery.isRefetching;
   return (
     <>
      {isLoading && <span>Loading...</span>}
