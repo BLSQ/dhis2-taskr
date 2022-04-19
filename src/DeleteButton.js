@@ -11,7 +11,8 @@ const DeleteButton = (props) => {
   const { dhis2, recipe } = props;
 
   const deleteButtonStyle = {
-    marginLeft: "40rem"
+    marginRight: "10rem",
+    float: "right"
   }
 
   const verifyRecipeQuery = useQuery("verifyRecipe", async () => {
