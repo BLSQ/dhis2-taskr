@@ -1,3 +1,13 @@
+# 0.0.33
+
+* fixes issue with special character encoding
+* adds delete button
+* includes general refactor of main app component
+
+# 0.0.32
+
+* improves report display
+
 # 0.0.31
 
 * fix regression in OrgUnitMap when only geojsons were present the auto fit map wasn't working.
