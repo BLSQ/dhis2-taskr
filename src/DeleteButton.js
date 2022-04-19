@@ -12,53 +12,67 @@ const DeleteButton = (props) => {
 
   const deleteButtonStyle = {
     marginRight: "10rem",
-    float: "right"
-  }
+    float: "right",
+  };
 
-  const verifyRecipeQuery = useQuery("verifyRecipe", async () => {
-    const api = await dhis2.api()
-    await api.get("/dataStore/taskr/" + recipe.id)
-  },
-  {
-    retry: false
-  });
+  const verifyRecipeQuery = useQuery(
+    "verifyRecipe",
+    async () => {
+      const api = await dhis2.api();
+      await api.get("/dataStore/taskr/" + recipe.id);
+    },
+    {
+      retry: false,
+    }
+  );
 
-  const recipeExists = verifyRecipeQuery?.isSuccess
+  const recipeExists = verifyRecipeQuery?.isSuccess;
 
   const handleDeleteMutation = useMutation(
     async () => {
       _.downloadFile({
         data: JSON.stringify(recipe),
         fileName: `recipe-${recipe.id}.json`,
-        fileType: 'text/json',
-      })
+        fileType: "text/json",
+      });
       const api = await dhis2.api();
-      await api.delete(
-        "/dataStore/taskr/" + recipe.id,
-        recipe 
-      )
+      await api.delete("/dataStore/taskr/" + recipe.id, recipe);
     },
     {
       onSuccess: (apiResponse) => {
-        window.location.replace("/#/recipes")
-        window.location.reload()
+        window.location.replace("/#/recipes");
+        window.location.reload();
       },
       onError: (error) => {
-        alert("There was a problem")
-      }
+        alert("There was a problem");
+      },
     }
-  )
+  );
   return (
-    <span style={deleteButtonStyle} >
-      <Button onClick={() => setConfirmOpen(true)} variant="contained" color="secondary" disabled={!recipeExists || recipe.local}>
+    <span style={deleteButtonStyle}>
+      <Button
+        onClick={() => setConfirmOpen(true)}
+        variant="contained"
+        color="secondary"
+        disabled={!recipeExists || recipe.local}
+      >
         Delete
       </Button>
-      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} aria-labelledby="confirm-dialog">
+      <Dialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        aria-labelledby="confirm-dialog"
+      >
         <DialogContent>
-          "Are you sure that you want to delete this recipe? A JSON file will be automatically downloaded as a back-up."
+          "Are you sure that you want to delete this recipe? A JSON file will be
+          automatically downloaded as a back-up."
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" onClick={() => setConfirmOpen(false)} color="primary">
+          <Button
+            variant="contained"
+            onClick={() => setConfirmOpen(false)}
+            color="primary"
+          >
             Cancel
           </Button>
           <Button
