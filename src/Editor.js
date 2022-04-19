@@ -219,7 +219,7 @@ function Editor({ recipe, dhis2, onSave, editable, autorun }) {
       params: parameterDefinitions,
       report: report,
     };
-    onSave(modifiedRecipe);
+    onSave.mutate({ modifiedRecipe });
   }
   const dirty = recipe.code !== code || name !== recipe.name || recipe.report !== report || !(_.isEqual(recipe.params, parameterDefinitions));
 

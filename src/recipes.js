@@ -291,7 +291,7 @@ You might want to audit the roles and orgunits of existing users
     const vfloat = parseFloat(v[0] + "." + v[1]);
     const fieldCoordinates = vfloat >= 2.32 ? "geometry" : "coordinates";
 
-    await asyncForEach(levels.organisationUnitLevels, async level => {
+    for( let level of levels.organisationUnitLevels) {
       const withCoordinates = await api.get("organisationUnits", {
         fields: "id,name",
         filter: ["level:eq:" + level.level, fieldCoordinates + ":!null"],
@@ -327,7 +327,7 @@ You might want to audit the roles and orgunits of existing users
         { x: "with", y: withCoordinates.pager.total },
         { x: "without", y: withoutCoordinates.pager.total }
       ]);
-    });
+    }
 
     return stats;
 
@@ -715,7 +715,6 @@ return ou.organisationUnits.map(ou => {
     name: "Play : event counts",
     editable: true,
     code: `
-    // press crtl-r to run
 const api = await dhis2.api();
 const pg = await api.get("programs", {
   fields: "id,name,programStages[id,name]",
@@ -723,8 +722,8 @@ const pg = await api.get("programs", {
 });
 
 const results = [];
+for (let program of pg.programs) {
 
-await asyncForEach(pg.programs, async program => {
   try {
     const ev = await api.get("events", {
       program: program.id,
@@ -738,7 +737,7 @@ await asyncForEach(pg.programs, async program => {
       events: ev.pager.total
     });
   } catch (ignore) {}
-});
+}
 
 results.push({
   name: "TOTAL",

@@ -65,7 +65,7 @@ export function Results({ results, label, position }) {
       </Tabs>
       {selectedTab == 3 && <Stats columns={memoizedKeys} data={results} />}
       {selectedTab == 2 && (
-        <Suspense fallback={<h1>Loading profile...</h1>}>
+        <Suspense fallback={<h1>Loading...</h1>}>
           <OrgunitMap
             lines={results}
             position={position}
