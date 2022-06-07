@@ -7,8 +7,10 @@ import AppBar from "@material-ui/core/AppBar";
 import Button from "@material-ui/core/Button";
 import Paper from "@material-ui/core/Paper";
 import Toolbar from "@material-ui/core/Toolbar";
-import IconButton from "@material-ui/core/IconButton";
+import { IconButton, List, ListItem, ListItemIcon, ListItemText, Drawer } from "@material-ui/core";
+import BorderAllIcon from "@material-ui/icons/BorderAll"
 import MenuIcon from "@material-ui/icons/Menu";
+import MailIcon from "@material-ui/icons/Mail"
 import Grid from "@material-ui/core/Grid";
 
 import Editor from "./Editor";
@@ -23,6 +25,7 @@ import { generateUid } from "d2/lib/uid";
 import RecipesPage from "./RecipesPage";
 import Dhis2 from "./support/Dhis2";
 import RecipePage from "./RecipePage";
+
 
 const DocPage = React.lazy(() => import("./DocPage"));
 
@@ -76,6 +79,18 @@ function App() {
     history.push(`/recipes/` + newR.id);
   }
 
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const toggleDrawer = (open) => (event) => {
+    if (event.type === 'keydown' && (event.key === 'Tab' || event.key === 'Shift')) {
+      return;
+    }
+
+    setDrawerOpen(open);
+  };
+
+  const dhis2BaseUrl = window.location.origin;
+
   return (
     <Router>
       <QueryClientProvider client={queryClient}>
@@ -94,10 +109,33 @@ function App() {
                       className={classes.menuButton}
                       color="inherit"
                       aria-label="menu"
-                      href={"#/recipes/"}
+                      onClick={toggleDrawer(true)}
                     >
                       <MenuIcon />
                     </IconButton>
+                    <Drawer
+                      open={drawerOpen}
+                      onClose={toggleDrawer(false)}
+                    >
+                      <List>
+                        <ListItem key={"allRecipes"} component="a" href="#/recipes/" disablePadding>
+                          <IconButton>
+                            <ListItemIcon>
+                              <BorderAllIcon />
+                            </ListItemIcon>
+                            <ListItemText primary={"Recipes"} />
+                          </IconButton>
+                        </ListItem>
+                        <ListItem key={"dhis2"} component="a" href={dhis2BaseUrl} disablePadding>
+                          <IconButton>
+                            <ListItemIcon>
+                              <MailIcon />
+                            </ListItemIcon>
+                            <ListItemText primary={"Return to DHIS2"} />
+                          </IconButton>
+                        </ListItem>
+                      </List>
+                    </Drawer>
                   </Grid>
                   <Grid item>
                     <Typography variant="h6" color="inherit">
