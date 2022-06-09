@@ -1,3 +1,7 @@
+# 0.0.34
+
+* adds drawer component with links to recipes index page, dhis2
+
 # 0.0.33
 
 * fixes issue with special character encoding
