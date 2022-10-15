@@ -38,7 +38,6 @@ const RecipeGistPage = (props) => {
     const gist = await fetch(
       `https://api.github.com/gists/${gistId}`
     ).then((response) => response.json());
-    debugger;
 
     return {
       id: gistId,
