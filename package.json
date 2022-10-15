@@ -35,9 +35,9 @@
     "xlsx-populate": "^1.20.1"
   },
   "devDependencies": {
+    "gh-pages": "4.0.0",
     "react-scripts": "4.0.1",
-    "source-map-explorer": "^2.5.2",
-    "gh-pages": "4.0.0"
+    "source-map-explorer": "^2.5.2"
   },
   "scripts": {
     "analyze": "source-map-explorer 'build/static/js/*.js' --html bundle.html",
