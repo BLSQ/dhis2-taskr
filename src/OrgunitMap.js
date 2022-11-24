@@ -379,7 +379,8 @@ function OrgunitMap({
               color: line.color || getRandomColor(),
               weight: line.opacity || opacity,
               opacity: line.opacity || opacity,
-              fillOpacity: line.opacity || opacity,
+              fillOpacity: line.fillOpacity || line.opacity || opacity,
+              dashArray: line.dashArray || undefined,
             };
             if (clicked == line) {
               style.weight = 3;
