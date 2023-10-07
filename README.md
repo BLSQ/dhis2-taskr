@@ -71,6 +71,11 @@ REACT_APP_USER=xxxxxxxxxxxx
 REACT_APP_PASSWORD=xxxxxxxxxxxx
 ```
 
+
+# Run recipe from the command line
+
+bun ./cli/taskr
+
 # Production
 
 ## Install from the app store (recommanded)
