@@ -1,0 +1,87 @@
+
+import DatePeriods from "../src/support/DatePeriods";
+import JSONApi from "../src/support/JSONApi";
+import XlsxPopulate from "../src/support/XlsxPopulateOpenAsBlob"
+import Dhis2 from "../src/support/Dhis2";
+import * as turf from "@turf/turf";
+import papaparse from 'papaparse'
+import DataSets  from "../src/support/DataSets";
+
+
+const recipe =  {
+    id: "D5a1DVMw7F1",
+    name: "empty",
+    editable: true,
+    code: `
+    const api = await dhis2.api();
+    const ou = await api.get("organisationUnits", {
+      fields: "id,name,ancestors[id,name],geometry"
+    });
+
+    return _.flattenObjects(ou.organisationUnits, ["geometry"]);
+      `,
+  }
+
+const AsyncFunction = Object.getPrototypeOf(async function() {}).constructor;
+
+
+const startup = async () => {
+    const dhis2 = new Dhis2();
+    const parameters = {}
+    const report = new DataSets()
+
+
+    const workbook = await XlsxPopulate.fromFileAsync(process.argv[2])
+    console.log(workbook.sheets().map(s => s.name()))
+
+
+    const body = recipe.code.includes("return ")
+    ? recipe.code
+    : "return " + recipe.code;
+  const libs = [
+    { identifier: "dhis2", entryPoint: async () => dhis2 },
+
+    {
+      identifier: "_",
+      entryPoint: async () => {
+        const lodash = await import("../src/support/lodash");
+        return lodash.default;
+      },
+    },
+    {
+      identifier: "turf",
+      entryPoint: async () => {
+        return turf.default;
+      },
+    },
+    {
+      identifier: "Fuse",
+      entryPoint: async () => {
+        const Fuse = await import("fuse.js");
+        return Fuse.default;
+      },
+    },
+   
+    { identifier: "XlsxPopulate", entryPoint: async () => XlsxPopulate },
+    { identifier: "DatePeriods", entryPoint: async () => DatePeriods },
+    { identifier: "parameters", entryPoint: async () => parameters },
+    { identifier: "report", entryPoint: async () => report },
+    { identifier: "JSONApi", entryPoint: async () => JSONApi },
+  ];
+  const entryPoints = [];
+  for (let entryPoint of libs.map((l) => l.entryPoint)) {
+    entryPoints.push(await entryPoint());
+  }
+
+
+  console.log(body)
+  const results = await new AsyncFunction(
+    ...libs.map((l) => l.identifier),
+    body
+  )(...entryPoints);
+  console.log(results)
+
+}
+console.log("hello", process.argv)
+
+startup()

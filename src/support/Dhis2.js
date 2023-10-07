@@ -10,9 +10,9 @@ class Dhis2 {
    */
   constructor(argOptions) {
     const options = argOptions || {};
-    this.url = options.url || process.env.REACT_APP_DHIS2_URL;
-    this.user = options.user || process.env.REACT_APP_USER;
-    this.password = options.password || process.env.REACT_APP_PASSWORD;
+    this.url = options.url || process.env.REACT_APP_DHIS2_URL || process.env.DHIS2_URL;
+    this.user = options.user || process.env.REACT_APP_USER || process.env.DHIS2_USER
+    this.password = options.password || process.env.REACT_APP_PASSWORD || process.env.DHIS2_PASSWORD;
     this.contractGroupId =
       options.contractGroupId || process.env.REACT_APP_CONTRACT_OU_GROUP;
     this.cache = [];
@@ -39,7 +39,7 @@ class Dhis2 {
             Authorization: "Basic " + btoa(this.user + ":" + this.password)
           }
         : null;
-    console.info("Using node env: " + process.env.NODE_ENV);
+    console.info("Using node env: " + process.env.NODE_ENV, this.url);
     this.d2 = getManifest("./manifest.webapp")
       .then(manifest => {
         let baseUrl =
