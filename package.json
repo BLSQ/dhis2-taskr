@@ -1,6 +1,6 @@
 {
   "name": "dhis2-importer",
-  "version": "0.0.34",
+  "version": "0.0.35",
   "homepage": ".",
   "private": true,
   "dependencies": {
