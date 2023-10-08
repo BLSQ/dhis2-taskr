@@ -1,4 +1,4 @@
-
+import fs from "fs"
 import DatePeriods from "../src/support/DatePeriods";
 import JSONApi from "../src/support/JSONApi";
 import XlsxPopulate from "../src/support/XlsxPopulateOpenAsBlob"
@@ -6,33 +6,58 @@ import Dhis2 from "../src/support/Dhis2";
 import * as turf from "@turf/turf";
 import papaparse from 'papaparse'
 import DataSets  from "../src/support/DataSets";
+import minimist from "minimist"
 
 
-const recipe =  {
-    id: "D5a1DVMw7F1",
-    name: "empty",
-    editable: true,
-    code: `
-    const api = await dhis2.api();
-    const ou = await api.get("organisationUnits", {
-      fields: "id,name,ancestors[id,name],geometry"
-    });
-
-    return _.flattenObjects(ou.organisationUnits, ["geometry"]);
-      `,
-  }
 
 const AsyncFunction = Object.getPrototypeOf(async function() {}).constructor;
 
+const argv = minimist(process.argv.slice(2));
+console.log(argv);
+
+
+const saveResultsAsCsv = async (results, file) => {
+  const headers = Array.from(
+    new Set(results.flatMap(item => Object.keys(item)))
+  );
+
+  const jsonifiedData = results.map(item => {
+    const newItem = {}
+    for (const key in item) {
+      newItem[key] = item[key];
+      if (typeof item[key] === 'object') {
+        newItem[key] = JSON.stringify(item[key]);
+      }
+    }
+    
+    return newItem;
+  });
+
+  const csv = papaparse.unparse({
+    fields: headers,
+    data: jsonifiedData,
+  });
+  await Bun.write(file, csv)
+  console.log("writing results to ", file)
+}
+
+const directory = "./temp"
 
 const startup = async () => {
-    const dhis2 = new Dhis2();
+    const dhis2 = new Dhis2({});
+
+
+    const api = await  dhis2.api()
+    const recipe = await api.get("dataStore/taskr/"+argv["r"])
+    console.log(recipe)
+
+    
     const parameters = {}
     const report = new DataSets()
 
 
-    const workbook = await XlsxPopulate.fromFileAsync(process.argv[2])
-    console.log(workbook.sheets().map(s => s.name()))
+    /*const workbook = await XlsxPopulate.fromFileAsync(process.argv[2])
+    console.log(workbook.sheets().map(s => s.name()))*/
 
 
     const body = recipe.code.includes("return ")
@@ -79,7 +104,10 @@ const startup = async () => {
     ...libs.map((l) => l.identifier),
     body
   )(...entryPoints);
-  console.log(results)
+
+  if (Array.isArray(results)) {
+    saveResultsAsCsv(results, directory+"/results.csv")
+  }
 
 }
 console.log("hello", process.argv)

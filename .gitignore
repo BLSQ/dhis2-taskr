@@ -30,3 +30,5 @@ test-data/*
 .eslintcache
 
 bundle.html
+
+/temp
