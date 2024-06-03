@@ -3,11 +3,7 @@ import PixiOverlay from "react-leaflet-pixi-overlay";
 import { renderToString } from "react-dom/server";
 import React, { useState, useRef, useEffect } from "react";
 import { AsPrimitive } from "./AsPrimitive";
-import {
-  Map,
-  TileLayer,
-  GeoJSON
-} from "react-leaflet";
+import { Map, TileLayer, GeoJSON } from "react-leaflet";
 import * as L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import CoordinatesControl from "./leaflet/CoordinatesControl";
@@ -48,11 +44,11 @@ const maps = [
   {
     name: "Stamen Design - Toner",
     attribution: `Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://www.openstreetmap.org/copyright">ODbL</a>.`,
-    url: "https://stamen-tiles-{s}.a.ssl.fastly.net/toner/{z}/{x}/{y}.png",
+    url: "https://tiles.stadiamaps.com/tiles/stamen_toner/{z}/{x}/{y}.png",
   },
   {
     name: "Stamen Design - Water color",
-    url: "https://stamen-tiles-{s}.a.ssl.fastly.net/watercolor/{z}/{x}/{y}.png",
+    url: "https://tiles.stadiamaps.com/tiles/stamen_terrain/{z}/{x}/{y}.png",
     attribution:
       'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
   },
@@ -61,6 +57,11 @@ const maps = [
     url: "http://mt3.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
     attribution: "Google",
   },
+   {
+    name: "OpenTopoMap",
+    url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', 
+    attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
+  }  
 ];
 
 const bboxForPoints = (points) => {
@@ -124,20 +125,28 @@ function OrgunitMap({
         const southWest = L.latLng(bound[0], bound[1]);
         const northEast = L.latLng(bound[2], bound[3]);
         const bounds = L.latLngBounds(southWest, northEast);
-
         map.fitBounds(bounds);
       } else if (rawGeojsons && rawGeojsons.length > 0) {
-        const functionPoly = turf.bbox;
+        // I know it looks strange but make debugging easier
+        const myTurf = turf;
+        const functionPoly = myTurf.bbox;
         // only geojson
-        var bboxPolygon = functionPoly({
-          type: "FeatureCollection",
-          features: rawGeojsons,
-        });
+
+        var bboxPolygon;
+        try {
+          bboxPolygon = functionPoly(
+            myTurf.featureCollection(rawGeojsons.map((r) => myTurf.feature(r)))
+          );
+        } catch (e) {
+          debugger;
+          bboxPolygon = functionPoly(rawGeojsons[0]);
+        }
 
         if (bboxPolygon) {
           const southWest = L.latLng(bboxPolygon[1], bboxPolygon[0]);
           const northEast = L.latLng(bboxPolygon[3], bboxPolygon[2]);
           const bounds = L.latLngBounds(southWest, northEast);
+
           map.fitBounds(bounds);
         }
       }
@@ -146,8 +155,8 @@ function OrgunitMap({
   useEffect(() => {
     setTimeout(() => {
       handleClick();
-    }, 1000);
-  }, [mapRef, pointMarkers]);
+    }, 2000);
+  }, [mapRef, pointMarkers, rawGeojsons]);
 
   useEffect(() => {
     if (mapRef && mapRef.current && mapRef.current.leafletElement) {
@@ -271,6 +280,7 @@ function OrgunitMap({
       const color = line.color || "red";
       return {
         id: "points" + index,
+        key: "points" + index,
         iconColor: color,
         position: latlong,
         tooltip: () => {
@@ -297,9 +307,9 @@ function OrgunitMap({
           '" /></svg>',
       };
     });
+    setPointMarkers(markers);
     setRawGeojsons(newGeojsons);
     setRawPoints(newRawPoints);
-    setPointMarkers(markers);
     handleClick();
   }, [lines]);
   if (lines == undefined || lines == null) {
@@ -360,34 +370,40 @@ function OrgunitMap({
   const geojsons =
     rawGeojsons == undefined
       ? []
-      : rawGeojsons.filter(geometry => geometry && geometry.properties && geometry.properties.line).map((geometry, index) => {
-          const line = geometry.properties.line;
-          const opacity = geometry.type == "LineString" ? 1 : 0.3;
-          line.fillColor = line.fillColor || getRandomColor();
-          const style = {
-            fillColor: line.fillColor,
-            color: line.color || getRandomColor(),
-            weight: line.opacity || opacity,
-            opacity: line.opacity || opacity,
-            fillOpacity: line.opacity || opacity,
-          };
-          if (clicked == line) {
-            style.weight = 3;
-            style.opacity = 0.8;
-            style.dashArray = "5,5";
-          }
-          return (
-            <GeoJSON
-              data={geometry}
-              key={"parent-" + index + (clicked == line ? "clicked" : "none")}
-              style={style}
-              title={JSON.stringify(line, getCircularReplacer())}
-              onClick={(event) => {
-                onFeature(line, event);
-              }}
-            />
-          );
-        });
+      : rawGeojsons
+          .filter(
+            (geometry) =>
+              geometry && geometry.properties && geometry.properties.line
+          )
+          .map((geometry, index) => {
+            const line = geometry.properties.line;
+            const opacity = geometry.type == "LineString" ? 1 : 0.3;
+            line.fillColor = line.fillColor || getRandomColor();
+            const style = {
+              fillColor: line.fillColor,
+              color: line.color || getRandomColor(),
+              weight: line.opacity || opacity,
+              opacity: line.opacity || opacity,
+              fillOpacity: line.fillOpacity || line.opacity || opacity,
+              dashArray: line.dashArray || undefined,
+            };
+            if (clicked == line) {
+              style.weight = 3;
+              style.opacity = 0.8;
+              style.dashArray = "5,5";
+            }
+            return (
+              <GeoJSON
+                data={geometry}
+                key={"parent-" + index + (clicked == line ? "clicked" : "none")}
+                style={style}
+                title={JSON.stringify(line, getCircularReplacer())}
+                onClick={(event) => {
+                  onFeature(line, event);
+                }}
+              />
+            );
+          });
 
   const mapSelected = (event, val) => {
     setSelectedLayer(val.props.value);
@@ -428,26 +444,29 @@ function OrgunitMap({
             })}
       </div>
 
-      <Map
-        preferCanvas={true}
-        doubleClickZoom={false}
-        center={position}
-        zoom={3}
-        ref={mapRef}
-        style={{
-          width: width || "80%",
-          height: height || "900px",
-          padding: "0px",
-        }}
-      >
-        <TileLayer {...selectedLayer}></TileLayer>
-        <CoordinatesControl position="top" coordinates="decimal" />
+      {((pointMarkers && pointMarkers[0]) || (geojsons && geojsons[0])) && (
+        <Map
+          preferCanvas={true}
+          doubleClickZoom={false}
+          center={position}
+          zoom={3}
+          ref={mapRef}
+          style={{
+            width: width || "80%",
+            height: height || "900px",
+            padding: "0px",
+          }}
+        >
+          <TileLayer {...selectedLayer}></TileLayer>
+          <CoordinatesControl position="top" coordinates="decimal" />
 
-        {pointMarkers && (
-          <PixiOverlay markers={pointMarkers} interactive={true} />
-        )}
-        {geojsons}
-      </Map>
+          {geojsons}
+
+          {pointMarkers && pointMarkers[0] && (
+            <PixiOverlay key="4" markers={pointMarkers} interactive={true} />
+          )}
+        </Map>
+      )}
     </div>
   );
 }
