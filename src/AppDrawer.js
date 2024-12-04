@@ -69,8 +69,10 @@ const AppDrawer = () => {
             </IconButton>
           </ListItem>
           <ListItem 
-            key={"dhis2"} 
-            onClick={toggleDrawer(false, "/")}
+            key={"dhis2"}
+            component="a"
+            href={"../../"}
+            onClick={toggleDrawer(false)}
             disablePadding
           >
             <IconButton>
